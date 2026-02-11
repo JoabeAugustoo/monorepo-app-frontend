@@ -4,6 +4,7 @@ import type {
   CreateApplicationRequest,
   UpdateApplicationRequest,
   SearchRequest,
+  PaginatedResponse,
   CountResponse,
   ApplicationUserInfo,
   UserRoleResponse,
@@ -47,8 +48,8 @@ export const applicationsApi = {
     return response.data;
   },
 
-  search: async (request: SearchRequest): Promise<Application[]> => {
-    const response = await api.post<Application[]>("/api/applications/search", request);
+  search: async (request: SearchRequest): Promise<PaginatedResponse<Application>> => {
+    const response = await api.post<PaginatedResponse<Application>>("/api/applications/search", request);
     return response.data;
   },
 
@@ -102,8 +103,8 @@ export const applicationsApi = {
   searchApplicationUsers: async (
     appPublicId: string,
     request: SearchRequest
-  ): Promise<ApplicationUserSearchResponse[]> => {
-    const response = await api.post<ApplicationUserSearchResponse[]>(
+  ): Promise<PaginatedResponse<ApplicationUserSearchResponse>> => {
+    const response = await api.post<PaginatedResponse<ApplicationUserSearchResponse>>(
       `/api/applications/${appPublicId}/users/search`,
       request
     );
@@ -113,8 +114,8 @@ export const applicationsApi = {
   searchApplicationRoles: async (
     appPublicId: string,
     request: SearchRequest
-  ): Promise<ApplicationRoleSearchResponse[]> => {
-    const response = await api.post<ApplicationRoleSearchResponse[]>(
+  ): Promise<PaginatedResponse<ApplicationRoleSearchResponse>> => {
+    const response = await api.post<PaginatedResponse<ApplicationRoleSearchResponse>>(
       `/api/applications/${appPublicId}/roles/search`,
       request
     );

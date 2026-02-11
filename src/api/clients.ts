@@ -7,6 +7,7 @@ import type {
   AssignClientRoleRequest,
   ClientRoleResponse,
   SearchRequest,
+  PaginatedResponse,
   CountResponse,
 } from '../types';
 
@@ -38,8 +39,8 @@ export const clientsApi = {
     await api.delete(`/api/clients/${clientPublicId}`);
   },
 
-  search: async (request: SearchRequest): Promise<Client[]> => {
-    const response = await api.post<Client[]>('/api/clients/search', request);
+  search: async (request: SearchRequest): Promise<PaginatedResponse<Client>> => {
+    const response = await api.post<PaginatedResponse<Client>>('/api/clients/search', request);
     return response.data;
   },
 

@@ -1,0 +1,2606 @@
+openapi: 3.0.0
+paths:
+  /api/health:
+    get:
+      operationId: HealthController_health
+      parameters: []
+      responses:
+        '200':
+          description: Service is healthy
+      summary: Health check endpoint
+      tags:
+        - Health
+  /api/auth/login:
+    post:
+      operationId: AuthController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponseVendasDto'
+        '401':
+          description: Invalid credentials
+        '503':
+          description: Auth service unavailable
+      summary: Authenticate user and get tokens
+      tags:
+        - Authentication
+  /api/auth/refresh:
+    post:
+      operationId: AuthController_refresh
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenDto'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponseDto'
+        '401':
+          description: Invalid or expired refresh token
+      summary: Refresh access token using refresh token
+      tags:
+        - Authentication
+  /api/auth/validate:
+    post:
+      operationId: AuthController_validate
+      parameters:
+        - name: authorization
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPayloadDto'
+        '401':
+          description: Invalid or expired token
+      security:
+        - bearer: []
+      summary: Validate current token from Authorization header
+      tags:
+        - Authentication
+  /api/auth/introspect:
+    post:
+      operationId: AuthController_introspect
+      parameters:
+        - name: authorization
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token introspection result
+      security:
+        - bearer: []
+      summary: Introspect token from Authorization header
+      tags:
+        - Authentication
+  /api/products/active:
+    get:
+      operationId: ProductController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductResponseDto'
+      security:
+        - bearer: []
+      summary: List all active Products
+      tags:
+        - Products
+  /api/products/{id}:
+    get:
+      operationId: ProductController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Product public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponseDto'
+        '404':
+          description: Product not found
+      security:
+        - bearer: []
+      summary: Get Product by ID
+      tags:
+        - Products
+    put:
+      operationId: ProductController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Product public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDto'
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Product not found
+      security:
+        - bearer: []
+      summary: Update Product by ID
+      tags:
+        - Products
+    delete:
+      operationId: ProductController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Product public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Product deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Product not found
+      security:
+        - bearer: []
+      summary: Delete Product by ID
+      tags:
+        - Products
+  /api/products/search:
+    post:
+      operationId: ProductController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Products
+      security:
+        - bearer: []
+      summary: Search Products with filters and pagination
+      tags:
+        - Products
+  /api/products:
+    post:
+      operationId: ProductController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDto'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Product
+      tags:
+        - Products
+  /api/products/stats/count:
+    get:
+      operationId: ProductController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Product count statistics
+      tags:
+        - Products
+  /api/products/{id}/activate:
+    patch:
+      operationId: ProductController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Product public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Product not found
+      security:
+        - bearer: []
+      summary: Activate Product by ID
+      tags:
+        - Products
+  /api/products/{id}/deactivate:
+    patch:
+      operationId: ProductController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Product public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Product not found
+      security:
+        - bearer: []
+      summary: Deactivate Product by ID
+      tags:
+        - Products
+  /api/employees:
+    post:
+      operationId: EmployeeController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDto'
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeCreateResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Employee with auth user
+      tags:
+        - Employees
+  /api/employees/{id}:
+    get:
+      operationId: EmployeeController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Get Employee by ID
+      tags:
+        - Employees
+    put:
+      operationId: EmployeeController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDto'
+      responses:
+        '200':
+          description: Employee updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Update Employee by ID
+      tags:
+        - Employees
+    delete:
+      operationId: EmployeeController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Employee deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Delete Employee by ID
+      tags:
+        - Employees
+  /api/employees/stats/count:
+    get:
+      operationId: EmployeeController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Employee count statistics
+      tags:
+        - Employees
+  /api/employees/active:
+    get:
+      operationId: EmployeeController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Employee
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Employee
+      tags:
+        - Employees
+  /api/employees/search:
+    post:
+      operationId: EmployeeController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Employee
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Employee with filters and pagination
+      tags:
+        - Employees
+  /api/employees/{id}/activate:
+    patch:
+      operationId: EmployeeController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Activate Employee by ID
+      tags:
+        - Employees
+  /api/employees/{id}/deactivate:
+    patch:
+      operationId: EmployeeController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Deactivate Employee by ID
+      tags:
+        - Employees
+  /api/sales/dashboard/total:
+    get:
+      operationId: SaleController_getDashboardTotal
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Total sales amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponseDto'
+      security:
+        - bearer: []
+      summary: Get total sales amount in period
+      tags:
+        - Sales
+  /api/sales/dashboard/new-clients:
+    get:
+      operationId: SaleController_getDashboardNewClients
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Total new clients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponseDto'
+      security:
+        - bearer: []
+      summary: Get count of new client sales in period
+      tags:
+        - Sales
+  /api/sales/dashboard/daily:
+    get:
+      operationId: SaleController_getDashboardDaily
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Daily sales breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailySalesDto'
+      security:
+        - bearer: []
+      summary: Get daily sales breakdown in period
+      tags:
+        - Sales
+  /api/sales/dashboard/employee-performance:
+    get:
+      operationId: SaleController_getDashboardEmployeePerformance
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee sales performance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeePerformanceDto'
+      security:
+        - bearer: []
+      summary: Get employee sales performance in period
+      tags:
+        - Sales
+  /api/sales/management/employee-summary:
+    post:
+      operationId: SaleController_getEmployeeSalesSummary
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated employee sales summary
+      security:
+        - bearer: []
+      summary: Search employee sales summary for management view
+      tags:
+        - Sales
+  /api/sales:
+    post:
+      operationId: SaleController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleDto'
+      responses:
+        '201':
+          description: Sale created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Sale
+      tags:
+        - Sales
+  /api/sales/stats/count:
+    get:
+      operationId: SaleController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Sale count statistics
+      tags:
+        - Sales
+  /api/sales/active:
+    get:
+      operationId: SaleController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Sale
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SaleResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Sale
+      tags:
+        - Sales
+  /api/sales/{id}:
+    get:
+      operationId: SaleController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Sale public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sale found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Sale not found
+      security:
+        - bearer: []
+      summary: Get Sale by ID
+      tags:
+        - Sales
+    put:
+      operationId: SaleController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Sale public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleDto'
+      responses:
+        '200':
+          description: Sale updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Sale not found
+      security:
+        - bearer: []
+      summary: Update Sale by ID
+      tags:
+        - Sales
+    delete:
+      operationId: SaleController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Sale public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Sale deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Sale not found
+      security:
+        - bearer: []
+      summary: Delete Sale by ID
+      tags:
+        - Sales
+  /api/sales/search:
+    post:
+      operationId: SaleController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Sale
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Sale with filters and pagination
+      tags:
+        - Sales
+  /api/sales/{id}/activate:
+    patch:
+      operationId: SaleController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Sale public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sale activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Sale not found
+      security:
+        - bearer: []
+      summary: Activate Sale by ID
+      tags:
+        - Sales
+  /api/sales/{id}/deactivate:
+    patch:
+      operationId: SaleController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Sale public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sale deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Sale not found
+      security:
+        - bearer: []
+      summary: Deactivate Sale by ID
+      tags:
+        - Sales
+  /api/purchases/dashboard/total:
+    get:
+      operationId: PurchaseController_getDashboardTotal
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Total purchases amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponseDto'
+      security:
+        - bearer: []
+      summary: Get total purchases amount in period
+      tags:
+        - Purchases
+  /api/purchases/dashboard/distribution:
+    get:
+      operationId: PurchaseController_getDashboardDistribution
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Purchases distribution by payment type
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseDistributionDto'
+      security:
+        - bearer: []
+      summary: Get purchases distribution by payment type in period
+      tags:
+        - Purchases
+  /api/purchases:
+    post:
+      operationId: PurchaseController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseDto'
+      responses:
+        '201':
+          description: Purchase created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Purchase
+      tags:
+        - Purchases
+  /api/purchases/stats/count:
+    get:
+      operationId: PurchaseController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Purchase count statistics
+      tags:
+        - Purchases
+  /api/purchases/active:
+    get:
+      operationId: PurchaseController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Purchase
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Purchase
+      tags:
+        - Purchases
+  /api/purchases/{id}:
+    get:
+      operationId: PurchaseController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Purchase public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Purchase found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Purchase not found
+      security:
+        - bearer: []
+      summary: Get Purchase by ID
+      tags:
+        - Purchases
+    put:
+      operationId: PurchaseController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Purchase public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseDto'
+      responses:
+        '200':
+          description: Purchase updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Purchase not found
+      security:
+        - bearer: []
+      summary: Update Purchase by ID
+      tags:
+        - Purchases
+    delete:
+      operationId: PurchaseController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Purchase public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Purchase deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Purchase not found
+      security:
+        - bearer: []
+      summary: Delete Purchase by ID
+      tags:
+        - Purchases
+  /api/purchases/search:
+    post:
+      operationId: PurchaseController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Purchase
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Purchase with filters and pagination
+      tags:
+        - Purchases
+  /api/purchases/{id}/activate:
+    patch:
+      operationId: PurchaseController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Purchase public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Purchase activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Purchase not found
+      security:
+        - bearer: []
+      summary: Activate Purchase by ID
+      tags:
+        - Purchases
+  /api/purchases/{id}/deactivate:
+    patch:
+      operationId: PurchaseController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Purchase public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Purchase deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Purchase not found
+      security:
+        - bearer: []
+      summary: Deactivate Purchase by ID
+      tags:
+        - Purchases
+  /api/stocks/summary:
+    get:
+      operationId: StockController_getSummary
+      parameters:
+        - name: threshold
+          required: false
+          in: query
+          description: 'Low stock threshold (default: 5)'
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      security:
+        - bearer: []
+      summary: Get stock summary dashboard
+      tags:
+        - Stocks
+  /api/stocks/low-stock:
+    get:
+      operationId: StockController_getLowStock
+      parameters:
+        - name: threshold
+          required: false
+          in: query
+          description: 'Low stock threshold (default: 5)'
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      security:
+        - bearer: []
+      summary: Get products with low stock
+      tags:
+        - Stocks
+  /api/stocks:
+    post:
+      operationId: StockController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockDto'
+      responses:
+        '201':
+          description: Stock created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Stock
+      tags:
+        - Stocks
+  /api/stocks/stats/count:
+    get:
+      operationId: StockController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Stock count statistics
+      tags:
+        - Stocks
+  /api/stocks/active:
+    get:
+      operationId: StockController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Stock
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Stock
+      tags:
+        - Stocks
+  /api/stocks/{id}:
+    get:
+      operationId: StockController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Stock public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stock found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Stock not found
+      security:
+        - bearer: []
+      summary: Get Stock by ID
+      tags:
+        - Stocks
+    put:
+      operationId: StockController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Stock public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockDto'
+      responses:
+        '200':
+          description: Stock updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Stock not found
+      security:
+        - bearer: []
+      summary: Update Stock by ID
+      tags:
+        - Stocks
+    delete:
+      operationId: StockController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Stock public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Stock deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Stock not found
+      security:
+        - bearer: []
+      summary: Delete Stock by ID
+      tags:
+        - Stocks
+  /api/stocks/search:
+    post:
+      operationId: StockController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Stock
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Stock with filters and pagination
+      tags:
+        - Stocks
+  /api/stocks/{id}/activate:
+    patch:
+      operationId: StockController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Stock public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stock activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Stock not found
+      security:
+        - bearer: []
+      summary: Activate Stock by ID
+      tags:
+        - Stocks
+  /api/stocks/{id}/deactivate:
+    patch:
+      operationId: StockController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Stock public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stock deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Stock not found
+      security:
+        - bearer: []
+      summary: Deactivate Stock by ID
+      tags:
+        - Stocks
+  /api/stock-movements/by-product/{productPublicId}:
+    get:
+      operationId: StockMovementController_findByProduct
+      parameters:
+        - name: productPublicId
+          required: true
+          in: path
+          description: Product public ID (UUID)
+          schema:
+            type: string
+        - name: skip
+          required: false
+          in: query
+          description: 'Number of records to skip (default: 0)'
+          schema:
+            type: number
+        - name: take
+          required: false
+          in: query
+          description: 'Number of records to take (default: 10)'
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      security:
+        - bearer: []
+      summary: Get stock movements by product
+      tags:
+        - Stock Movements
+  /api/stock-movements:
+    post:
+      operationId: StockMovementController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementDto'
+      responses:
+        '201':
+          description: StockMovement created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new StockMovement
+      tags:
+        - Stock Movements
+  /api/stock-movements/stats/count:
+    get:
+      operationId: StockMovementController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get StockMovement count statistics
+      tags:
+        - Stock Movements
+  /api/stock-movements/active:
+    get:
+      operationId: StockMovementController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active StockMovement
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active StockMovement
+      tags:
+        - Stock Movements
+  /api/stock-movements/{id}:
+    get:
+      operationId: StockMovementController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockMovement found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Get StockMovement by ID
+      tags:
+        - Stock Movements
+    put:
+      operationId: StockMovementController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementDto'
+      responses:
+        '200':
+          description: StockMovement updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Update StockMovement by ID
+      tags:
+        - Stock Movements
+    delete:
+      operationId: StockMovementController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: StockMovement deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Delete StockMovement by ID
+      tags:
+        - Stock Movements
+  /api/stock-movements/search:
+    post:
+      operationId: StockMovementController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of StockMovement
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search StockMovement with filters and pagination
+      tags:
+        - Stock Movements
+  /api/stock-movements/{id}/activate:
+    patch:
+      operationId: StockMovementController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockMovement activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Activate StockMovement by ID
+      tags:
+        - Stock Movements
+  /api/stock-movements/{id}/deactivate:
+    patch:
+      operationId: StockMovementController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockMovement deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Deactivate StockMovement by ID
+      tags:
+        - Stock Movements
+  /api/dashboard/monthly-trend:
+    get:
+      operationId: DashboardController_getMonthlyTrend
+      parameters:
+        - name: year
+          required: true
+          in: query
+          description: Reference year
+          schema:
+            type: number
+        - name: month
+          required: true
+          in: query
+          description: Reference month (1-12)
+          schema:
+            type: number
+        - name: months
+          required: false
+          in: query
+          description: 'Number of months to return (default: 6)'
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Monthly sales/expenses/profit trend
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MonthlyTrendDto'
+      security:
+        - bearer: []
+      summary: Get monthly sales/expenses/profit trend
+      tags:
+        - Dashboard
+  /api/reports/monthly-closing:
+    get:
+      operationId: ReportController_getMonthlyClosing
+      parameters:
+        - name: year
+          required: true
+          in: query
+          description: Year
+          schema:
+            type: number
+        - name: month
+          required: true
+          in: query
+          description: Month (1-12)
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Monthly closing summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyClosingDto'
+      security:
+        - bearer: []
+      summary: Get monthly closing summary
+      tags:
+        - Reports
+info:
+  title: Vendamax API
+  description: API for Vendamax application
+  version: '1.0'
+  contact: {}
+tags: []
+servers:
+  - url: http://localhost:8083
+    description: Local development
+components:
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+  schemas:
+    LoginDto:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Username or email
+        password:
+          type: string
+          description: User password
+        applicationId:
+          type: string
+          description: Application public ID (UUID)
+      required:
+        - username
+        - password
+    TokenResponseVendasDto:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+        tokenType:
+          type: string
+          description: Token type (Bearer)
+        expiresIn:
+          type: number
+          description: Access token expiration time in seconds
+      required:
+        - accessToken
+        - refreshToken
+        - tokenType
+        - expiresIn
+    RefreshTokenDto:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token
+      required:
+        - refreshToken
+    TokenResponseDto:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+        tokenType:
+          type: string
+          description: Token type (Bearer)
+        expiresIn:
+          type: number
+          description: Access token expiration time in seconds
+      required:
+        - accessToken
+        - refreshToken
+        - tokenType
+        - expiresIn
+    TokenPayloadDto:
+      type: object
+      properties:
+        sub:
+          type: string
+          description: User/Client public ID
+        app:
+          type: string
+          description: Application code (e.g., "vendamax", "auth")
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: User email
+        roles:
+          description: User/Client roles in the application
+          type: array
+          items:
+            type: string
+        iat:
+          type: number
+          description: Token issued at timestamp
+        exp:
+          type: number
+          description: Token expiration timestamp
+      required:
+        - sub
+        - app
+        - username
+        - email
+        - roles
+    ProductResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        name:
+          type: string
+          description: Product name
+        price:
+          type: number
+          description: Product price
+        suggestedSalePrice:
+          type: number
+          description: Suggested sale price
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - name
+        - price
+    SearchRequest:
+      type: object
+      properties:
+        where:
+          type: object
+          description: Filter conditions
+          example:
+            active: true
+            name: Example
+          additionalProperties: true
+        skip:
+          type: number
+          description: Number of records to skip (pagination offset)
+          example: 0
+          default: 0
+          minimum: 0
+        take:
+          type: number
+          description: Number of records to return (pagination limit)
+          example: 10
+          default: 10
+          minimum: 1
+        sort:
+          description: Sort fields and directions
+          example:
+            - field: createdAt
+              direction: DESC
+          type: array
+          items:
+            type: array
+      required:
+        - skip
+        - take
+    ProductDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Product name
+          maxLength: 255
+        price:
+          type: number
+          description: Product price
+          example: 99.99
+        suggestedSalePrice:
+          type: number
+          description: Suggested sale price
+          example: 129.99
+      required:
+        - name
+        - price
+    CountResponse:
+      type: object
+      properties:
+        total:
+          type: number
+          description: Total number of records
+          example: 100
+        active:
+          type: number
+          description: Number of active records
+          example: 85
+        inactive:
+          type: number
+          description: Number of inactive records
+          example: 15
+      required:
+        - total
+        - active
+        - inactive
+    EmployeeDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Employee full name (first and last name)
+          maxLength: 255
+        email:
+          type: string
+          description: Employee email
+          maxLength: 255
+        monthlySalary:
+          type: number
+          description: Monthly salary
+          example: 3500
+        startTime:
+          type: string
+          description: Start time (HH:mm format)
+          example: '08:00'
+        endTime:
+          type: string
+          description: End time (HH:mm format)
+          example: '17:00'
+        hoursPerDay:
+          type: number
+          description: Hours per day
+          example: 8
+        daysPerWeek:
+          type: number
+          description: Days per week
+          example: 5
+        createAuthUser:
+          type: boolean
+          description: Whether to create auth user in security-api
+          default: true
+      required:
+        - name
+        - monthlySalary
+        - startTime
+        - endTime
+        - hoursPerDay
+        - daysPerWeek
+    EmployeeCreateResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        name:
+          type: string
+          description: Employee full name
+        email:
+          type: string
+          description: Employee email
+        monthlySalary:
+          type: number
+          description: Monthly salary
+        startTime:
+          type: string
+          description: Start time
+        endTime:
+          type: string
+          description: End time
+        hoursPerDay:
+          type: number
+          description: Hours per day
+        daysPerWeek:
+          type: number
+          description: Days per week
+        employeeGuid:
+          type: string
+          description: Employee GUID
+        authUserGuid:
+          type: string
+          description: Auth User GUID (reference to security-api User)
+        hasAuthAccess:
+          type: boolean
+          description: Whether the employee has auth access in security-api
+        generatedUserName:
+          type: string
+          description: Generated username for authentication
+        generatedPassword:
+          type: string
+          description: >-
+            Generated password (only returned on new user creation, empty if
+            user already existed)
+        isExistingUser:
+          type: boolean
+          description: Whether the auth user already existed in the security system
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - name
+        - monthlySalary
+        - startTime
+        - endTime
+        - hoursPerDay
+        - daysPerWeek
+        - hasAuthAccess
+        - generatedUserName
+        - generatedPassword
+        - isExistingUser
+    EmployeeResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        name:
+          type: string
+          description: Employee full name
+        email:
+          type: string
+          description: Employee email
+        monthlySalary:
+          type: number
+          description: Monthly salary
+        startTime:
+          type: string
+          description: Start time
+        endTime:
+          type: string
+          description: End time
+        hoursPerDay:
+          type: number
+          description: Hours per day
+        daysPerWeek:
+          type: number
+          description: Days per week
+        employeeGuid:
+          type: string
+          description: Employee GUID
+        authUserGuid:
+          type: string
+          description: Auth User GUID (reference to security-api User)
+        hasAuthAccess:
+          type: boolean
+          description: Whether the employee has auth access in security-api
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - name
+        - monthlySalary
+        - startTime
+        - endTime
+        - hoursPerDay
+        - daysPerWeek
+        - hasAuthAccess
+    TotalResponseDto:
+      type: object
+      properties:
+        total:
+          type: number
+          description: Total value
+          example: 15000
+      required:
+        - total
+    DailySalesDto:
+      type: object
+      properties:
+        day:
+          type: string
+          description: Day of month (zero-padded)
+          example: '01'
+        sales:
+          type: number
+          description: Number of sales
+        amount:
+          type: number
+          description: Total amount
+      required:
+        - day
+        - sales
+        - amount
+    EmployeePerformanceDto:
+      type: object
+      properties:
+        employeeId:
+          type: string
+          description: Employee public ID
+        employeeName:
+          type: string
+          description: Employee name
+        sales:
+          type: number
+          description: Number of sales
+        amount:
+          type: number
+          description: Total amount
+      required:
+        - employeeId
+        - employeeName
+        - sales
+        - amount
+    SaleDto:
+      type: object
+      properties:
+        employeePublicId:
+          type: string
+          description: Employee public ID (UUID)
+        productPublicId:
+          type: string
+          description: Product public ID (UUID)
+        clientName:
+          type: string
+          description: Client name
+          maxLength: 100
+        quantity:
+          type: number
+          description: Quantity sold
+          example: 1
+        salePrice:
+          type: number
+          description: Sale price per unit
+          example: 99.99
+        suggestedSalePrice:
+          type: number
+          description: Suggested sale price
+          example: 129.99
+        isNewClient:
+          type: boolean
+          description: Is a new client
+          default: false
+        date:
+          type: string
+          description: Sale date (YYYY-MM-DD)
+          example: '2026-02-02'
+        notes:
+          type: string
+          description: Additional notes
+          maxLength: 500
+      required:
+        - employeePublicId
+        - productPublicId
+        - clientName
+        - quantity
+        - salePrice
+        - date
+    SaleResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        employeePublicId:
+          type: string
+          description: Employee public ID
+        employeeName:
+          type: string
+          description: Employee name
+        productPublicId:
+          type: string
+          description: Product public ID
+        productName:
+          type: string
+          description: Product name
+        clientName:
+          type: string
+          description: Client name
+        quantity:
+          type: number
+          description: Quantity sold
+        salePrice:
+          type: number
+          description: Sale price per unit
+        suggestedSalePrice:
+          type: number
+          description: Suggested sale price
+        totalPrice:
+          type: number
+          description: Total price (quantity * salePrice)
+        isNewClient:
+          type: boolean
+          description: Is a new client
+        date:
+          format: date-time
+          type: string
+          description: Sale date
+        notes:
+          type: string
+          description: Additional notes
+        employeeGuid:
+          type: string
+          description: Employee GUID
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - employeePublicId
+        - employeeName
+        - productPublicId
+        - productName
+        - clientName
+        - quantity
+        - salePrice
+        - totalPrice
+        - isNewClient
+        - date
+    PurchaseDistributionDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Payment type name
+        amount:
+          type: number
+          description: Total amount
+      required:
+        - name
+        - amount
+    PurchaseDto:
+      type: object
+      properties:
+        productPublicId:
+          type: string
+          description: Product public ID (UUID)
+        quantity:
+          type: number
+          description: Quantity purchased
+          example: 10
+        unitPrice:
+          type: number
+          description: Unit price
+          example: 50
+        date:
+          type: string
+          description: Purchase date (YYYY-MM-DD)
+          example: '2026-02-02'
+        paymentType:
+          type: string
+          description: Payment type
+          enum:
+            - CASH
+            - CREDIT_CARD
+            - DEBIT_CARD
+            - PIX
+            - BANK_TRANSFER
+            - CHECK
+            - OTHER
+          example: CASH
+      required:
+        - productPublicId
+        - quantity
+        - unitPrice
+        - date
+        - paymentType
+    PurchaseResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        productPublicId:
+          type: string
+          description: Product public ID
+        productName:
+          type: string
+          description: Product name
+        quantity:
+          type: number
+          description: Quantity purchased
+        unitPrice:
+          type: number
+          description: Unit price
+        date:
+          format: date-time
+          type: string
+          description: Purchase date
+        totalPrice:
+          type: number
+          description: Total price (quantity * unitPrice)
+        paymentType:
+          type: string
+          description: Payment type
+          enum:
+            - CASH
+            - CREDIT_CARD
+            - DEBIT_CARD
+            - PIX
+            - BANK_TRANSFER
+            - CHECK
+            - OTHER
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - productPublicId
+        - productName
+        - quantity
+        - unitPrice
+        - date
+        - totalPrice
+        - paymentType
+    StockDto:
+      type: object
+      properties:
+        productPublicId:
+          type: string
+          description: Product public ID (UUID)
+        quantity:
+          type: number
+          description: Stock quantity
+          example: 100
+      required:
+        - productPublicId
+        - quantity
+    StockResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        productPublicId:
+          type: string
+          description: Product public ID
+        productName:
+          type: string
+          description: Product name
+        quantity:
+          type: number
+          description: Stock quantity
+        lastUpdated:
+          format: date-time
+          type: string
+          description: Last updated timestamp
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - productPublicId
+        - productName
+        - quantity
+    StockMovementDto:
+      type: object
+      properties:
+        productPublicId:
+          type: string
+          description: Product public ID (UUID)
+        movementType:
+          type: string
+          description: Movement type
+          enum:
+            - IN
+            - OUT
+            - ADJUSTMENT
+          example: IN
+        quantity:
+          type: number
+          description: Movement quantity
+          example: 10
+        referenceType:
+          type: string
+          description: Reference type
+          enum:
+            - SALE
+            - PURCHASE
+            - ADJUSTMENT
+            - RETURN
+        referenceId:
+          type: number
+          description: Reference ID
+        description:
+          type: string
+          description: Movement description
+      required:
+        - productPublicId
+        - movementType
+        - quantity
+    StockMovementResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        productPublicId:
+          type: string
+          description: Product public ID
+        productName:
+          type: string
+          description: Product name
+        movementType:
+          type: string
+          description: Movement type
+          enum:
+            - IN
+            - OUT
+            - ADJUSTMENT
+        quantity:
+          type: number
+          description: Movement quantity
+        referenceType:
+          type: string
+          description: Reference type
+          enum:
+            - SALE
+            - PURCHASE
+            - ADJUSTMENT
+            - RETURN
+        referenceId:
+          type: number
+          description: Reference ID
+        description:
+          type: string
+          description: Movement description
+        previousQuantity:
+          type: number
+          description: Previous stock quantity
+        newQuantity:
+          type: number
+          description: New stock quantity
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - productPublicId
+        - productName
+        - movementType
+        - quantity
+    MonthlyTrendDto:
+      type: object
+      properties:
+        month:
+          type: number
+          description: Month number (1-12)
+          example: 2
+        year:
+          type: number
+          description: Year
+          example: 2026
+        sales:
+          type: number
+          description: Total sales amount
+          example: 15000
+        expenses:
+          type: number
+          description: Total expenses (purchases) amount
+          example: 9000
+        profit:
+          type: number
+          description: Profit (sales - expenses)
+          example: 6000
+      required:
+        - month
+        - year
+        - sales
+        - expenses
+        - profit
+    MonthlySalesDto:
+      type: object
+      properties:
+        totalAmount:
+          type: number
+          description: Total sales amount
+        totalCount:
+          type: number
+          description: Total number of sales
+        newClients:
+          type: number
+          description: Number of new clients
+      required:
+        - totalAmount
+        - totalCount
+        - newClients
+    MonthlyPurchasesDto:
+      type: object
+      properties:
+        cashTotal:
+          type: number
+          description: Cash purchases total
+        creditTotal:
+          type: number
+          description: Credit purchases total
+        total:
+          type: number
+          description: Total purchases
+      required:
+        - cashTotal
+        - creditTotal
+        - total
+    MonthlyExpensesDto:
+      type: object
+      properties:
+        totalSalaries:
+          type: number
+          description: Total salaries of active employees
+        totalExtraWorks:
+          type: number
+          description: Total extra works in the period
+      required:
+        - totalSalaries
+        - totalExtraWorks
+    MonthlyClosingDto:
+      type: object
+      properties:
+        year:
+          type: number
+          description: Year
+        month:
+          type: number
+          description: Month (1-12)
+        sales:
+          description: Sales summary
+          allOf:
+            - $ref: '#/components/schemas/MonthlySalesDto'
+        purchases:
+          description: Purchases summary
+          allOf:
+            - $ref: '#/components/schemas/MonthlyPurchasesDto'
+        expenses:
+          description: Expenses summary
+          allOf:
+            - $ref: '#/components/schemas/MonthlyExpensesDto'
+        netProfit:
+          type: number
+          description: Net profit (sales - cash purchases - salaries - extra works)
+      required:
+        - year
+        - month
+        - sales
+        - purchases
+        - expenses
+        - netProfit

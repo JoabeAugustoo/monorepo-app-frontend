@@ -12,6 +12,16 @@ export interface SearchRequest {
   sort?: SortField[];
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
 export interface CountResponse {
   total: number;
   active: number;
@@ -131,9 +141,9 @@ export interface RefreshTokenRequest {
 
 export interface TokenPayload {
   sub: string;
+  app: string;
   username: string;
   email: string;
-  applicationId: string;
   roles: string[];
   iat?: number;
   exp?: number;

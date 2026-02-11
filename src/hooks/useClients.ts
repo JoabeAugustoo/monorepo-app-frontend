@@ -4,7 +4,6 @@ import type {
   CreateClientRequest,
   UpdateClientRequest,
   AssignClientRoleRequest,
-  SearchRequest,
 } from '../types';
 import { toast } from 'sonner';
 import { applicationKeys } from './useApplications';
@@ -17,13 +16,19 @@ export const clientKeys = {
   details: () => [...clientKeys.all, 'detail'] as const,
   detail: (id: string) => [...clientKeys.details(), id] as const,
   count: () => [...clientKeys.all, 'count'] as const,
-  search: (request: SearchRequest) => [...clientKeys.all, 'search', request] as const,
 };
 
 export function useAllClients() {
   return useQuery({
     queryKey: clientKeys.lists(),
-    queryFn: () => clientsApi.search({ skip: 0, take: 1000 }),
+    queryFn: () => clientsApi.search({ skip: 0, take: 1000 }).then(res => res.data),
+  });
+}
+
+export function useClientsCount() {
+  return useQuery({
+    queryKey: clientKeys.count(),
+    queryFn: clientsApi.getCount,
   });
 }
 
@@ -40,22 +45,6 @@ export function useClient(clientPublicId: string) {
     queryKey: clientKeys.detail(clientPublicId),
     queryFn: () => clientsApi.getById(clientPublicId),
     enabled: !!clientPublicId,
-  });
-}
-
-export function useClientsCount() {
-  return useQuery({
-    queryKey: clientKeys.count(),
-    queryFn: clientsApi.getCount,
-  });
-}
-
-export function useSearchClients() {
-  return useMutation({
-    mutationFn: (request: SearchRequest) => clientsApi.search(request),
-    onError: () => {
-      toast.error('Erro ao buscar clients');
-    },
   });
 }
 

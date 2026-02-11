@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { rolesApi } from '../api/roles';
 import { useAuth } from '../auth/AuthContext';
 import { applicationKeys } from './useApplications';
-import type { CreateRoleRequest, RoleDTO, SearchRequest } from '../types';
+import type { CreateRoleRequest, RoleDTO } from '../types';
 import { toast } from 'sonner';
 
 export const roleKeys = {
@@ -12,7 +12,6 @@ export const roleKeys = {
   details: () => [...roleKeys.all, 'detail'] as const,
   detail: (id: string) => [...roleKeys.details(), id] as const,
   count: () => [...roleKeys.all, 'count'] as const,
-  search: (request: SearchRequest) => [...roleKeys.all, 'search', request] as const,
 };
 
 export function useRoles() {
@@ -24,7 +23,7 @@ export function useRoles() {
       skip: 0,
       take: 100,
       where: { isAdministrative: true },
-    }),
+    }).then(res => res.data),
     enabled: isAuthenticated,
   });
 }
@@ -41,15 +40,6 @@ export function useRolesCount() {
   return useQuery({
     queryKey: roleKeys.count(),
     queryFn: rolesApi.getCount,
-  });
-}
-
-export function useSearchRoles() {
-  return useMutation({
-    mutationFn: (request: SearchRequest) => rolesApi.search(request),
-    onError: () => {
-      toast.error('Erro ao buscar roles');
-    },
   });
 }
 

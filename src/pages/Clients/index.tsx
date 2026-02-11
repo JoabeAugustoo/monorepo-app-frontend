@@ -39,21 +39,19 @@ import {
   useDeleteClient,
   useRotateClientSecret,
 } from '../../hooks/useClients';
-import { useApplications } from '../../hooks/useApplications';
 import { useResponsive } from '../../hooks/useResponsive';
-import type { Client, ClientWithSecret, Application } from '../../types';
+import type { Client, ClientWithSecret } from '../../types';
 
 export function ClientsPage() {
   const { isMobile } = useResponsive();
   const { data: clients, isLoading, isError, refetch } = useAllClients();
-  const { data: applications } = useApplications();
   const activateClient = useActivateClient();
   const deactivateClient = useDeactivateClient();
   const deleteClient = useDeleteClient();
   const rotateSecret = useRotateClientSecret();
 
   const [search, setSearch] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<{ publicId: string; name: string } | null>(null);
   const [formDialog, setFormDialog] = useState<{
     open: boolean;
     client: Client | null;
@@ -73,6 +71,20 @@ export function ClientsPage() {
     client: Client | null;
     action: 'enable' | 'disable' | 'delete' | 'rotate';
   }>({ open: false, client: null, action: 'enable' });
+
+  const applicationOptions = useMemo(() => {
+    if (!clients) return [];
+    const unique = new Map<string, { publicId: string; name: string }>();
+    clients.forEach((client) => {
+      if (!unique.has(client.applicationId)) {
+        unique.set(client.applicationId, {
+          publicId: client.applicationId,
+          name: client.applicationName,
+        });
+      }
+    });
+    return Array.from(unique.values());
+  }, [clients]);
 
   const filteredClients = useMemo(() => {
     if (!clients) return [];
@@ -412,7 +424,7 @@ export function ClientsPage() {
           <Autocomplete
             value={selectedApplication}
             onChange={(_, newValue) => setSelectedApplication(newValue)}
-            options={applications || []}
+            options={applicationOptions}
             getOptionLabel={(option) => option.name}
             renderInput={(params) => (
               <TextField {...params} label="Filtrar por aplicacao" size="small" />

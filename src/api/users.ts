@@ -4,6 +4,7 @@ import type {
   CreateUserRequest,
   UpdateUserRequest,
   SearchRequest,
+  PaginatedResponse,
   CountResponse,
   UserApplicationRoles,
 } from '../types';
@@ -43,8 +44,8 @@ export const usersApi = {
     return response.data;
   },
 
-  search: async (request: SearchRequest): Promise<User[]> => {
-    const response = await api.post<User[]>('/api/users/search', request);
+  search: async (request: SearchRequest): Promise<PaginatedResponse<User>> => {
+    const response = await api.post<PaginatedResponse<User>>('/api/users/search', request);
     return response.data;
   },
 

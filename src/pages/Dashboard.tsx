@@ -4,11 +4,13 @@ import SecurityIcon from '@mui/icons-material/Security';
 import AppsIcon from '@mui/icons-material/Apps';
 import PersonIcon from '@mui/icons-material/Person';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import KeyIcon from '@mui/icons-material/Key';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useAuth } from '../auth/AuthContext';
 import { useUsersCount } from '../hooks/useUsers';
 import { useRolesCount } from '../hooks/useRoles';
 import { useApplicationsCount } from '../hooks/useApplications';
+import { useClientsCount } from '../hooks/useClients';
 import { LoadingState } from '../components/cards/LoadingState';
 
 interface StatCardProps {
@@ -217,9 +219,10 @@ export function Dashboard() {
   const { data: usersCount, isLoading: usersLoading } = useUsersCount();
   const { data: rolesCount, isLoading: rolesLoading } = useRolesCount();
   const { data: applicationsCount, isLoading: applicationsLoading } = useApplicationsCount();
+  const { data: clientsCount, isLoading: clientsLoading } = useClientsCount();
 
   const isAdmin = hasRole('ADMIN');
-  const isLoading = usersLoading || rolesLoading || applicationsLoading;
+  const isLoading = usersLoading || rolesLoading || applicationsLoading || clientsLoading;
 
   if (isLoading) {
     return <LoadingState />;
@@ -231,6 +234,8 @@ export function Dashboard() {
   const activeRoles = rolesCount?.active || 0;
   const totalApplications = applicationsCount?.total || 0;
   const activeApplications = applicationsCount?.active || 0;
+  const totalClients = clientsCount?.total || 0;
+  const activeClients = clientsCount?.active || 0;
 
   return (
     <Box>
@@ -253,7 +258,7 @@ export function Dashboard() {
         <>
           {/* Stats Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Aplicações"
                 value={totalApplications}
@@ -262,7 +267,7 @@ export function Dashboard() {
                 subtitle={`${activeApplications} ativas`}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Usuários"
                 value={totalUsers}
@@ -271,13 +276,22 @@ export function Dashboard() {
                 subtitle={`${activeUsers} ativos`}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Roles"
                 value={totalRoles}
                 icon={<SecurityIcon sx={{ fontSize: 28, color: 'white' }} />}
                 color="#ec4899"
                 subtitle={`${activeRoles} ativas`}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Client Credentials"
+                value={totalClients}
+                icon={<KeyIcon sx={{ fontSize: 28, color: 'white' }} />}
+                color="#f59e0b"
+                subtitle={`${activeClients} ativos`}
               />
             </Grid>
           </Grid>
@@ -306,6 +320,12 @@ export function Dashboard() {
                   totalCount={totalRoles}
                   label="Roles Ativas"
                   color="#ec4899"
+                />
+                <QuickStatsCard
+                  activeCount={activeClients}
+                  totalCount={totalClients}
+                  label="Clients Ativos"
+                  color="#f59e0b"
                 />
               </Stack>
             </CardContent>

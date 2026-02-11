@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthContext';
-import type { CreateUserRequest, UpdateUserRequest, SearchRequest } from '../types';
+import type { CreateUserRequest, UpdateUserRequest } from '../types';
 import { toast } from 'sonner';
 
 export const userKeys = {
@@ -11,7 +11,6 @@ export const userKeys = {
   details: () => [...userKeys.all, 'detail'] as const,
   detail: (id: string) => [...userKeys.details(), id] as const,
   count: () => [...userKeys.all, 'count'] as const,
-  search: (request: SearchRequest) => [...userKeys.all, 'search', request] as const,
   applications: (userPublicId: string) => [...userKeys.all, 'applications', userPublicId] as const,
 };
 
@@ -20,7 +19,7 @@ export function useUsers() {
 
   return useQuery({
     queryKey: userKeys.list(),
-    queryFn: () => usersApi.search({ skip: 0, take: 100 }),
+    queryFn: () => usersApi.search({ skip: 0, take: 100 }).then(res => res.data),
     enabled: isAuthenticated,
   });
 }
@@ -37,15 +36,6 @@ export function useUsersCount() {
   return useQuery({
     queryKey: userKeys.count(),
     queryFn: usersApi.getCount,
-  });
-}
-
-export function useSearchUsers() {
-  return useMutation({
-    mutationFn: (request: SearchRequest) => usersApi.search(request),
-    onError: () => {
-      toast.error('Erro ao buscar usuários');
-    },
   });
 }
 

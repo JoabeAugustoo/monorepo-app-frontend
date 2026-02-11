@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationsApi } from '../api/applications';
 import { useAuth } from '../auth/AuthContext';
-import type { CreateApplicationRequest, UpdateApplicationRequest, SearchRequest } from '../types';
+import type { CreateApplicationRequest, UpdateApplicationRequest } from '../types';
 import { toast } from 'sonner';
 import { userKeys } from './useUsers';
 
@@ -11,7 +11,6 @@ export const applicationKeys = {
   details: () => [...applicationKeys.all, 'detail'] as const,
   detail: (id: string) => [...applicationKeys.details(), id] as const,
   count: () => [...applicationKeys.all, 'count'] as const,
-  search: (request: SearchRequest) => [...applicationKeys.all, 'search', request] as const,
   users: (appPublicId: string) => [...applicationKeys.all, 'users', appPublicId] as const,
   usersSearch: (appPublicId: string) => [...applicationKeys.all, 'users-search', appPublicId] as const,
   rolesSearch: (appPublicId: string) => [...applicationKeys.all, 'roles-search', appPublicId] as const,
@@ -32,21 +31,12 @@ export function useApplicationsCount() {
   });
 }
 
-export function useSearchApplications() {
-  return useMutation({
-    mutationFn: (request: SearchRequest) => applicationsApi.search(request),
-    onError: () => {
-      toast.error('Erro ao buscar aplicações');
-    },
-  });
-}
-
 export function useApplications() {
   const { isAuthenticated } = useAuth();
 
   return useQuery({
     queryKey: applicationKeys.lists(),
-    queryFn: () => applicationsApi.search({ skip: 0, take: 100 }),
+    queryFn: () => applicationsApi.search({ skip: 0, take: 100 }).then(res => res.data),
     enabled: isAuthenticated,
   });
 }
@@ -232,7 +222,7 @@ export function useRemoveUserFromApplication() {
 export function useApplicationUsersSearch(appPublicId: string) {
   return useQuery({
     queryKey: applicationKeys.usersSearch(appPublicId),
-    queryFn: () => applicationsApi.searchApplicationUsers(appPublicId, { skip: 0, take: 100 }),
+    queryFn: () => applicationsApi.searchApplicationUsers(appPublicId, { skip: 0, take: 100 }).then(res => res.data),
     enabled: !!appPublicId,
   });
 }
@@ -240,7 +230,7 @@ export function useApplicationUsersSearch(appPublicId: string) {
 export function useApplicationRolesSearch(appPublicId: string) {
   return useQuery({
     queryKey: applicationKeys.rolesSearch(appPublicId),
-    queryFn: () => applicationsApi.searchApplicationRoles(appPublicId, { skip: 0, take: 100 }),
+    queryFn: () => applicationsApi.searchApplicationRoles(appPublicId, { skip: 0, take: 100 }).then(res => res.data),
     enabled: !!appPublicId,
   });
 }

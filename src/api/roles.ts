@@ -4,6 +4,7 @@ import type {
   RoleDTO,
   CreateRoleRequest,
   SearchRequest,
+  PaginatedResponse,
   CountResponse,
 } from "../types";
 
@@ -42,8 +43,8 @@ export const rolesApi = {
     return response.data;
   },
 
-  search: async (request: SearchRequest): Promise<Role[]> => {
-    const response = await api.post<Role[]>("/api/roles/search", request);
+  search: async (request: SearchRequest): Promise<PaginatedResponse<Role>> => {
+    const response = await api.post<PaginatedResponse<Role>>("/api/roles/search", request);
     return response.data;
   },
 };

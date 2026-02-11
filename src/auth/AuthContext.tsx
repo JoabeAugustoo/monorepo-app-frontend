@@ -17,7 +17,7 @@ interface AuthUser {
   userName: string;
   email: string;
   roles: string[];
-  applicationId?: string;
+  app?: string;
 }
 
 type LoginCredentials = {
@@ -138,7 +138,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userName: payload?.username || '',
         email: payload?.email || '',
         roles: payload?.roles || [],
-        applicationId: payload?.applicationId,
+        app: payload?.app,
       };
 
       localStorage.setItem('token', newToken);
@@ -202,7 +202,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userName: payload?.username || data.username,
         email: payload?.email || '',
         roles: payload?.roles || [],
-        applicationId: payload?.applicationId,
+        app: payload?.app,
       };
 
       // Save to localStorage first

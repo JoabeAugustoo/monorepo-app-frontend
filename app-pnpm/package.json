@@ -1,0 +1,11 @@
+{
+  "name": "pet-manager-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter pet-manager dev",
+    "build": "pnpm --filter pet-manager build",
+    "dev:vendas": "pnpm --filter vendas-app dev",
+    "build:vendas": "pnpm --filter vendas-app build",
+    "dev:all": "pnpm -r dev"
+  }
+}
