@@ -21,27 +21,31 @@ function parseToNumber(raw: string): number {
 
 export function CurrencyField({ value, onChange, onBlur, ...rest }: CurrencyFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const [rawInput, setRawInput] = useState('');
 
   const displayValue = (() => {
+    if (isFocused) return rawInput;
     if (value == null && value !== 0) return '';
-    if (isFocused) {
-      return value === 0 ? '' : String(value).replace('.', ',');
-    }
     return formatter.format(value);
   })();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
     if (input === '') {
+      setRawInput('');
       onChange(0);
       return;
     }
     // Allow only digits, comma and dot while editing
     const clean = input.replace(/[^\d.,]/g, '');
+    setRawInput(clean);
     onChange(parseToNumber(clean));
   };
 
-  const handleFocus = () => setIsFocused(true);
+  const handleFocus = () => {
+    setIsFocused(true);
+    setRawInput(value === 0 ? '' : String(value).replace('.', ','));
+  };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);

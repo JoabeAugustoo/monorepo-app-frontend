@@ -1,0 +1,3983 @@
+openapi: 3.0.0
+paths:
+  /api/health:
+    get:
+      operationId: HealthController_health
+      parameters: []
+      responses:
+        '200':
+          description: Service is healthy
+      summary: Health check endpoint
+      tags:
+        - Health
+  /api/auth/login:
+    post:
+      operationId: AuthController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponseDto'
+        '401':
+          description: Invalid credentials
+        '503':
+          description: Auth service unavailable
+      summary: Authenticate user and get tokens
+      tags:
+        - Authentication
+  /api/auth/refresh:
+    post:
+      operationId: AuthController_refresh
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenDto'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponseDto'
+        '401':
+          description: Invalid or expired refresh token
+      summary: Refresh access token using refresh token
+      tags:
+        - Authentication
+  /api/auth/validate:
+    post:
+      operationId: AuthController_validate
+      parameters:
+        - name: authorization
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPayloadDto'
+        '401':
+          description: Invalid or expired token
+      security:
+        - bearer: []
+      summary: Validate current token from Authorization header
+      tags:
+        - Authentication
+  /api/auth/introspect:
+    post:
+      operationId: AuthController_introspect
+      parameters:
+        - name: authorization
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token introspection result
+      security:
+        - bearer: []
+      summary: Introspect token from Authorization header
+      tags:
+        - Authentication
+  /api/customers:
+    post:
+      operationId: CustomerController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerDto'
+      responses:
+        '201':
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Customer
+      tags:
+        - Customers
+  /api/customers/stats/count:
+    get:
+      operationId: CustomerController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Customer count statistics
+      tags:
+        - Customers
+  /api/customers/active:
+    get:
+      operationId: CustomerController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Customer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Customer
+      tags:
+        - Customers
+  /api/customers/{id}:
+    get:
+      operationId: CustomerController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: Get Customer by ID
+      tags:
+        - Customers
+    put:
+      operationId: CustomerController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerDto'
+      responses:
+        '200':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: Update Customer by ID
+      tags:
+        - Customers
+    delete:
+      operationId: CustomerController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Customer deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: Delete Customer by ID
+      tags:
+        - Customers
+  /api/customers/search:
+    post:
+      operationId: CustomerController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Customer
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Customer with filters and pagination
+      tags:
+        - Customers
+  /api/customers/{id}/activate:
+    patch:
+      operationId: CustomerController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: Activate Customer by ID
+      tags:
+        - Customers
+  /api/customers/{id}/deactivate:
+    patch:
+      operationId: CustomerController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: Deactivate Customer by ID
+      tags:
+        - Customers
+  /api/employees/veterinarians:
+    get:
+      operationId: EmployeeController_findVeterinarians
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeResponseDto'
+      security:
+        - bearer: []
+      summary: List all active veterinarians
+      tags:
+        - Employees
+  /api/employees:
+    post:
+      operationId: EmployeeController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDto'
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Employee
+      tags:
+        - Employees
+  /api/employees/stats/count:
+    get:
+      operationId: EmployeeController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Employee count statistics
+      tags:
+        - Employees
+  /api/employees/active:
+    get:
+      operationId: EmployeeController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Employee
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Employee
+      tags:
+        - Employees
+  /api/employees/{id}:
+    get:
+      operationId: EmployeeController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Get Employee by ID
+      tags:
+        - Employees
+    put:
+      operationId: EmployeeController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDto'
+      responses:
+        '200':
+          description: Employee updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Update Employee by ID
+      tags:
+        - Employees
+    delete:
+      operationId: EmployeeController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Employee deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Delete Employee by ID
+      tags:
+        - Employees
+  /api/employees/search:
+    post:
+      operationId: EmployeeController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Employee
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Employee with filters and pagination
+      tags:
+        - Employees
+  /api/employees/{id}/activate:
+    patch:
+      operationId: EmployeeController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Activate Employee by ID
+      tags:
+        - Employees
+  /api/employees/{id}/deactivate:
+    patch:
+      operationId: EmployeeController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Employee public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Employee not found
+      security:
+        - bearer: []
+      summary: Deactivate Employee by ID
+      tags:
+        - Employees
+  /api/pets/{id}/deceased:
+    patch:
+      operationId: PetController_markDeceased
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Mark pet as deceased
+      tags:
+        - Pets
+  /api/pets/{id}/transferred:
+    patch:
+      operationId: PetController_markTransferred
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Mark pet as transferred
+      tags:
+        - Pets
+  /api/pets/{id}/tutors:
+    post:
+      operationId: PetController_assignTutor
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetTutorDto'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Assign a tutor to the pet
+      tags:
+        - Pets
+  /api/pets/{petId}/tutors/{tutorId}:
+    delete:
+      operationId: PetController_removeTutor
+      parameters:
+        - name: petId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: tutorId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Remove a tutor from the pet
+      tags:
+        - Pets
+  /api/pets/by-customer/{customerId}:
+    get:
+      operationId: PetController_findByCustomer
+      parameters:
+        - name: customerId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: List all pets by customer
+      tags:
+        - Pets
+  /api/pets:
+    post:
+      operationId: PetController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetDto'
+      responses:
+        '201':
+          description: Pet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Pet
+      tags:
+        - Pets
+  /api/pets/stats/count:
+    get:
+      operationId: PetController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Pet count statistics
+      tags:
+        - Pets
+  /api/pets/active:
+    get:
+      operationId: PetController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Pet
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PetResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Pet
+      tags:
+        - Pets
+  /api/pets/{id}:
+    get:
+      operationId: PetController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Pet public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Pet not found
+      security:
+        - bearer: []
+      summary: Get Pet by ID
+      tags:
+        - Pets
+    put:
+      operationId: PetController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Pet public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetDto'
+      responses:
+        '200':
+          description: Pet updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Pet not found
+      security:
+        - bearer: []
+      summary: Update Pet by ID
+      tags:
+        - Pets
+    delete:
+      operationId: PetController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Pet public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Pet deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Pet not found
+      security:
+        - bearer: []
+      summary: Delete Pet by ID
+      tags:
+        - Pets
+  /api/pets/search:
+    post:
+      operationId: PetController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Pet
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Pet with filters and pagination
+      tags:
+        - Pets
+  /api/pets/{id}/activate:
+    patch:
+      operationId: PetController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Pet public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Pet not found
+      security:
+        - bearer: []
+      summary: Activate Pet by ID
+      tags:
+        - Pets
+  /api/pets/{id}/deactivate:
+    patch:
+      operationId: PetController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Pet public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Pet not found
+      security:
+        - bearer: []
+      summary: Deactivate Pet by ID
+      tags:
+        - Pets
+  /api/medical-procedures/{id}/start:
+    patch:
+      operationId: MedicalProcedureController_startProcedure
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Start a scheduled procedure
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/{id}/complete:
+    patch:
+      operationId: MedicalProcedureController_completeProcedure
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteProcedureDto'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Complete a procedure with medications and notes
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/{id}/cancel:
+    patch:
+      operationId: MedicalProcedureController_cancelProcedure
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Cancel a procedure
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/pet/{petId}/history:
+    get:
+      operationId: MedicalProcedureController_getMedicalHistory
+      parameters:
+        - name: petId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Get complete medical history of a pet
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/{id}/notes:
+    post:
+      operationId: MedicalProcedureController_addNote
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalNoteDto'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Add a note to a procedure
+      tags:
+        - Medical Procedures
+  /api/medical-procedures:
+    post:
+      operationId: MedicalProcedureController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalProcedureDto'
+      responses:
+        '201':
+          description: MedicalProcedure created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new MedicalProcedure
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/stats/count:
+    get:
+      operationId: MedicalProcedureController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get MedicalProcedure count statistics
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/active:
+    get:
+      operationId: MedicalProcedureController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active MedicalProcedure
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalProcedureResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active MedicalProcedure
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/{id}:
+    get:
+      operationId: MedicalProcedureController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: MedicalProcedure public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: MedicalProcedure found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: MedicalProcedure not found
+      security:
+        - bearer: []
+      summary: Get MedicalProcedure by ID
+      tags:
+        - Medical Procedures
+    put:
+      operationId: MedicalProcedureController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: MedicalProcedure public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalProcedureDto'
+      responses:
+        '200':
+          description: MedicalProcedure updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: MedicalProcedure not found
+      security:
+        - bearer: []
+      summary: Update MedicalProcedure by ID
+      tags:
+        - Medical Procedures
+    delete:
+      operationId: MedicalProcedureController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: MedicalProcedure public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: MedicalProcedure deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: MedicalProcedure not found
+      security:
+        - bearer: []
+      summary: Delete MedicalProcedure by ID
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/search:
+    post:
+      operationId: MedicalProcedureController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of MedicalProcedure
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search MedicalProcedure with filters and pagination
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/{id}/activate:
+    patch:
+      operationId: MedicalProcedureController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: MedicalProcedure public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: MedicalProcedure activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: MedicalProcedure not found
+      security:
+        - bearer: []
+      summary: Activate MedicalProcedure by ID
+      tags:
+        - Medical Procedures
+  /api/medical-procedures/{id}/deactivate:
+    patch:
+      operationId: MedicalProcedureController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: MedicalProcedure public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: MedicalProcedure deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: MedicalProcedure not found
+      security:
+        - bearer: []
+      summary: Deactivate MedicalProcedure by ID
+      tags:
+        - Medical Procedures
+  /api/medications/low-stock:
+    get:
+      operationId: MedicationController_findLowStock
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicationResponseDto'
+      security:
+        - bearer: []
+      summary: List medications below minimum stock
+      tags:
+        - Medications
+  /api/medications:
+    post:
+      operationId: MedicationController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicationDto'
+      responses:
+        '201':
+          description: Medication created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Medication
+      tags:
+        - Medications
+  /api/medications/stats/count:
+    get:
+      operationId: MedicationController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Medication count statistics
+      tags:
+        - Medications
+  /api/medications/active:
+    get:
+      operationId: MedicationController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Medication
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicationResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Medication
+      tags:
+        - Medications
+  /api/medications/{id}:
+    get:
+      operationId: MedicationController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Medication public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medication found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Medication not found
+      security:
+        - bearer: []
+      summary: Get Medication by ID
+      tags:
+        - Medications
+    put:
+      operationId: MedicationController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Medication public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicationDto'
+      responses:
+        '200':
+          description: Medication updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Medication not found
+      security:
+        - bearer: []
+      summary: Update Medication by ID
+      tags:
+        - Medications
+    delete:
+      operationId: MedicationController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Medication public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Medication deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Medication not found
+      security:
+        - bearer: []
+      summary: Delete Medication by ID
+      tags:
+        - Medications
+  /api/medications/search:
+    post:
+      operationId: MedicationController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Medication
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Medication with filters and pagination
+      tags:
+        - Medications
+  /api/medications/{id}/activate:
+    patch:
+      operationId: MedicationController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Medication public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medication activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Medication not found
+      security:
+        - bearer: []
+      summary: Activate Medication by ID
+      tags:
+        - Medications
+  /api/medications/{id}/deactivate:
+    patch:
+      operationId: MedicationController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Medication public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medication deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Medication not found
+      security:
+        - bearer: []
+      summary: Deactivate Medication by ID
+      tags:
+        - Medications
+  /api/stock-batches/expiring:
+    get:
+      operationId: StockBatchController_findExpiringBatches
+      parameters:
+        - name: days
+          required: false
+          in: query
+          description: Days ahead (default 30)
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockBatchResponseDto'
+      security:
+        - bearer: []
+      summary: List batches expiring within N days
+      tags:
+        - Stock Batches
+  /api/stock-batches:
+    post:
+      operationId: StockBatchController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockBatchDto'
+      responses:
+        '201':
+          description: StockBatch created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockBatchResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new StockBatch
+      tags:
+        - Stock Batches
+  /api/stock-batches/stats/count:
+    get:
+      operationId: StockBatchController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get StockBatch count statistics
+      tags:
+        - Stock Batches
+  /api/stock-batches/active:
+    get:
+      operationId: StockBatchController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active StockBatch
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockBatchResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active StockBatch
+      tags:
+        - Stock Batches
+  /api/stock-batches/{id}:
+    get:
+      operationId: StockBatchController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockBatch public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockBatch found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockBatchResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockBatch not found
+      security:
+        - bearer: []
+      summary: Get StockBatch by ID
+      tags:
+        - Stock Batches
+    put:
+      operationId: StockBatchController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockBatch public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockBatchDto'
+      responses:
+        '200':
+          description: StockBatch updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockBatchResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockBatch not found
+      security:
+        - bearer: []
+      summary: Update StockBatch by ID
+      tags:
+        - Stock Batches
+    delete:
+      operationId: StockBatchController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockBatch public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: StockBatch deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockBatch not found
+      security:
+        - bearer: []
+      summary: Delete StockBatch by ID
+      tags:
+        - Stock Batches
+  /api/stock-batches/search:
+    post:
+      operationId: StockBatchController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of StockBatch
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search StockBatch with filters and pagination
+      tags:
+        - Stock Batches
+  /api/stock-batches/{id}/activate:
+    patch:
+      operationId: StockBatchController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockBatch public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockBatch activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockBatchResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockBatch not found
+      security:
+        - bearer: []
+      summary: Activate StockBatch by ID
+      tags:
+        - Stock Batches
+  /api/stock-batches/{id}/deactivate:
+    patch:
+      operationId: StockBatchController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockBatch public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockBatch deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockBatchResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockBatch not found
+      security:
+        - bearer: []
+      summary: Deactivate StockBatch by ID
+      tags:
+        - Stock Batches
+  /api/stock-movements:
+    post:
+      operationId: StockMovementController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementDto'
+      responses:
+        '201':
+          description: StockMovement created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new StockMovement
+      tags:
+        - Stock Movements
+  /api/stock-movements/stats/count:
+    get:
+      operationId: StockMovementController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get StockMovement count statistics
+      tags:
+        - Stock Movements
+  /api/stock-movements/active:
+    get:
+      operationId: StockMovementController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active StockMovement
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active StockMovement
+      tags:
+        - Stock Movements
+  /api/stock-movements/{id}:
+    get:
+      operationId: StockMovementController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockMovement found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Get StockMovement by ID
+      tags:
+        - Stock Movements
+    put:
+      operationId: StockMovementController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementDto'
+      responses:
+        '200':
+          description: StockMovement updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Update StockMovement by ID
+      tags:
+        - Stock Movements
+    delete:
+      operationId: StockMovementController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: StockMovement deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Delete StockMovement by ID
+      tags:
+        - Stock Movements
+  /api/stock-movements/search:
+    post:
+      operationId: StockMovementController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of StockMovement
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search StockMovement with filters and pagination
+      tags:
+        - Stock Movements
+  /api/stock-movements/{id}/activate:
+    patch:
+      operationId: StockMovementController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockMovement activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Activate StockMovement by ID
+      tags:
+        - Stock Movements
+  /api/stock-movements/{id}/deactivate:
+    patch:
+      operationId: StockMovementController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: StockMovement public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: StockMovement deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: StockMovement not found
+      security:
+        - bearer: []
+      summary: Deactivate StockMovement by ID
+      tags:
+        - Stock Movements
+  /api/revenues:
+    post:
+      operationId: RevenueController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevenueDto'
+      responses:
+        '201':
+          description: Revenue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Revenue
+      tags:
+        - Revenues
+  /api/revenues/stats/count:
+    get:
+      operationId: RevenueController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Revenue count statistics
+      tags:
+        - Revenues
+  /api/revenues/active:
+    get:
+      operationId: RevenueController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Revenue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RevenueResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Revenue
+      tags:
+        - Revenues
+  /api/revenues/{id}:
+    get:
+      operationId: RevenueController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Revenue public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revenue found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Revenue not found
+      security:
+        - bearer: []
+      summary: Get Revenue by ID
+      tags:
+        - Revenues
+    put:
+      operationId: RevenueController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Revenue public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevenueDto'
+      responses:
+        '200':
+          description: Revenue updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Revenue not found
+      security:
+        - bearer: []
+      summary: Update Revenue by ID
+      tags:
+        - Revenues
+    delete:
+      operationId: RevenueController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Revenue public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Revenue deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Revenue not found
+      security:
+        - bearer: []
+      summary: Delete Revenue by ID
+      tags:
+        - Revenues
+  /api/revenues/search:
+    post:
+      operationId: RevenueController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Revenue
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Revenue with filters and pagination
+      tags:
+        - Revenues
+  /api/revenues/{id}/activate:
+    patch:
+      operationId: RevenueController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Revenue public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revenue activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Revenue not found
+      security:
+        - bearer: []
+      summary: Activate Revenue by ID
+      tags:
+        - Revenues
+  /api/revenues/{id}/deactivate:
+    patch:
+      operationId: RevenueController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Revenue public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revenue deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Revenue not found
+      security:
+        - bearer: []
+      summary: Deactivate Revenue by ID
+      tags:
+        - Revenues
+  /api/expenses:
+    post:
+      operationId: ExpenseController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseDto'
+      responses:
+        '201':
+          description: Expense created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Expense
+      tags:
+        - Expenses
+  /api/expenses/stats/count:
+    get:
+      operationId: ExpenseController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Expense count statistics
+      tags:
+        - Expenses
+  /api/expenses/active:
+    get:
+      operationId: ExpenseController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Expense
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpenseResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Expense
+      tags:
+        - Expenses
+  /api/expenses/{id}:
+    get:
+      operationId: ExpenseController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Expense public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expense found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Expense not found
+      security:
+        - bearer: []
+      summary: Get Expense by ID
+      tags:
+        - Expenses
+    put:
+      operationId: ExpenseController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Expense public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseDto'
+      responses:
+        '200':
+          description: Expense updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Expense not found
+      security:
+        - bearer: []
+      summary: Update Expense by ID
+      tags:
+        - Expenses
+    delete:
+      operationId: ExpenseController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Expense public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Expense deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Expense not found
+      security:
+        - bearer: []
+      summary: Delete Expense by ID
+      tags:
+        - Expenses
+  /api/expenses/search:
+    post:
+      operationId: ExpenseController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Expense
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Expense with filters and pagination
+      tags:
+        - Expenses
+  /api/expenses/{id}/activate:
+    patch:
+      operationId: ExpenseController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Expense public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expense activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Expense not found
+      security:
+        - bearer: []
+      summary: Activate Expense by ID
+      tags:
+        - Expenses
+  /api/expenses/{id}/deactivate:
+    patch:
+      operationId: ExpenseController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Expense public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expense deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Expense not found
+      security:
+        - bearer: []
+      summary: Deactivate Expense by ID
+      tags:
+        - Expenses
+  /api/debts/active:
+    get:
+      operationId: DebtController_findActive
+      parameters: []
+      responses:
+        '200':
+          description: List of active Debt
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DebtResponseDto'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: List all active Debt
+      tags:
+        - Debts
+  /api/debts/{debtId}/installments/{installmentId}/pay:
+    patch:
+      operationId: DebtController_payInstallment
+      parameters:
+        - name: debtId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: installmentId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayInstallmentDto'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebtResponseDto'
+      security:
+        - bearer: []
+      summary: Pay a debt installment
+      tags:
+        - Debts
+  /api/debts:
+    post:
+      operationId: DebtController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebtDto'
+      responses:
+        '201':
+          description: Debt created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebtResponseDto'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Create new Debt
+      tags:
+        - Debts
+  /api/debts/stats/count:
+    get:
+      operationId: DebtController_count
+      parameters: []
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Get Debt count statistics
+      tags:
+        - Debts
+  /api/debts/{id}:
+    get:
+      operationId: DebtController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Debt public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debt found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebtResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Debt not found
+      security:
+        - bearer: []
+      summary: Get Debt by ID
+      tags:
+        - Debts
+    put:
+      operationId: DebtController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Debt public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebtDto'
+      responses:
+        '200':
+          description: Debt updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebtResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Debt not found
+      security:
+        - bearer: []
+      summary: Update Debt by ID
+      tags:
+        - Debts
+    delete:
+      operationId: DebtController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Debt public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Debt deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Debt not found
+      security:
+        - bearer: []
+      summary: Delete Debt by ID
+      tags:
+        - Debts
+  /api/debts/search:
+    post:
+      operationId: DebtController_search
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Debt
+        '401':
+          description: Unauthorized
+      security:
+        - bearer: []
+      summary: Search Debt with filters and pagination
+      tags:
+        - Debts
+  /api/debts/{id}/activate:
+    patch:
+      operationId: DebtController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Debt public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debt activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebtResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Debt not found
+      security:
+        - bearer: []
+      summary: Activate Debt by ID
+      tags:
+        - Debts
+  /api/debts/{id}/deactivate:
+    patch:
+      operationId: DebtController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Debt public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debt deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebtResponseDto'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Debt not found
+      security:
+        - bearer: []
+      summary: Deactivate Debt by ID
+      tags:
+        - Debts
+  /api/financial-reports/monthly/{year}/{month}:
+    get:
+      operationId: FinancialReportController_getMonthlyReport
+      parameters:
+        - name: year
+          required: true
+          in: path
+          schema:
+            example: 2024
+            type: number
+        - name: month
+          required: true
+          in: path
+          schema:
+            example: 1
+            type: number
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyReportDto'
+      security:
+        - bearer: []
+      summary: Get monthly financial report
+      tags:
+        - Financial Reports
+info:
+  title: Petflow API
+  description: API for Petflow application
+  version: '1.0'
+  contact: {}
+tags: []
+servers:
+  - url: http://localhost:8084
+    description: Local development
+components:
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+  schemas:
+    LoginDto:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Username or email
+        password:
+          type: string
+          description: User password
+        applicationId:
+          type: string
+          description: Application public ID (UUID)
+      required:
+        - username
+        - password
+    TokenResponseDto:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+        tokenType:
+          type: string
+          description: Token type (Bearer)
+        expiresIn:
+          type: number
+          description: Access token expiration time in seconds
+      required:
+        - accessToken
+        - refreshToken
+        - tokenType
+        - expiresIn
+    RefreshTokenDto:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token
+      required:
+        - refreshToken
+    TokenPayloadDto:
+      type: object
+      properties:
+        sub:
+          type: string
+          description: User/Client public ID
+        app:
+          type: string
+          description: Application code (e.g., "vendamax", "auth")
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: User email
+        roles:
+          description: User/Client roles in the application
+          type: array
+          items:
+            type: string
+        iat:
+          type: number
+          description: Token issued at timestamp
+        exp:
+          type: number
+          description: Token expiration timestamp
+      required:
+        - sub
+        - app
+        - username
+        - email
+        - roles
+    CustomerDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Customer full name
+          maxLength: 150
+        cpf:
+          type: string
+          description: 'CPF (format: 000.000.000-00)'
+          maxLength: 14
+        rg:
+          type: string
+          description: RG document
+          maxLength: 20
+        email:
+          type: string
+          description: Email address
+          maxLength: 150
+        phone:
+          type: string
+          description: Primary phone number
+          maxLength: 20
+        secondaryPhone:
+          type: string
+          description: Secondary/emergency phone
+          maxLength: 20
+        notes:
+          type: string
+          description: Internal notes about the customer
+        street:
+          type: string
+          description: Street name
+          maxLength: 200
+        number:
+          type: string
+          description: Address number
+          maxLength: 20
+        complement:
+          type: string
+          description: Address complement
+          maxLength: 100
+        neighborhood:
+          type: string
+          description: Neighborhood
+          maxLength: 100
+        city:
+          type: string
+          description: City
+          maxLength: 100
+        state:
+          type: string
+          description: State (2 letters)
+          maxLength: 2
+        zipCode:
+          type: string
+          description: Zip code
+          maxLength: 10
+      required:
+        - name
+        - phone
+    CustomerResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        name:
+          type: string
+          description: Customer full name
+        cpf:
+          type: string
+          description: CPF
+        rg:
+          type: string
+          description: RG
+        email:
+          type: string
+          description: Email
+        phone:
+          type: string
+          description: Primary phone
+        secondaryPhone:
+          type: string
+          description: Secondary phone
+        notes:
+          type: string
+          description: Notes
+        street:
+          type: string
+          description: Street
+        number:
+          type: string
+          description: Number
+        complement:
+          type: string
+          description: Complement
+        neighborhood:
+          type: string
+          description: Neighborhood
+        city:
+          type: string
+          description: City
+        state:
+          type: string
+          description: State
+        zipCode:
+          type: string
+          description: Zip code
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - name
+        - phone
+    CountResponse:
+      type: object
+      properties:
+        total:
+          type: number
+          description: Total number of records
+          example: 100
+        active:
+          type: number
+          description: Number of active records
+          example: 85
+        inactive:
+          type: number
+          description: Number of inactive records
+          example: 15
+      required:
+        - total
+        - active
+        - inactive
+    SearchRequest:
+      type: object
+      properties:
+        where:
+          type: object
+          description: Filter conditions
+          example:
+            active: true
+            name: Example
+          additionalProperties: true
+        skip:
+          type: number
+          description: Number of records to skip (pagination offset)
+          example: 0
+          default: 0
+          minimum: 0
+        take:
+          type: number
+          description: Number of records to return (pagination limit)
+          example: 10
+          default: 10
+          minimum: 1
+        sort:
+          description: Sort fields and directions
+          example:
+            - field: createdAt
+              direction: DESC
+          type: array
+          items:
+            type: array
+      required:
+        - skip
+        - take
+    EmployeeResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        name:
+          type: string
+          description: Employee full name
+        cpf:
+          type: string
+          description: CPF
+        email:
+          type: string
+          description: Email
+        phone:
+          type: string
+          description: Phone
+        role:
+          type: string
+          description: Role
+        crmv:
+          type: string
+          description: CRMV number
+        hireDate:
+          format: date-time
+          type: string
+          description: Hire date
+        status:
+          type: string
+          description: Employment status
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - name
+        - cpf
+        - role
+        - hireDate
+        - status
+    EmployeeDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Employee full name
+          maxLength: 150
+        cpf:
+          type: string
+          description: 'CPF (format: 000.000.000-00)'
+          maxLength: 14
+        email:
+          type: string
+          description: Email
+          maxLength: 150
+        phone:
+          type: string
+          description: Phone
+          maxLength: 20
+        role:
+          type: string
+          description: Employee role
+          enum:
+            - VETERINARIAN
+            - ATTENDANT
+            - ADMINISTRATIVE
+            - MANAGER
+        crmv:
+          type: string
+          description: CRMV number (required for VETERINARIAN)
+          maxLength: 20
+        hireDate:
+          type: string
+          description: Hire date (ISO format)
+          example: '2024-01-15'
+      required:
+        - name
+        - cpf
+        - role
+        - hireDate
+    PetTutorResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        customerId:
+          type: string
+          description: Customer public ID
+        customerName:
+          type: string
+          description: Customer name
+        role:
+          type: string
+          description: Tutor role
+        relationship:
+          type: string
+          description: Relationship
+        canAuthorize:
+          type: boolean
+          description: Can authorize procedures
+        canPickup:
+          type: boolean
+          description: Can pickup pet
+        startDate:
+          format: date-time
+          type: string
+          description: Start date
+        endDate:
+          format: date-time
+          type: string
+          description: End date
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - customerId
+        - customerName
+        - role
+        - canAuthorize
+        - canPickup
+        - startDate
+    PetResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        name:
+          type: string
+          description: Pet name
+        species:
+          type: string
+          description: Species
+        breed:
+          type: string
+          description: Breed
+        gender:
+          type: string
+          description: Gender
+        birthDate:
+          format: date-time
+          type: string
+          description: Birth date
+        weight:
+          type: number
+          description: Weight in kg
+        color:
+          type: string
+          description: Color
+        observations:
+          type: string
+          description: Observations
+        status:
+          type: string
+          description: Pet status
+        tutors:
+          description: Tutors
+          type: array
+          items:
+            $ref: '#/components/schemas/PetTutorResponseDto'
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - name
+        - species
+        - status
+    PetTutorDto:
+      type: object
+      properties:
+        customerId:
+          type: string
+          description: Customer public ID (UUID)
+        role:
+          type: string
+          description: Tutor role
+          enum:
+            - PRIMARY
+            - SECONDARY
+            - TEMPORARY
+        relationship:
+          type: string
+          description: Relationship to pet
+          maxLength: 50
+        canAuthorize:
+          type: boolean
+          description: Can authorize procedures
+          default: false
+        canPickup:
+          type: boolean
+          description: Can pickup pet
+          default: true
+        endDate:
+          type: string
+          description: End date for temporary tutors
+      required:
+        - customerId
+        - role
+    PetDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Pet name
+          maxLength: 100
+        species:
+          type: string
+          description: Species
+          enum:
+            - DOG
+            - CAT
+            - BIRD
+            - REPTILE
+            - OTHER
+        breed:
+          type: string
+          description: Breed
+          maxLength: 100
+        gender:
+          type: string
+          description: Gender
+          enum:
+            - MALE
+            - FEMALE
+            - UNKNOWN
+        birthDate:
+          type: string
+          description: Birth date (ISO format)
+          example: '2020-05-15'
+        weight:
+          type: number
+          description: Weight in kg
+          example: 12.5
+        color:
+          type: string
+          description: Color/coat
+          maxLength: 50
+        observations:
+          type: string
+          description: Observations
+        primaryTutorId:
+          type: string
+          description: Primary tutor (customer) public ID
+      required:
+        - name
+        - species
+        - primaryTutorId
+    ProcedureMedicationResponseDto:
+      type: object
+      properties:
+        medicationId:
+          type: string
+          description: Medication public ID
+        medicationName:
+          type: string
+          description: Medication name
+        quantity:
+          type: number
+          description: Quantity
+        dosage:
+          type: string
+          description: Dosage
+        batchId:
+          type: string
+          description: Batch public ID
+      required:
+        - medicationId
+        - medicationName
+        - quantity
+        - dosage
+    MedicalNoteResponseDto:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Note content
+        authorId:
+          type: string
+          description: Author ID
+        createdAt:
+          format: date-time
+          type: string
+          description: Created at
+      required:
+        - content
+        - authorId
+        - createdAt
+    MedicalProcedureResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        type:
+          type: string
+          description: Procedure type
+        location:
+          type: string
+          description: Location
+        description:
+          type: string
+          description: Description
+        date:
+          format: date-time
+          type: string
+          description: Procedure date
+        cost:
+          type: number
+          description: Cost
+        observations:
+          type: string
+          description: Observations
+        status:
+          type: string
+          description: Status
+        petId:
+          type: string
+          description: Pet public ID
+        petName:
+          type: string
+          description: Pet name
+        veterinarianId:
+          type: string
+          description: Veterinarian public ID
+        veterinarianName:
+          type: string
+          description: Veterinarian name
+        medications:
+          description: Medications used
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureMedicationResponseDto'
+        notes:
+          description: Medical notes
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalNoteResponseDto'
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - type
+        - location
+        - description
+        - date
+        - cost
+        - status
+        - petId
+        - veterinarianId
+    ProcedureMedicationDto:
+      type: object
+      properties:
+        medicationId:
+          type: string
+          description: Medication public ID
+        quantity:
+          type: number
+          description: Quantity used
+          example: 2.5
+        dosage:
+          type: string
+          description: Dosage administered
+          maxLength: 200
+      required:
+        - medicationId
+        - quantity
+        - dosage
+    MedicalNoteDto:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Note content
+      required:
+        - content
+    CompleteProcedureDto:
+      type: object
+      properties:
+        medications:
+          description: Medications used
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureMedicationDto'
+        notes:
+          description: Final notes
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalNoteDto'
+        observations:
+          type: string
+          description: Final observations
+    MedicalProcedureDto:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Procedure type
+          enum:
+            - CONSULTATION
+            - SURGERY
+            - EXAM
+            - VACCINATION
+            - GROOMING
+            - OTHER
+        location:
+          type: string
+          description: Location
+          enum:
+            - IN_CLINIC
+            - HOME_VISIT
+            - PARTNER
+            - EXTERNAL
+          default: IN_CLINIC
+        description:
+          type: string
+          description: Procedure description
+        date:
+          type: string
+          description: Procedure date (ISO format)
+        cost:
+          type: number
+          description: Cost
+          example: 150
+        observations:
+          type: string
+          description: Observations
+        petId:
+          type: string
+          description: Pet public ID
+        veterinarianId:
+          type: string
+          description: Veterinarian (employee) public ID
+        medications:
+          description: Medications used in the procedure
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureMedicationDto'
+        notes:
+          description: Medical notes
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalNoteDto'
+      required:
+        - type
+        - description
+        - date
+        - cost
+        - petId
+        - veterinarianId
+    MedicationResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        name:
+          type: string
+          description: Medication name
+        type:
+          type: string
+          description: Medication type
+        defaultDosage:
+          type: string
+          description: Default dosage
+        manufacturer:
+          type: string
+          description: Manufacturer
+        description:
+          type: string
+          description: Description
+        minimumStock:
+          type: number
+          description: Minimum stock threshold
+        currentStock:
+          type: number
+          description: Current total stock (sum of available batches)
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - name
+        - type
+        - minimumStock
+    MedicationDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Medication name
+          maxLength: 200
+        type:
+          type: string
+          description: Medication type
+          enum:
+            - INTERNAL
+            - EXTERNAL
+            - CONTROLLED
+        defaultDosage:
+          type: string
+          description: Default dosage instructions
+          maxLength: 200
+        manufacturer:
+          type: string
+          description: Manufacturer
+          maxLength: 150
+        description:
+          type: string
+          description: Description
+        minimumStock:
+          type: number
+          description: Minimum stock alert threshold
+          default: 0
+      required:
+        - name
+        - type
+    StockBatchResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        medicationId:
+          type: string
+          description: Medication public ID
+        medicationName:
+          type: string
+          description: Medication name
+        batchNumber:
+          type: string
+          description: Batch number
+        quantity:
+          type: number
+          description: Current quantity
+        initialQuantity:
+          type: number
+          description: Initial quantity
+        unitCost:
+          type: number
+          description: Unit cost
+        expirationDate:
+          format: date-time
+          type: string
+          description: Expiration date
+        entryDate:
+          format: date-time
+          type: string
+          description: Entry date
+        status:
+          type: string
+          description: Batch status
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - medicationId
+        - medicationName
+        - batchNumber
+        - quantity
+        - initialQuantity
+        - unitCost
+        - expirationDate
+        - entryDate
+        - status
+    StockBatchDto:
+      type: object
+      properties:
+        medicationId:
+          type: string
+          description: Medication public ID
+        batchNumber:
+          type: string
+          description: Batch number
+          maxLength: 50
+        quantity:
+          type: number
+          description: Quantity
+          example: 100
+        unitCost:
+          type: number
+          description: Unit cost
+          example: 25.5
+        expirationDate:
+          type: string
+          description: Expiration date (ISO format)
+          example: '2025-12-31'
+      required:
+        - medicationId
+        - batchNumber
+        - quantity
+        - unitCost
+        - expirationDate
+    StockMovementDto:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Movement type
+          enum:
+            - ENTRY
+            - EXIT_PROCEDURE
+            - EXIT_SALE
+            - ADJUSTMENT
+            - DISPOSAL
+        medicationId:
+          type: string
+          description: Medication public ID
+        batchId:
+          type: string
+          description: Batch public ID
+        quantity:
+          type: number
+          description: Quantity
+          example: 10
+        performedById:
+          type: string
+          description: Employee (performer) public ID
+        reason:
+          type: string
+          description: Reason for movement
+        referenceId:
+          type: string
+          description: Reference ID (procedure, sale, etc.)
+      required:
+        - type
+        - medicationId
+        - batchId
+        - quantity
+        - performedById
+    StockMovementResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        type:
+          type: string
+          description: Movement type
+        quantity:
+          type: number
+          description: Quantity
+        reason:
+          type: string
+          description: Reason
+        referenceId:
+          type: string
+          description: Reference ID
+        medicationId:
+          type: string
+          description: Medication public ID
+        medicationName:
+          type: string
+          description: Medication name
+        batchId:
+          type: string
+          description: Batch public ID
+        batchNumber:
+          type: string
+          description: Batch number
+        performedById:
+          type: string
+          description: Performed by (employee public ID)
+        performedByName:
+          type: string
+          description: Performer name
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - type
+        - quantity
+        - medicationId
+        - medicationName
+        - batchId
+        - batchNumber
+        - performedById
+        - performedByName
+    RevenueDto:
+      type: object
+      properties:
+        category:
+          type: string
+          description: Revenue category
+          enum:
+            - PROCEDURE
+            - PRODUCT_SALE
+            - OTHER
+        description:
+          type: string
+          description: Description
+          maxLength: 500
+        amount:
+          type: number
+          description: Amount
+          example: 250
+        date:
+          type: string
+          description: Date (ISO format)
+          example: '2024-01-15'
+        status:
+          type: string
+          description: Payment status
+          enum:
+            - PENDING
+            - PAID
+            - OVERDUE
+            - CANCELLED
+          default: PENDING
+        customerId:
+          type: string
+          description: Customer public ID
+        procedureId:
+          type: string
+          description: Procedure public ID
+      required:
+        - category
+        - description
+        - amount
+        - date
+    RevenueResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        category:
+          type: string
+          description: Category
+        description:
+          type: string
+          description: Description
+        amount:
+          type: number
+          description: Amount
+        date:
+          format: date-time
+          type: string
+          description: Date
+        status:
+          type: string
+          description: Payment status
+        customerId:
+          type: string
+          description: Customer public ID
+        customerName:
+          type: string
+          description: Customer name
+        procedureId:
+          type: string
+          description: Procedure public ID
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - category
+        - description
+        - amount
+        - date
+        - status
+    ExpenseDto:
+      type: object
+      properties:
+        category:
+          type: string
+          description: Expense category
+          enum:
+            - STOCK_PURCHASE
+            - RENT
+            - SALARY
+            - UTILITIES
+            - MAINTENANCE
+            - OTHER
+        description:
+          type: string
+          description: Description
+          maxLength: 500
+        amount:
+          type: number
+          description: Amount
+          example: 500
+        date:
+          type: string
+          description: Date (ISO format)
+          example: '2024-01-15'
+        costType:
+          type: string
+          description: Cost type
+          enum:
+            - FIXED
+            - VARIABLE
+        status:
+          type: string
+          description: Payment status
+          enum:
+            - PENDING
+            - PAID
+            - OVERDUE
+            - CANCELLED
+          default: PENDING
+        referenceId:
+          type: string
+          description: Reference ID (stock batch, etc.)
+      required:
+        - category
+        - description
+        - amount
+        - date
+        - costType
+    ExpenseResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        category:
+          type: string
+          description: Category
+        description:
+          type: string
+          description: Description
+        amount:
+          type: number
+          description: Amount
+        date:
+          format: date-time
+          type: string
+          description: Date
+        costType:
+          type: string
+          description: Cost type
+        status:
+          type: string
+          description: Payment status
+        referenceId:
+          type: string
+          description: Reference ID
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - category
+        - description
+        - amount
+        - date
+        - costType
+        - status
+    DebtInstallmentResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        installmentNumber:
+          type: number
+          description: Installment number
+        amount:
+          type: number
+          description: Amount
+        dueDate:
+          format: date-time
+          type: string
+          description: Due date
+        paidDate:
+          format: date-time
+          type: string
+          description: Paid date
+        status:
+          type: string
+          description: Status
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - installmentNumber
+        - amount
+        - dueDate
+        - status
+    DebtResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        description:
+          type: string
+          description: Description
+        totalAmount:
+          type: number
+          description: Total amount
+        remainingAmount:
+          type: number
+          description: Remaining amount
+        creditor:
+          type: string
+          description: Creditor
+        startDate:
+          format: date-time
+          type: string
+          description: Start date
+        dueDate:
+          format: date-time
+          type: string
+          description: Due date
+        status:
+          type: string
+          description: Status
+        installments:
+          description: Installments
+          type: array
+          items:
+            $ref: '#/components/schemas/DebtInstallmentResponseDto'
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - description
+        - totalAmount
+        - remainingAmount
+        - creditor
+        - startDate
+        - dueDate
+        - status
+    PayInstallmentDto:
+      type: object
+      properties:
+        paidDate:
+          type: string
+          description: Payment date (defaults to today)
+    DebtDto:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Debt description
+          maxLength: 500
+        totalAmount:
+          type: number
+          description: Total debt amount
+          example: 5000
+        creditor:
+          type: string
+          description: Creditor name
+          maxLength: 200
+        startDate:
+          type: string
+          description: Start date (ISO format)
+          example: '2024-01-15'
+        dueDate:
+          type: string
+          description: Due date (ISO format)
+          example: '2024-12-15'
+        numberOfInstallments:
+          type: number
+          description: Number of installments (auto-generates installments)
+          example: 12
+      required:
+        - description
+        - totalAmount
+        - creditor
+        - startDate
+        - dueDate
+    MonthlyReportDto:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+        totalExpenses:
+          type: number
+        fixedCosts:
+          type: number
+        variableCosts:
+          type: number
+        profit:
+          type: number
+        month:
+          type: number
+        year:
+          type: number
+      required:
+        - totalRevenue
+        - totalExpenses
+        - fixedCosts
+        - variableCosts
+        - profit
+        - month
+        - year

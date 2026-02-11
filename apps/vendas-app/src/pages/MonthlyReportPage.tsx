@@ -256,9 +256,10 @@ const MonthlyReportPage = () => {
             {/* Receitas - KPI Cards */}
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
+                display: 'flex',
+                flexWrap: 'wrap',
                 gap: 2.5,
+                '& > *': { flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 10px)', md: '1 1 0' } },
               }}
             >
               <KPICard
@@ -306,9 +307,10 @@ const MonthlyReportPage = () => {
 
                 <Box
                   sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' },
+                    display: 'flex',
+                    flexWrap: 'wrap',
                     gap: 2.5,
+                    '& > *': { flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 10px)', md: '1 1 0' } },
                   }}
                 >
                   {/* Pagos A Vista */}
@@ -406,21 +408,25 @@ const MonthlyReportPage = () => {
             >
               <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box>
+                  <Box sx={{ minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                      <TrendingUp sx={{ fontSize: 28 }} />
-                      <Typography variant="h6" fontWeight="bold">
+                      <TrendingUp sx={{ fontSize: 28, flexShrink: 0 }} />
+                      <Typography variant="h6" fontWeight="bold" noWrap>
                         Lucro Liquido
                       </Typography>
                     </Box>
-                    <Typography variant="h3" fontWeight="bold" sx={{ mb: 1 }}>
+                    <Typography
+                      variant="h3"
+                      fontWeight="bold"
+                      sx={{ mb: 1, fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' } }}
+                    >
                       {formatCurrency(report.net_profit)}
                     </Typography>
                     <Typography variant="body2" sx={{ opacity: 0.85 }}>
                       Vendas - Compras Pagas - Salarios - Extras
                     </Typography>
                   </Box>
-                  <TrendingUp sx={{ fontSize: 64, opacity: 0.2 }} />
+                  <TrendingUp sx={{ fontSize: { xs: 40, md: 64 }, opacity: 0.2, flexShrink: 0, display: { xs: 'none', sm: 'block' } }} />
                 </Box>
               </CardContent>
             </Card>
@@ -428,9 +434,10 @@ const MonthlyReportPage = () => {
             {/* Export Buttons */}
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                display: 'flex',
+                flexWrap: 'wrap',
                 gap: 2,
+                '& > *': { flex: { xs: '1 1 100%', sm: '1 1 0' } },
               }}
             >
               <Button

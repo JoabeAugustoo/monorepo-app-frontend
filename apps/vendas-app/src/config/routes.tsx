@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom';
 import type { AppRoute } from '@app/core';
 import type { Permissions } from '../types';
 import DashboardPage from '../pages/DashboardPage';
@@ -39,6 +40,14 @@ export function getRoutes(permissions: Permissions, isEmployee: boolean): AppRou
 
   if (permissions.canReadDashboard) {
     routes.push({ path: '/fechamento', element: <MonthlyReportPage /> });
+  }
+
+  // Se nao tem rota index, redireciona para a primeira rota disponivel
+  if (!routes.some((r) => r.index)) {
+    const firstRoute = routes[0];
+    if (firstRoute) {
+      routes.push({ path: '/', element: <Navigate to={firstRoute.path} replace />, index: true });
+    }
   }
 
   return routes;

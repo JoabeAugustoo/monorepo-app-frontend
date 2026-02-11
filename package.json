@@ -7,12 +7,12 @@
     "pnpm": ">=9"
   },
   "scripts": {
-    "dev": "pnpm --filter pet-manager dev",
+    "dev": "pnpm --filter pet-app dev",
     "dev:security": "pnpm --filter security-app dev",
     "dev:vendas": "pnpm --filter vendas-app dev",
     "dev:all": "pnpm -r dev",
     "build": "pnpm -r build",
-    "build:pet": "pnpm --filter pet-manager build",
+    "build:pet": "pnpm --filter pet-app build",
     "build:security": "pnpm --filter security-app build",
     "build:vendas": "pnpm --filter vendas-app build",
     "lint": "eslint .",
