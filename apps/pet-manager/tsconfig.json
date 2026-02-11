@@ -13,12 +13,5 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "references": [
-    { "path": "./packages/core" },
-    { "path": "./packages/ui" },
-    { "path": "./apps/pet-manager" },
-    { "path": "./apps/security-app" },
-    { "path": "./apps/vendas-app" }
-  ],
-  "files": []
+  "include": ["src"]
 }
