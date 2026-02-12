@@ -122,7 +122,8 @@ export function DataGrid<T>(props: DataGridProps<T>) {
         overflow: 'hidden',
         borderRadius: 1,
         boxShadow: 'none',
-        border: '1px solid #e5e7eb',
+        border: '1px solid',
+        borderColor: 'divider',
         ...sx,
       }}
     >
@@ -134,7 +135,10 @@ export function DataGrid<T>(props: DataGridProps<T>) {
             py: 2,
             borderBottom: 1,
             borderColor: 'divider',
-            bgcolor: '#f8fafc',
+            bgcolor: (theme) =>
+              theme.palette.mode === 'dark'
+                ? theme.palette.background.paper
+                : '#f8fafc',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -156,12 +160,19 @@ export function DataGrid<T>(props: DataGridProps<T>) {
         <Table size="small">
           <TableHead
             sx={{
-              bgcolor: '#f9fafb',
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? theme.palette.background.paper
+                  : '#f9fafb',
               '& .MuiTableCell-head': {
                 fontWeight: 600,
-                color: '#374151',
+                color: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? theme.palette.text.primary
+                    : '#374151',
                 fontSize: '0.875rem',
-                borderBottom: '2px solid #e5e7eb',
+                borderBottom: '2px solid',
+                borderColor: 'divider',
               },
             }}
           >
@@ -234,14 +245,13 @@ export function DataGrid<T>(props: DataGridProps<T>) {
                 </TableCell>
               </TableRow>
             ) : (
-              currentData.map((row, rowIdx) => {
+              currentData.map((row) => {
                 const rowId = getRowId(row);
                 return (
                   <TableRow
                     key={rowId}
                     hover
                     sx={{
-                      '&:hover': { bgcolor: '#f9fafb' },
                       transition: 'background-color 0.15s',
                     }}
                   >
@@ -258,13 +268,17 @@ export function DataGrid<T>(props: DataGridProps<T>) {
                         key={ci}
                         style={col.cellStyle}
                         sx={{
-                          color: '#6b7280',
+                          color: 'text.secondary',
                           fontSize: '0.875rem',
-                          borderBottom: '1px solid #f3f4f6',
+                          borderBottom: '1px solid',
+                          borderColor: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? theme.palette.divider
+                              : '#f3f4f6',
                         }}
                       >
                         {col.render
-                          ? col.render(row, rowIdx)
+                          ? col.render(row, currentData.indexOf(row))
                           : (row[col.key as keyof T] as React.ReactNode)}
                       </TableCell>
                     ))}
@@ -272,7 +286,11 @@ export function DataGrid<T>(props: DataGridProps<T>) {
                       <TableCell
                         align="center"
                         sx={{
-                          borderBottom: '1px solid #f3f4f6',
+                          borderBottom: '1px solid',
+                          borderColor: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? theme.palette.divider
+                              : '#f3f4f6',
                         }}
                       >
                         <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
@@ -310,7 +328,8 @@ export function DataGrid<T>(props: DataGridProps<T>) {
           sx={{
             px: 3,
             py: 1.5,
-            borderTop: '1px solid #e5e7eb',
+            borderTop: '1px solid',
+            borderColor: 'divider',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -318,7 +337,7 @@ export function DataGrid<T>(props: DataGridProps<T>) {
             gap: 1,
           }}
         >
-          <Typography variant="body2" sx={{ color: '#9ca3af', fontSize: '0.8rem' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
             {start}–{end} de {totalRows}
           </Typography>
 
@@ -331,13 +350,13 @@ export function DataGrid<T>(props: DataGridProps<T>) {
               disableUnderline
               sx={{
                 fontSize: '0.8rem',
-                color: '#6b7280',
+                color: 'text.secondary',
                 '& .MuiSelect-select': {
                   py: 0.25,
                   px: 0.5,
                   pr: '20px !important',
                 },
-                '& .MuiSvgIcon-root': { fontSize: '1rem', color: '#9ca3af' },
+                '& .MuiSvgIcon-root': { fontSize: '1rem', color: 'text.secondary' },
               }}
             >
               <MenuItem value={10}>10 / pág</MenuItem>
@@ -358,7 +377,7 @@ export function DataGrid<T>(props: DataGridProps<T>) {
                     fontSize: '0.8rem',
                     minWidth: 28,
                     height: 28,
-                    color: '#6b7280',
+                    color: 'text.secondary',
                     '&.Mui-selected': {
                       bgcolor: 'primary.main',
                       color: '#fff',

@@ -63,6 +63,7 @@ export function AppShell({ config }: AppShellProps) {
                     appLogo={config.appLogo}
                     menuLayout={config.menuLayout}
                     appBarActions={config.appBarActions}
+                    themeOptions={config.themeOptions}
                   />
                 </RotaProtegida>
               ),
@@ -91,6 +92,7 @@ export function AppShell({ config }: AppShellProps) {
             appName={config.appName}
             appLogo={config.appLogo}
             menuLayout={config.menuLayout}
+            themeOptions={config.themeOptions}
           />
         ),
         children: [

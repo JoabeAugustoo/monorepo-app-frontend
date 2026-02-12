@@ -7,6 +7,7 @@ export { useSidebar } from './hooks/useSidebar';
 export { useAuth, useAuthOpcional } from './hooks/useAuth';
 export { useSearchDebounce } from './hooks/useSearchDebounce';
 export { createAppTheme } from './theme/createAppTheme';
+export { darkTokens } from './theme/darkThemeTokens';
 export { formatCurrency, formatNumber, currencyConfig } from './utils/i18n';
 export { DateProvider, useDate } from './contexts/DateContext';
 export { RefreshProvider, useRefresh } from './contexts/RefreshContext';

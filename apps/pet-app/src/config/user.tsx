@@ -1,22 +1,17 @@
-import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { UserMenuConfig } from '@app/core';
+import { authService } from '../services/authService';
 
-export function createUserMenuConfig(navigate: (path: string) => void, logout?: () => void): UserMenuConfig {
+export function createUserMenuConfig(_navigate: (path: string) => void, logout?: () => void): UserMenuConfig {
+  const user = authService.getCurrentUser();
   return {
-    nomeUsuario: 'Joabe',
+    nomeUsuario: user?.name || user?.username || 'Usuário',
     items: [
-      {
-        label: 'Configuracoes',
-        icon: <SettingsIcon />,
-        onClick: () => navigate('/configuracoes'),
-      },
       {
         label: 'Sair',
         icon: <LogoutIcon />,
         onClick: () => {
           logout?.();
-          navigate('/login');
         },
       },
     ],

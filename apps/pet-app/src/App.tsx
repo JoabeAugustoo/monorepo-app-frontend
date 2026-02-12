@@ -1,11 +1,13 @@
+import { useState, useEffect } from 'react';
 import { AppShell } from '@app/core';
-import { PetProvider } from './context/PetContext';
+import { Toaster } from 'sonner';
 import { menuItems } from './config/menu';
 import { routes } from './config/routes';
 import { themeOptions } from './config/theme';
 import { createUserMenuConfig } from './config/user';
+import { authService } from './services/authService';
 
-export default function App() {
+function AppContent() {
   return (
     <AppShell
       config={{
@@ -14,7 +16,6 @@ export default function App() {
         routes,
         themeOptions,
         userMenu: (navigate, logout) => createUserMenuConfig(navigate, logout),
-        providers: [PetProvider],
         menuLayout: 'vertical',
         loginPage: {
           mode: 'username',
@@ -35,13 +36,38 @@ export default function App() {
           subtitulo: 'Gerencie seus pets com facilidade',
           corFundo: '#9C72D9',
           onSubmit: async (credenciais) => {
-            if (credenciais.identificador === 'admin' && credenciais.senha === '1234') {
-              return { token: 'mock-jwt-token-abc123', usuario: { nomeUsuario: 'Joabe' } };
-            }
-            throw new Error('Usuário ou senha inválidos');
+            const { user, token } = await authService.login(
+              credenciais.identificador,
+              credenciais.senha
+            );
+            return {
+              token,
+              usuario: { nomeUsuario: user.name || user.username },
+            };
           },
+          onLogout: () => authService.logout(),
         },
       }}
     />
+  );
+}
+
+export default function App() {
+  const [authKey, setAuthKey] = useState(() => authService.getCurrentUser()?.id || 'anon');
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const user = authService.getCurrentUser();
+      setAuthKey(user?.id || 'anon');
+    };
+    window.addEventListener('pet-auth-change', handleAuthChange);
+    return () => window.removeEventListener('pet-auth-change', handleAuthChange);
+  }, []);
+
+  return (
+    <>
+      <Toaster richColors position="top-right" />
+      <AppContent key={authKey} />
+    </>
   );
 }

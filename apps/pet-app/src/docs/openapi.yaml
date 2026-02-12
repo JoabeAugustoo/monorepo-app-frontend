@@ -96,6 +96,146 @@ paths:
       summary: Introspect token from Authorization header
       tags:
         - Authentication
+  /api/customers/cpf/{cpf}:
+    get:
+      operationId: CustomerController_findByCpf
+      parameters:
+        - name: cpf
+          required: true
+          in: path
+          description: Customer CPF
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: Find customer by CPF with addresses
+      tags:
+        - Customers
+  /api/customers/{id}/addresses:
+    post:
+      operationId: CustomerController_addAddress
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressDto'
+      responses:
+        '201':
+          description: Address added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAddressResponseDto'
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: Add address to customer
+      tags:
+        - Customers
+    get:
+      operationId: CustomerController_listAddresses
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of customer addresses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerAddressResponseDto'
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: List customer addresses
+      tags:
+        - Customers
+  /api/customers/{customerId}/addresses/{addressId}:
+    patch:
+      operationId: CustomerController_updateAddress
+      parameters:
+        - name: customerId
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+        - name: addressId
+          required: true
+          in: path
+          description: CustomerAddress public ID (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerAddressDto'
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAddressResponseDto'
+        '404':
+          description: Customer or address not found
+      security:
+        - bearer: []
+      summary: Update customer address details
+      tags:
+        - Customers
+    delete:
+      operationId: CustomerController_removeAddress
+      parameters:
+        - name: customerId
+          required: true
+          in: path
+          description: Customer public ID (UUID)
+          schema:
+            type: string
+        - name: addressId
+          required: true
+          in: path
+          description: CustomerAddress public ID (UUID)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Address removed successfully
+        '404':
+          description: Customer or address not found
+      security:
+        - bearer: []
+      summary: Remove customer address (soft delete)
+      tags:
+        - Customers
   /api/customers:
     post:
       operationId: CustomerController_create
@@ -2593,6 +2733,32 @@ paths:
       summary: Get monthly financial report
       tags:
         - Financial Reports
+  /api/addresses/cep/{cep}:
+    get:
+      operationId: AddressController_findByCep
+      parameters:
+        - name: cep
+          required: true
+          in: path
+          description: CEP (8 numeric digits)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Address found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CepResponseDto'
+        '400':
+          description: Invalid CEP format
+        '404':
+          description: CEP not found
+      security:
+        - bearer: []
+      summary: Lookup address by CEP
+      tags:
+        - Addresses
 info:
   title: Petflow API
   description: API for Petflow application
@@ -2684,67 +2850,88 @@ components:
         - username
         - email
         - roles
-    CustomerDto:
+    AddressResponseDto:
       type: object
       properties:
-        name:
+        publicId:
           type: string
-          description: Customer full name
-          maxLength: 150
-        cpf:
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
           type: string
-          description: 'CPF (format: 000.000.000-00)'
-          maxLength: 14
-        rg:
+          description: Creation date
+        updatedAt:
+          format: date-time
           type: string
-          description: RG document
-          maxLength: 20
-        email:
+          description: Last update date
+        zipCode:
           type: string
-          description: Email address
-          maxLength: 150
-        phone:
-          type: string
-          description: Primary phone number
-          maxLength: 20
-        secondaryPhone:
-          type: string
-          description: Secondary/emergency phone
-          maxLength: 20
-        notes:
-          type: string
-          description: Internal notes about the customer
+          description: Zip code (CEP)
         street:
           type: string
           description: Street name
-          maxLength: 200
-        number:
-          type: string
-          description: Address number
-          maxLength: 20
-        complement:
-          type: string
-          description: Address complement
-          maxLength: 100
         neighborhood:
           type: string
           description: Neighborhood
-          maxLength: 100
         city:
           type: string
           description: City
-          maxLength: 100
         state:
           type: string
-          description: State (2 letters)
-          maxLength: 2
-        zipCode:
-          type: string
-          description: Zip code
-          maxLength: 10
+          description: State (UF)
       required:
-        - name
-        - phone
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - zipCode
+        - street
+        - neighborhood
+        - city
+        - state
+    CustomerAddressResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+          description: Public UUID
+        active:
+          type: boolean
+          description: Whether the record is active
+        createdAt:
+          format: date-time
+          type: string
+          description: Creation date
+        updatedAt:
+          format: date-time
+          type: string
+          description: Last update date
+        number:
+          type: string
+          description: Address number
+        complement:
+          type: string
+          description: Address complement
+        notes:
+          type: string
+          description: Additional notes
+        isDefault:
+          type: boolean
+          description: Is default address
+        address:
+          description: Address details
+          allOf:
+            - $ref: '#/components/schemas/AddressResponseDto'
+      required:
+        - publicId
+        - active
+        - createdAt
+        - updatedAt
+        - isDefault
+        - address
     CustomerResponseDto:
       type: object
       properties:
@@ -2783,32 +2970,90 @@ components:
         notes:
           type: string
           description: Notes
-        street:
-          type: string
-          description: Street
-        number:
-          type: string
-          description: Number
-        complement:
-          type: string
-          description: Complement
-        neighborhood:
-          type: string
-          description: Neighborhood
-        city:
-          type: string
-          description: City
-        state:
-          type: string
-          description: State
-        zipCode:
-          type: string
-          description: Zip code
+        addresses:
+          description: Customer addresses
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerAddressResponseDto'
       required:
         - publicId
         - active
         - createdAt
         - updatedAt
+        - name
+        - phone
+    AddressDto:
+      type: object
+      properties:
+        zipCode:
+          type: string
+          description: Zip code (CEP)
+          maxLength: 10
+        number:
+          type: string
+          description: Address number
+          maxLength: 20
+        complement:
+          type: string
+          description: Address complement (apartment, block)
+          maxLength: 100
+        notes:
+          type: string
+          description: Additional notes
+        isDefault:
+          type: boolean
+          description: Set as default address
+          default: false
+      required:
+        - zipCode
+    UpdateCustomerAddressDto:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Address number
+          maxLength: 20
+        complement:
+          type: string
+          description: Address complement
+          maxLength: 100
+        notes:
+          type: string
+          description: Additional notes
+        isDefault:
+          type: boolean
+          description: Set as default address
+    CustomerDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Customer full name
+          maxLength: 150
+        cpf:
+          type: string
+          description: 'CPF (format: 000.000.000-00)'
+          maxLength: 14
+        rg:
+          type: string
+          description: RG document
+          maxLength: 20
+        email:
+          type: string
+          description: Email address
+          maxLength: 150
+        phone:
+          type: string
+          description: Primary phone number
+          maxLength: 20
+        secondaryPhone:
+          type: string
+          description: Secondary/emergency phone
+          maxLength: 20
+        notes:
+          type: string
+          description: Internal notes about the customer
+      required:
         - name
         - phone
     CountResponse:
@@ -3981,3 +4226,27 @@ components:
         - profit
         - month
         - year
+    CepResponseDto:
+      type: object
+      properties:
+        cep:
+          type: string
+          example: '29024010'
+        street:
+          type: string
+          example: Rua Maria Clara de Menezes Rodrigues
+        neighborhood:
+          type: string
+          example: Grande Vitória
+        city:
+          type: string
+          example: Vitória
+        state:
+          type: string
+          example: ES
+      required:
+        - cep
+        - street
+        - neighborhood
+        - city
+        - state

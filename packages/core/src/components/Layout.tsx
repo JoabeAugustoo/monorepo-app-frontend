@@ -3,6 +3,7 @@ import {
   Box,
   Card,
   CardContent,
+  CssBaseline,
   FormControl,
   MenuItem as MuiMenuItem,
   Paper,
@@ -13,12 +14,15 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
+import { ThemeOptions } from '@mui/material';
 import { NavigateFunction, Outlet, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { AppBarComponent } from './AppBarComponent';
 import { useSidebar } from '../hooks/useSidebar';
 import { useAuthOpcional } from '../hooks/useAuth';
+import { createAppThemeDark } from '../theme/createAppTheme';
 import { MenuItem, SidebarTema, UserMenuConfig } from '../types';
 
 const LARGURA_SIDEBAR = 260;
@@ -40,6 +44,7 @@ interface LayoutProps {
   appLogo?: ReactNode;
   menuLayout?: 'vertical' | 'horizontal';
   appBarActions?: ReactNode;
+  themeOptions?: ThemeOptions;
 }
 
 export type LayoutContext = {
@@ -48,7 +53,7 @@ export type LayoutContext = {
   appName: string;
 };
 
-export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 'vertical', appBarActions }: LayoutProps) {
+export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 'vertical', appBarActions, themeOptions }: LayoutProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isHorizontal = menuLayout === 'horizontal';
@@ -57,6 +62,11 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
   const location = useLocation();
   const auth = useAuthOpcional();
   const [sidebarTema, setSidebarTema] = useState<SidebarTema>(lerTema);
+
+  const darkTheme = useMemo(
+    () => createAppThemeDark(themeOptions),
+    [themeOptions],
+  );
 
   const resolvedUserMenu = useMemo(
     () => (typeof userMenu === 'function' ? userMenu(navigate, auth?.logout) : userMenu),
@@ -92,7 +102,9 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
     navigate(menuItems[event.target.value as number].path);
   };
 
-  return (
+  const isDark = sidebarTema === 'escuro';
+
+  const content = (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <AppBarComponent
         onAlternarMenu={alternar}
@@ -124,6 +136,7 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
           p: 3,
           display: 'flex',
           flexDirection: 'column',
+          bgcolor: 'background.default',
           transition: theme.transitions.create('margin', {
             easing: aberto
               ? theme.transitions.easing.easeOut
@@ -136,87 +149,65 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
         }}
       >
         <Toolbar />
-        {isHorizontal && (() => {
-          const isDark = sidebarTema === 'escuro';
-          const tabBg = isDark ? '#1E293B' : '#FFFFFF';
-          const tabColor = isDark ? alpha('#fff', 0.7) : 'text.secondary';
-          const tabActiveColor = isDark ? '#fff' : 'primary.main';
-          const indicatorColor = isDark ? '#fff' : undefined;
-
-          return (
-            <Box sx={{ mb: 3 }}>
-              {isMobile ? (
-                <FormControl fullWidth>
-                  <Select
-                    value={activeTabIndex}
-                    onChange={handleSelectChange}
-                    sx={{
-                      backgroundColor: tabBg,
-                      color: isDark ? '#fff' : undefined,
-                      '& .MuiSelect-icon': { color: isDark ? alpha('#fff', 0.7) : undefined },
-                    }}
-                    renderValue={(value) => {
-                      const item = menuItems[value as number];
-                      return (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {item.icon}
-                          {item.label}
-                        </Box>
-                      );
-                    }}
-                  >
-                    {menuItems.map((item, index) => (
-                      <MuiMenuItem key={item.path} value={index}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {item.icon}
-                          {item.label}
-                        </Box>
-                      </MuiMenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              ) : (
-                <Paper
-                  sx={{
-                    p: 0.5,
-                    bgcolor: tabBg,
-                    ...(isDark && { border: 'none' }),
+        {isHorizontal && (
+          <Box sx={{ mb: 3 }}>
+            {isMobile ? (
+              <FormControl fullWidth>
+                <Select
+                  value={activeTabIndex}
+                  onChange={handleSelectChange}
+                  renderValue={(value) => {
+                    const item = menuItems[value as number];
+                    return (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {item.icon}
+                        {item.label}
+                      </Box>
+                    );
                   }}
                 >
-                  <Tabs
-                    value={activeTabIndex}
-                    onChange={handleTabChange}
-                    variant="fullWidth"
-                    TabIndicatorProps={{
-                      sx: indicatorColor ? { backgroundColor: indicatorColor } : {},
-                    }}
-                  >
-                    {menuItems.map((item) => (
-                      <Tab
-                        key={item.path}
-                        icon={<Box sx={{ display: 'flex', alignItems: 'center' }}>{item.icon}</Box>}
-                        label={item.label}
-                        iconPosition="start"
-                        sx={{
-                          minHeight: 48,
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          color: tabColor,
-                          '&.Mui-selected': {
-                            color: tabActiveColor,
-                          },
-                          '&:hover': {
-                            bgcolor: isDark ? alpha('#fff', 0.08) : undefined,
-                          },
-                        }}
-                      />
-                    ))}
-                  </Tabs>
-                </Paper>
-              )}
-            </Box>
-          );
-        })()}
+                  {menuItems.map((item, index) => (
+                    <MuiMenuItem key={item.path} value={index}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {item.icon}
+                        {item.label}
+                      </Box>
+                    </MuiMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              <Paper sx={{ p: 0.5 }}>
+                <Tabs
+                  value={activeTabIndex}
+                  onChange={handleTabChange}
+                  variant="fullWidth"
+                  TabIndicatorProps={{
+                    sx: { backgroundColor: 'primary.main' },
+                  }}
+                >
+                  {menuItems.map((item) => (
+                    <Tab
+                      key={item.path}
+                      icon={<Box sx={{ display: 'flex', alignItems: 'center' }}>{item.icon}</Box>}
+                      label={item.label}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 48,
+                        textTransform: 'none',
+                        fontWeight: 500,
+                        color: 'text.secondary',
+                        '&.Mui-selected': {
+                          color: 'primary.main',
+                        },
+                      }}
+                    />
+                  ))}
+                </Tabs>
+              </Paper>
+            )}
+          </Box>
+        )}
         <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <CardContent sx={{ flex: 1, p: 3, '&:last-child': { pb: 3 } }}>
             <Outlet context={{ menuItems, userMenu: resolvedUserMenu, appName } satisfies LayoutContext} />
@@ -225,6 +216,17 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
       </Box>
     </Box>
   );
+
+  if (isDark) {
+    return (
+      <ThemeProvider theme={darkTheme}>
+        <CssBaseline />
+        {content}
+      </ThemeProvider>
+    );
+  }
+
+  return content;
 }
 
 export function useLayoutContext() {

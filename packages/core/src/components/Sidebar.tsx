@@ -14,6 +14,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MenuItem, SidebarTema } from '../types';
+import { darkTokens } from '../theme/darkThemeTokens';
 
 interface SidebarProps {
   menuItems: MenuItem[];
@@ -36,9 +37,11 @@ function getTemaConfig(tema: SidebarTema): TemaConfig {
     case 'claro':
       return { dark: false, bgcolor: '#FFFFFF', border: true };
     case 'escuro':
-      return { dark: true, bgcolor: '#1E293B', border: false };
+      return { dark: true, bgcolor: darkTokens.sidebar.bg, border: false };
   }
 }
+
+const dk = darkTokens.sidebar;
 
 export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo, tema = 'claro' }: SidebarProps) {
   const theme = useTheme();
@@ -74,13 +77,13 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
               width: 34,
               height: 34,
               borderRadius: 1.5,
-              bgcolor: cfg.dark ? alpha('#fff', 0.18) : alpha(primaryColor, 0.1),
+              bgcolor: cfg.dark ? dk.brandBg : alpha(primaryColor, 0.1),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 800,
               fontSize: '1rem',
-              color: cfg.dark ? '#fff' : primaryColor,
+              color: cfg.dark ? dk.activeText : primaryColor,
             }}
           >
             {appName[0]}
@@ -89,7 +92,7 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
         <Typography
           variant="h6"
           fontWeight={700}
-          sx={{ color: cfg.dark ? '#fff' : primaryColor }}
+          sx={{ color: cfg.dark ? dk.activeText : primaryColor }}
         >
           {appName}
         </Typography>
@@ -110,29 +113,46 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
               borderRadius: 2,
               mb: 0.5,
               py: 1,
+              position: 'relative',
+              overflow: 'hidden',
               ...(cfg.dark
                 ? {
-                    color: ativo ? '#fff' : alpha('#fff', 0.7),
+                    color: ativo ? dk.activeText : dk.inactiveText,
                     '&.Mui-selected': {
-                      bgcolor: alpha('#fff', 0.15),
-                      '&:hover': { bgcolor: alpha('#fff', 0.22) },
+                      bgcolor: dk.selectedBg,
+                      '&:hover': { bgcolor: dk.selectedHoverBg },
                     },
-                    '&:hover': { bgcolor: alpha('#fff', 0.08) },
+                    '&:hover': { bgcolor: dk.hoverBg },
                   }
                 : {
+                    color: ativo ? primaryColor : 'text.secondary',
                     '&.Mui-selected': {
                       bgcolor: alpha(primaryColor, 0.08),
                       '&:hover': { bgcolor: alpha(primaryColor, 0.14) },
                     },
+                    '&:hover': { bgcolor: alpha(primaryColor, 0.04) },
                   }),
+              // Active indicator bar (vertical bar on the left)
+              '&::after': ativo
+                ? {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: '20%',
+                    bottom: '20%',
+                    width: 3,
+                    borderRadius: '0 3px 3px 0',
+                    bgcolor: cfg.dark ? dk.indicator : primaryColor,
+                  }
+                : {},
             }}
           >
             <ListItemIcon
               sx={{
                 minWidth: 40,
                 color: cfg.dark
-                  ? ativo ? '#fff' : alpha('#fff', 0.7)
-                  : ativo ? primaryColor : 'inherit',
+                  ? ativo ? dk.activeIcon : dk.inactiveIcon
+                  : ativo ? primaryColor : alpha(primaryColor, 0.5),
               }}
             >
               {item.icon}
@@ -153,7 +173,7 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
   const drawerContent = (cfg: TemaConfig) => (
     <>
       {brandArea(cfg)}
-      <Divider sx={{ borderColor: cfg.dark ? alpha('#fff', 0.12) : 'divider', mx: 2 }} />
+      <Divider sx={{ borderColor: cfg.dark ? dk.divider : 'divider', mx: 2 }} />
       {navList(cfg)}
     </>
   );
