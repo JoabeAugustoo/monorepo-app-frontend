@@ -17,6 +17,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import type { DataGridProps, SortDirection } from './DataGrid.types';
 
 export function DataGrid<T>(props: DataGridProps<T>) {
@@ -220,7 +221,15 @@ export function DataGrid<T>(props: DataGridProps<T>) {
           <TableBody>
             {loading ? (
               Array.from({ length: Math.min(pageSize, 5) }).map((_, i) => (
-                <TableRow key={i}>
+                <TableRow
+                  key={i}
+                  sx={{
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? i % 2 === 0 ? theme.palette.background.default : theme.palette.background.paper
+                        : 'transparent',
+                  }}
+                >
                   {selectable && (
                     <TableCell padding="checkbox">
                       <Skeleton variant="rectangular" width={20} height={20} />
@@ -240,20 +249,35 @@ export function DataGrid<T>(props: DataGridProps<T>) {
               ))
             ) : currentData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={colSpan} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                <TableCell
+                  colSpan={colSpan}
+                  align="center"
+                  sx={{
+                    py: 6,
+                    color: 'text.secondary',
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
+                  }}
+                >
                   {emptyMessage}
                 </TableCell>
               </TableRow>
             ) : (
-              currentData.map((row) => {
+              currentData.map((row, rowIndex) => {
                 const rowId = getRowId(row);
                 return (
                   <TableRow
                     key={rowId}
                     hover
-                    sx={{
+                    sx={(theme) => ({
                       transition: 'background-color 0.15s',
-                    }}
+                      ...(theme.palette.mode === 'dark' && {
+                        bgcolor: rowIndex % 2 === 0 ? theme.palette.background.default : theme.palette.background.paper,
+                        '&.MuiTableRow-hover:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.12),
+                        },
+                      }),
+                    })}
                   >
                     {selectable && (
                       <TableCell padding="checkbox">
@@ -330,6 +354,10 @@ export function DataGrid<T>(props: DataGridProps<T>) {
             py: 1.5,
             borderTop: '1px solid',
             borderColor: 'divider',
+            bgcolor: (theme) =>
+              theme.palette.mode === 'dark'
+                ? theme.palette.background.paper
+                : 'transparent',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',

@@ -14,7 +14,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MenuItem, SidebarTema } from '../types';
-import { darkTokens } from '../theme/darkThemeTokens';
+import { getThemeTokens, type DarkThemeTokens } from '../theme/darkThemeTokens';
 
 interface SidebarProps {
   menuItems: MenuItem[];
@@ -30,18 +30,17 @@ interface TemaConfig {
   dark: boolean;
   bgcolor: string;
   border: boolean;
+  tokens: DarkThemeTokens['sidebar'] | null;
 }
 
 function getTemaConfig(tema: SidebarTema): TemaConfig {
-  switch (tema) {
-    case 'claro':
-      return { dark: false, bgcolor: '#FFFFFF', border: true };
-    case 'escuro':
-      return { dark: true, bgcolor: darkTokens.sidebar.bg, border: false };
+  const themeTokens = getThemeTokens(tema);
+  if (!themeTokens) {
+    // Light themes (claro, pet, etc.)
+    return { dark: false, bgcolor: '#FFFFFF', border: true, tokens: null };
   }
+  return { dark: true, bgcolor: themeTokens.sidebar.bg, border: false, tokens: themeTokens.sidebar };
 }
-
-const dk = darkTokens.sidebar;
 
 export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo, tema = 'claro' }: SidebarProps) {
   const theme = useTheme();
@@ -77,13 +76,13 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
               width: 34,
               height: 34,
               borderRadius: 1.5,
-              bgcolor: cfg.dark ? dk.brandBg : alpha(primaryColor, 0.1),
+              bgcolor: cfg.dark ? cfg.tokens!.brandBg : alpha(primaryColor, 0.1),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 800,
               fontSize: '1rem',
-              color: cfg.dark ? dk.activeText : primaryColor,
+              color: cfg.dark ? cfg.tokens!.activeText : primaryColor,
             }}
           >
             {appName[0]}
@@ -92,7 +91,7 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
         <Typography
           variant="h6"
           fontWeight={700}
-          sx={{ color: cfg.dark ? dk.activeText : primaryColor }}
+          sx={{ color: cfg.dark ? cfg.tokens!.activeText : primaryColor }}
         >
           {appName}
         </Typography>
@@ -117,12 +116,12 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
               overflow: 'hidden',
               ...(cfg.dark
                 ? {
-                    color: ativo ? dk.activeText : dk.inactiveText,
+                    color: ativo ? cfg.tokens!.activeText : cfg.tokens!.inactiveText,
                     '&.Mui-selected': {
-                      bgcolor: dk.selectedBg,
-                      '&:hover': { bgcolor: dk.selectedHoverBg },
+                      bgcolor: cfg.tokens!.selectedBg,
+                      '&:hover': { bgcolor: cfg.tokens!.selectedHoverBg },
                     },
-                    '&:hover': { bgcolor: dk.hoverBg },
+                    '&:hover': { bgcolor: cfg.tokens!.hoverBg },
                   }
                 : {
                     color: ativo ? primaryColor : 'text.secondary',
@@ -142,7 +141,7 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
                     bottom: '20%',
                     width: 3,
                     borderRadius: '0 3px 3px 0',
-                    bgcolor: cfg.dark ? dk.indicator : primaryColor,
+                    bgcolor: cfg.dark ? cfg.tokens!.indicator : primaryColor,
                   }
                 : {},
             }}
@@ -151,7 +150,7 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
               sx={{
                 minWidth: 40,
                 color: cfg.dark
-                  ? ativo ? dk.activeIcon : dk.inactiveIcon
+                  ? ativo ? cfg.tokens!.activeIcon : cfg.tokens!.inactiveIcon
                   : ativo ? primaryColor : alpha(primaryColor, 0.5),
               }}
             >
@@ -173,7 +172,7 @@ export function Sidebar({ menuItems, aberto, onFechar, largura, appName, appLogo
   const drawerContent = (cfg: TemaConfig) => (
     <>
       {brandArea(cfg)}
-      <Divider sx={{ borderColor: cfg.dark ? dk.divider : 'divider', mx: 2 }} />
+      <Divider sx={{ borderColor: cfg.dark ? cfg.tokens!.divider : 'divider', mx: 2 }} />
       {navList(cfg)}
     </>
   );

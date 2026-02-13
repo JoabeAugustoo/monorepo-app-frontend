@@ -10,35 +10,37 @@ import {
   ListItemIcon,
   ListItemText,
   Box,
+  Tooltip,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import { SidebarTema, UserMenuConfig } from '../types';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import { UserMenuConfig, SidebarTema } from '../types';
+import { TEMA_OPTIONS } from './ConfigDrawer';
 
 interface AppBarComponentProps {
   onAlternarMenu: () => void;
-  onAlternarTema?: () => void;
-  sidebarTema?: SidebarTema;
+  onAbrirConfiguracoes?: () => void;
   userMenu: UserMenuConfig;
   appName: string;
   sidebarAberto?: boolean;
   larguraSidebar?: number;
   showHamburger?: boolean;
   appBarActions?: ReactNode;
+  tema?: SidebarTema;
 }
 
 export function AppBarComponent({
   onAlternarMenu,
-  onAlternarTema,
-  sidebarTema = 'claro',
+  onAbrirConfiguracoes,
   userMenu,
   appName,
   sidebarAberto = false,
   larguraSidebar = 260,
   showHamburger = true,
   appBarActions,
+  tema,
 }: AppBarComponentProps) {
+  const temaIcon = tema ? TEMA_OPTIONS.find((o) => o.value === tema)?.icon : null;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleAbrirMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -103,14 +105,15 @@ export function AppBarComponent({
           </Box>
         )}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {onAlternarTema && (
-            <IconButton onClick={onAlternarTema} size="small">
-              {sidebarTema === 'escuro' ? (
-                <DarkModeOutlinedIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-              ) : (
-                <LightModeOutlinedIcon fontSize="small" sx={{ color: 'warning.main' }} />
-              )}
-            </IconButton>
+          {onAbrirConfiguracoes && (
+            <Tooltip title="Configurações">
+              <IconButton onClick={onAbrirConfiguracoes} size="small">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                  {temaIcon}
+                  <SettingsOutlinedIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                </Box>
+              </IconButton>
+            </Tooltip>
           )}
           <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' }, ml: 0.5 }}>
             {userMenu.nomeUsuario}

@@ -26,7 +26,7 @@ export interface AppRoute {
   index?: boolean;
 }
 
-export type SidebarTema = 'claro' | 'escuro';
+export type SidebarTema = 'claro' | 'escuro' | 'oceano' | 'sunset' | 'nord' | 'pet' | 'azul';
 
 export type LoginMode = 'email' | 'username' | 'both';
 
@@ -70,6 +70,7 @@ export interface AppShellConfig {
   loginPage?: LoginPageConfig;
   menuLayout?: 'vertical' | 'horizontal';
   appBarActions?: ReactNode;
+  themeApiUrl?: string;
 }
 
 // --- Generic types ---

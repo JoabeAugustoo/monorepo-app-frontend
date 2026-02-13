@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import {
   Box,
   Card,
@@ -15,24 +15,24 @@ import {
   useTheme,
 } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
-import { alpha } from '@mui/material/styles';
 import { ThemeOptions } from '@mui/material';
 import { NavigateFunction, Outlet, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { AppBarComponent } from './AppBarComponent';
+import { ConfigDrawer } from './ConfigDrawer';
 import { useSidebar } from '../hooks/useSidebar';
 import { useAuthOpcional } from '../hooks/useAuth';
-import { createAppThemeDark } from '../theme/createAppTheme';
+import { createThemeForTema } from '../theme/createAppTheme';
 import { MenuItem, SidebarTema, UserMenuConfig } from '../types';
 
 const LARGURA_SIDEBAR = 260;
 const STORAGE_KEY = 'pet-sidebar-tema';
-const TEMAS: SidebarTema[] = ['claro', 'escuro'];
+const TEMAS_VALIDOS: SidebarTema[] = ['claro', 'escuro', 'oceano', 'sunset', 'nord', 'pet', 'azul'];
 
 function lerTema(): SidebarTema {
   try {
     const salvo = localStorage.getItem(STORAGE_KEY);
-    if (salvo && TEMAS.includes(salvo as SidebarTema)) return salvo as SidebarTema;
+    if (salvo && TEMAS_VALIDOS.includes(salvo as SidebarTema)) return salvo as SidebarTema;
   } catch { /* ignore */ }
   return 'claro';
 }
@@ -45,6 +45,7 @@ interface LayoutProps {
   menuLayout?: 'vertical' | 'horizontal';
   appBarActions?: ReactNode;
   themeOptions?: ThemeOptions;
+  themeApiUrl?: string;
 }
 
 export type LayoutContext = {
@@ -53,7 +54,7 @@ export type LayoutContext = {
   appName: string;
 };
 
-export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 'vertical', appBarActions, themeOptions }: LayoutProps) {
+export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 'vertical', appBarActions, themeOptions, themeApiUrl }: LayoutProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isHorizontal = menuLayout === 'horizontal';
@@ -62,24 +63,35 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
   const location = useLocation();
   const auth = useAuthOpcional();
   const [sidebarTema, setSidebarTema] = useState<SidebarTema>(lerTema);
+  const [configAberto, setConfigAberto] = useState(false);
 
-  const darkTheme = useMemo(
-    () => createAppThemeDark(themeOptions),
-    [themeOptions],
-  );
+  const activeTheme = useMemo(() => createThemeForTema(sidebarTema, themeOptions), [sidebarTema, themeOptions]);
 
   const resolvedUserMenu = useMemo(
     () => (typeof userMenu === 'function' ? userMenu(navigate, auth?.logout) : userMenu),
     [userMenu, navigate, auth?.logout],
   );
 
-  const alternarTema = useCallback(() => {
-    setSidebarTema((atual) => {
-      const proximo = TEMAS[(TEMAS.indexOf(atual) + 1) % TEMAS.length];
-      try { localStorage.setItem(STORAGE_KEY, proximo); } catch { /* ignore */ }
-      return proximo;
-    });
-  }, []);
+  const handleTemaChange = (novoTema: SidebarTema) => {
+    setSidebarTema(novoTema);
+    try { localStorage.setItem(STORAGE_KEY, novoTema); } catch { /* ignore */ }
+    if (themeApiUrl) {
+      const token = localStorage.getItem('pet-auth-token');
+      if (token) {
+        fetch(themeApiUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ theme: novoTema }),
+        }).then((res) => {
+          if (res.ok) return res.json();
+        }).then((data) => {
+          if (data?.accessToken) {
+            try { localStorage.setItem('pet-auth-token', data.accessToken); } catch { /* ignore */ }
+          }
+        }).catch(() => { /* best-effort */ });
+      }
+    }
+  };
 
   const showSidebar = isHorizontal ? isMobile : true;
   const sidebarAberto = isHorizontal ? (isMobile && aberto) : (!isMobile && aberto);
@@ -102,20 +114,26 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
     navigate(menuItems[event.target.value as number].path);
   };
 
-  const isDark = sidebarTema === 'escuro';
-
-  const content = (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+  return (
+    <ThemeProvider theme={activeTheme}>
+      <CssBaseline />
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <AppBarComponent
         onAlternarMenu={alternar}
-        onAlternarTema={alternarTema}
-        sidebarTema={sidebarTema}
+        onAbrirConfiguracoes={() => setConfigAberto(true)}
         userMenu={resolvedUserMenu}
         appName={appName}
         sidebarAberto={!isHorizontal && !isMobile && aberto}
         larguraSidebar={LARGURA_SIDEBAR}
         showHamburger={showHamburger}
         appBarActions={appBarActions}
+        tema={sidebarTema}
+      />
+      <ConfigDrawer
+        aberto={configAberto}
+        onFechar={() => setConfigAberto(false)}
+        tema={sidebarTema}
+        onTemaChange={handleTemaChange}
       />
       {showSidebar && (
         <Sidebar
@@ -215,18 +233,8 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
         </Card>
       </Box>
     </Box>
+    </ThemeProvider>
   );
-
-  if (isDark) {
-    return (
-      <ThemeProvider theme={darkTheme}>
-        <CssBaseline />
-        {content}
-      </ThemeProvider>
-    );
-  }
-
-  return content;
 }
 
 export function useLayoutContext() {

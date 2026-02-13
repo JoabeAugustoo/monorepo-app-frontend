@@ -62,6 +62,7 @@ function AppContent() {
         routes,
         themeOptions,
         userMenu: (navigate, logout) => createUserMenuConfig(navigate, logout),
+        themeApiUrl: `${import.meta.env.VITE_AUTH_URL || 'http://localhost:8083'}/api/auth/theme`,
         providers: [I18nProvider, RefreshProvider, DateProvider],
         loginPage: {
           mode: 'username',

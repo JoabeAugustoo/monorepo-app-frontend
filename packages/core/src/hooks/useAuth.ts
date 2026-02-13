@@ -59,6 +59,12 @@ export function useAuthState(onLogout?: () => void): AuthContextValue {
 
   const login = useCallback((resposta: AuthRespostaLogin) => {
     salvarAuth(resposta.token, resposta.usuario);
+    try {
+      const payload = JSON.parse(atob(resposta.token.split('.')[1]));
+      if (payload?.config?.theme) {
+        localStorage.setItem('pet-sidebar-tema', payload.config.theme);
+      }
+    } catch { /* ignore */ }
     setToken(resposta.token);
     setUsuario(resposta.usuario);
   }, []);

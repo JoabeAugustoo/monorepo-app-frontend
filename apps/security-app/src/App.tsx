@@ -38,6 +38,7 @@ function AppContent() {
         routes,
         themeOptions,
         userMenu: (navigate, logout) => createUserMenuConfig(navigate, logout),
+        themeApiUrl: `${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/theme`,
         providers: [QueryProvider, I18nProvider, RefreshProvider],
         loginPage: {
           mode: 'username',
@@ -92,6 +93,7 @@ function StaticApp() {
         routes,
         themeOptions,
         userMenu: (navigate, logout) => createUserMenuConfig(navigate, logout),
+        themeApiUrl: `${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/theme`,
         providers: [QueryProvider, I18nProvider, RefreshProvider],
         loginPage: {
           mode: 'username',
