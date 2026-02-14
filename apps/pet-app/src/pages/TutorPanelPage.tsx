@@ -22,16 +22,9 @@ import {
   History as HistoryIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { formatCpf, formatPhone } from '@app/core';
 import { customerService, petService, medicalProcedureService } from '../services';
 import type { CustomerWithAddresses, Pet, MedicalProcedure } from '../types';
-
-const formatCpf = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  return digits
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-};
 
 const TutorPanelPage = () => {
   const navigate = useNavigate();
@@ -148,7 +141,7 @@ const TutorPanelPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 3 }}>
                   <Typography variant="body2" color="text.secondary">Telefone</Typography>
-                  <Typography variant="body1">{customer.phone || '-'}</Typography>
+                  <Typography variant="body1">{customer.phone ? formatPhone(customer.phone) : '-'}</Typography>
                 </Grid>
                 {customer.email && (
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -159,7 +152,7 @@ const TutorPanelPage = () => {
                 {customer.secondaryPhone && (
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="body2" color="text.secondary">Tel. Secundário</Typography>
-                    <Typography variant="body1">{customer.secondaryPhone}</Typography>
+                    <Typography variant="body1">{formatPhone(customer.secondaryPhone)}</Typography>
                   </Grid>
                 )}
               </Grid>

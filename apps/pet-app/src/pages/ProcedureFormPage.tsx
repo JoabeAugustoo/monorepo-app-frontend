@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { MuiDatePicker } from '@app/ui';
 import { medicalProcedureService, petService, employeeService, medicationService } from '../services';
 import type {
   MedicalProcedureDto,
@@ -62,6 +63,7 @@ const ProcedureFormPage = () => {
     location: 'IN_CLINIC' as ProcedureLocation,
     description: '',
     date: '',
+    time: '',
     cost: '',
     observations: '',
     petId: preselectedPetId,
@@ -85,11 +87,12 @@ const ProcedureFormPage = () => {
 
     setSaving(true);
     try {
+      const dateTime = formData.time ? `${formData.date}T${formData.time}` : formData.date;
       const data: MedicalProcedureDto = {
         type: formData.type as ProcedureType,
         location: formData.location,
         description: formData.description,
-        date: formData.date,
+        date: dateTime,
         cost: parseFloat(formData.cost),
         observations: formData.observations || undefined,
         petId: formData.petId,
@@ -153,12 +156,18 @@ const ProcedureFormPage = () => {
             />
 
             <Box sx={{ display: 'flex', gap: 2 }}>
+              <MuiDatePicker
+                mode="day"
+                value={formData.date}
+                onChange={(val) => setFormData({ ...formData, date: val })}
+                placeholder="Data *"
+              />
               <TextField
                 fullWidth
-                label="Data *"
-                type="datetime-local"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                label="Hora"
+                type="time"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                 slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField

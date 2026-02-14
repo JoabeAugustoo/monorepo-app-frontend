@@ -11,6 +11,7 @@ export { createAppTheme, createAppThemeDark, createDarkTheme, createThemeForTema
 export { darkTokens, darkThemeRegistry, getThemeTokens } from './theme/darkThemeTokens';
 export type { DarkThemeTokens } from './theme/darkThemeTokens';
 export { formatCurrency, formatNumber, currencyConfig } from './utils/i18n';
+export { formatCpf, formatCep, formatPhone, formatDate, formatDateTime } from './utils/format';
 export { DateProvider, useDate } from './contexts/DateContext';
 export { RefreshProvider, useRefresh } from './contexts/RefreshContext';
 export { I18nProvider, useI18n } from './contexts/I18nContext';

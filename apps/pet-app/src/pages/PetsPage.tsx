@@ -13,9 +13,11 @@ import {
   Delete as DeleteIcon,
   Pets as PetsIcon,
 } from '@mui/icons-material';
+import { FaDog, FaCat, FaDove, FaFrog, FaPaw, FaMars, FaVenus, FaGenderless } from 'react-icons/fa6';
 import { toast } from 'sonner';
-import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
+import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField, MuiDatePicker } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
+import { useSearchDebounce } from '@app/core';
 import { petService, customerService } from '../services';
 import type { Pet, PetDto, PetSpecies, PetGender, Customer, SearchRequest } from '../types';
 
@@ -35,10 +37,30 @@ const SPECIES_COLORS: Record<PetSpecies, string> = {
   OTHER: '#FFD6A5',
 };
 
+const SPECIES_ICONS: Record<PetSpecies, React.ReactNode> = {
+  DOG: <FaDog />,
+  CAT: <FaCat />,
+  BIRD: <FaDove />,
+  REPTILE: <FaFrog />,
+  OTHER: <FaPaw />,
+};
+
 const GENDER_LABELS: Record<PetGender, string> = {
   MALE: 'Macho',
   FEMALE: 'Fêmea',
   UNKNOWN: 'Indefinido',
+};
+
+const GENDER_ICONS: Record<PetGender, React.ReactNode> = {
+  MALE: <FaMars />,
+  FEMALE: <FaVenus />,
+  UNKNOWN: <FaGenderless />,
+};
+
+const GENDER_COLORS: Record<PetGender, string> = {
+  MALE: '#7EB3E0',
+  FEMALE: '#F48FB1',
+  UNKNOWN: '#BDBDBD',
 };
 
 interface PetFormData {
@@ -80,8 +102,7 @@ const PetsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const { debouncedValue: searchTerm, inputValue: searchInput, setInputValue: setSearchInput } = useSearchDebounce('', 500);
 
   const [sortField, setSortField] = useState('active');
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
@@ -93,12 +114,8 @@ const PetsPage = () => {
   }, []);
 
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      setSearchTerm(searchInput);
-      setCurrentPage(1);
-    }, 500);
-    return () => clearTimeout(debounceTimer);
-  }, [searchInput]);
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchPets = useCallback(async () => {
     try {
@@ -219,7 +236,9 @@ const PetsPage = () => {
       sortable: true,
       render: (pet) => (
         <div style={{ fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <PetsIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+          <span style={{ color: pet.species ? SPECIES_COLORS[pet.species] : '#6b7280', display: 'flex', fontSize: 16 }}>
+            {pet.species ? SPECIES_ICONS[pet.species] : <PetsIcon sx={{ fontSize: 16 }} />}
+          </span>
           {pet.name}
         </div>
       ),
@@ -230,6 +249,7 @@ const PetsPage = () => {
       sortable: true,
       render: (pet) => pet.species ? (
         <Chip
+          icon={<span style={{ color: SPECIES_COLORS[pet.species], display: 'flex', fontSize: 14 }}>{SPECIES_ICONS[pet.species]}</span>}
           label={SPECIES_LABELS[pet.species] || pet.species}
           size="small"
           sx={{
@@ -244,7 +264,12 @@ const PetsPage = () => {
     {
       key: 'gender',
       header: 'Sexo',
-      render: (pet) => pet.gender ? GENDER_LABELS[pet.gender] || pet.gender : '-',
+      render: (pet) => pet.gender ? (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: GENDER_COLORS[pet.gender], display: 'flex' }}>{GENDER_ICONS[pet.gender]}</span>
+          {GENDER_LABELS[pet.gender]}
+        </span>
+      ) : '-',
     },
     {
       key: 'primaryTutorName',
@@ -353,7 +378,12 @@ const PetsPage = () => {
             >
               <MuiMenuItem value="">Selecione...</MuiMenuItem>
               {Object.entries(SPECIES_LABELS).map(([value, label]) => (
-                <MuiMenuItem key={value} value={value}>{label}</MuiMenuItem>
+                <MuiMenuItem key={value} value={value}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: SPECIES_COLORS[value as PetSpecies], display: 'flex' }}>{SPECIES_ICONS[value as PetSpecies]}</span>
+                    {label}
+                  </span>
+                </MuiMenuItem>
               ))}
             </TextField>
             <TextField fullWidth label="Raça" value={formData.breed} onChange={(e) => setFormData({ ...formData, breed: e.target.value })} />
@@ -368,19 +398,22 @@ const PetsPage = () => {
             >
               <MuiMenuItem value="">Selecione...</MuiMenuItem>
               {Object.entries(GENDER_LABELS).map(([value, label]) => (
-                <MuiMenuItem key={value} value={value}>{label}</MuiMenuItem>
+                <MuiMenuItem key={value} value={value}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: GENDER_COLORS[value as PetGender], display: 'flex' }}>{GENDER_ICONS[value as PetGender]}</span>
+                    {label}
+                  </span>
+                </MuiMenuItem>
               ))}
             </TextField>
             <TextField fullWidth label="Cor" value={formData.color} onChange={(e) => setFormData({ ...formData, color: e.target.value })} />
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              fullWidth
-              label="Data de Nascimento"
-              type="date"
+            <MuiDatePicker
+              mode="day"
               value={formData.birthDate}
-              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-              slotProps={{ inputLabel: { shrink: true } }}
+              onChange={(val) => setFormData({ ...formData, birthDate: val })}
+              placeholder="Data de Nascimento"
             />
             <TextField
               fullWidth

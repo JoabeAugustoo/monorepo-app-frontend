@@ -11,6 +11,7 @@ export interface MuiDatePickerProps {
   mode?: 'month' | 'day';
   placeholder?: string;
   disabled?: boolean;
+  size?: 'small' | 'medium';
   sx?: SxProps<Theme>;
   className?: string;
 }
@@ -41,6 +42,7 @@ export function MuiDatePicker({
   mode = 'month',
   placeholder = 'Selecione...',
   disabled = false,
+  size = 'medium',
   sx,
   className,
 }: MuiDatePickerProps) {
@@ -60,7 +62,7 @@ export function MuiDatePicker({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-      <Box sx={sx} className={className}>
+      <Box sx={{ width: '100%', ...sx }} className={className}>
         <DatePicker
           value={selectedDate}
           onChange={handleDateChange}
@@ -72,7 +74,7 @@ export function MuiDatePicker({
             textField: {
               placeholder,
               fullWidth: true,
-              size: 'small',
+              size,
             },
           }}
         />

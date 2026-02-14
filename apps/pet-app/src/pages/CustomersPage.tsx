@@ -14,13 +14,13 @@ import {
 import { toast } from 'sonner';
 import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
+import { formatPhone } from '@app/core';
 import { customerService } from '../services';
 import type { Customer, CustomerDto, SearchRequest } from '../types';
 
 interface CustomerFormData {
   name: string;
   cpf: string;
-  rg: string;
   email: string;
   phone: string;
   secondaryPhone: string;
@@ -37,7 +37,6 @@ interface CustomerFormData {
 const initialFormData: CustomerFormData = {
   name: '',
   cpf: '',
-  rg: '',
   email: '',
   phone: '',
   secondaryPhone: '',
@@ -120,7 +119,6 @@ const CustomersPage = () => {
     setFormData({
       name: customer.name || '',
       cpf: customer.cpf || '',
-      rg: customer.rg || '',
       email: customer.email || '',
       phone: customer.phone || '',
       secondaryPhone: customer.secondaryPhone || '',
@@ -170,7 +168,6 @@ const CustomersPage = () => {
       const customerData: CustomerDto = {
         name: formData.name,
         cpf: formData.cpf || undefined,
-        rg: formData.rg || undefined,
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         secondaryPhone: formData.secondaryPhone || undefined,
@@ -216,7 +213,7 @@ const CustomersPage = () => {
     },
     { key: 'cpf', header: 'CPF' },
     { key: 'email', header: 'Email' },
-    { key: 'phone', header: 'Telefone' },
+    { key: 'phone', header: 'Telefone', render: (customer) => customer.phone ? formatPhone(customer.phone) : '-' },
     {
       key: 'city',
       header: 'Cidade',
@@ -315,14 +312,11 @@ const CustomersPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
           <Typography variant="subtitle2" color="text.secondary">Dados Pessoais</Typography>
           <TextField fullWidth label="Nome" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField fullWidth label="CPF" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} />
-            <TextField fullWidth label="RG" value={formData.rg} onChange={(e) => setFormData({ ...formData, rg: e.target.value })} />
-          </Box>
+          <TextField fullWidth label="CPF" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} />
           <TextField fullWidth label="Email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField fullWidth label="Telefone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-            <TextField fullWidth label="Telefone Secundário" value={formData.secondaryPhone} onChange={(e) => setFormData({ ...formData, secondaryPhone: e.target.value })} />
+            <TextField fullWidth label="Telefone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })} placeholder="(00) 00000-0000" />
+            <TextField fullWidth label="Telefone Secundário" value={formData.secondaryPhone} onChange={(e) => setFormData({ ...formData, secondaryPhone: formatPhone(e.target.value) })} placeholder="(00) 00000-0000" />
           </Box>
 
           <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>Endereço</Typography>

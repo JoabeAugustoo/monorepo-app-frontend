@@ -15,8 +15,9 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DataGrid, FormDialog } from '@app/ui';
+import { DataGrid, FormDialog, MuiDatePicker } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
+import { formatCurrency, formatDate } from '@app/core';
 import { stockBatchService, medicationService } from '../services';
 import type { StockBatch, StockBatchDto, Medication, SearchRequest } from '../types';
 
@@ -114,15 +115,7 @@ const MedicationStockPage = () => {
     }
   };
 
-  const formatDate = (date?: string) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
-
-  const formatCurrency = (value?: number) => {
-    if (value == null) return '-';
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
+  const fmtCurrency = (value?: number) => value != null ? formatCurrency(value, 'BRL') : '-';
 
   const isExpiringSoon = (date?: string) => {
     if (!date) return false;
@@ -149,7 +142,7 @@ const MedicationStockPage = () => {
     {
       key: 'unitCost',
       header: 'Custo Unit.',
-      render: (batch) => formatCurrency(batch.unitCost),
+      render: (batch) => fmtCurrency(batch.unitCost),
     },
     {
       key: 'entryDate',
@@ -255,14 +248,11 @@ const MedicationStockPage = () => {
             <TextField fullWidth label="Quantidade *" type="number" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: e.target.value })} required slotProps={{ input: { inputProps: { min: '1' } } }} />
             <TextField fullWidth label="Custo Unitário *" type="number" value={formData.unitCost} onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })} required slotProps={{ input: { inputProps: { min: '0', step: '0.01' } } }} />
           </Box>
-          <TextField
-            fullWidth
-            label="Data de Validade *"
-            type="date"
+          <MuiDatePicker
+            mode="day"
             value={formData.expirationDate}
-            onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-            required
-            slotProps={{ inputLabel: { shrink: true } }}
+            onChange={(val) => setFormData({ ...formData, expirationDate: val })}
+            placeholder="Data de Validade *"
           />
         </Box>
       </FormDialog>

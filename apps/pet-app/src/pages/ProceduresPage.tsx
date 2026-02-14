@@ -14,6 +14,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DataGrid, SearchField } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
+import { useSearchDebounce, formatCurrency, formatDate } from '@app/core';
 import { medicalProcedureService } from '../services';
 import type { MedicalProcedure, ProcedureStatus, ProcedureType, SearchRequest } from '../types';
 
@@ -44,8 +45,7 @@ const ProceduresPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const { debouncedValue: searchTerm, inputValue: searchInput, setInputValue: setSearchInput } = useSearchDebounce('', 500);
 
   const [sortField, setSortField] = useState('date');
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
@@ -54,12 +54,8 @@ const ProceduresPage = () => {
   const [typeFilter, setTypeFilter] = useState('');
 
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      setSearchTerm(searchInput);
-      setCurrentPage(1);
-    }, 500);
-    return () => clearTimeout(debounceTimer);
-  }, [searchInput]);
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchProcedures = useCallback(async () => {
     try {
@@ -101,15 +97,7 @@ const ProceduresPage = () => {
     fetchProcedures();
   }, [fetchProcedures]);
 
-  const formatDate = (date?: string) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
-
-  const formatCurrency = (value?: number) => {
-    if (value == null) return '-';
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
+  const fmtCurrency = (value?: number) => value != null ? formatCurrency(value, 'BRL') : '-';
 
   const columns: DataGridColumn<MedicalProcedure>[] = [
     {
@@ -157,7 +145,7 @@ const ProceduresPage = () => {
       key: 'cost',
       header: 'Custo',
       sortable: true,
-      render: (proc) => formatCurrency(proc.cost),
+      render: (proc) => fmtCurrency(proc.cost),
     },
   ];
 

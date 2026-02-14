@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
+import { formatCurrency, formatDateTime } from '@app/core';
 import { medicalProcedureService, medicationService } from '../services';
 import type {
   MedicalProcedure,
@@ -161,15 +162,7 @@ const ProcedureDetailPage = () => {
     setCompleteNotes(completeNotes.filter((_, i) => i !== index));
   };
 
-  const formatDate = (date?: string) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleString('pt-BR');
-  };
-
-  const formatCurrency = (value?: number) => {
-    if (value == null) return '-';
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
+  const fmtCurrency = (value?: number) => value != null ? formatCurrency(value, 'BRL') : '-';
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
@@ -241,11 +234,11 @@ const ProcedureDetailPage = () => {
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography variant="body2" color="text.secondary">Data</Typography>
-              <Typography>{formatDate(procedure.date)}</Typography>
+              <Typography>{formatDateTime(procedure.date)}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography variant="body2" color="text.secondary">Custo</Typography>
-              <Typography>{formatCurrency(procedure.cost)}</Typography>
+              <Typography>{fmtCurrency(procedure.cost)}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography variant="body2" color="text.secondary">Localização</Typography>
@@ -298,7 +291,7 @@ const ProcedureDetailPage = () => {
               <Box key={idx} sx={{ mb: 1, p: 1.5, backgroundColor: '#f8fafc', borderRadius: 1 }}>
                 <Typography variant="body2">{note.content}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {formatDate(note.createdAt)}
+                  {formatDateTime(note.createdAt)}
                 </Typography>
               </Box>
             ))

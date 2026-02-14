@@ -5,7 +5,6 @@ import {
   CardContent,
   Grid2 as Grid,
   Typography,
-  CircularProgress,
   List,
   ListItem,
   ListItemText,
@@ -38,6 +37,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+import { KPICard } from '@app/ui';
 import { petService, customerService, employeeService, medicalProcedureService, medicationService, stockBatchService } from '../services';
 import type { MedicalProcedure, Medication, StockBatch, ProcedureType } from '../types';
 
@@ -263,10 +263,10 @@ export default function Dashboard() {
   }, []);
 
   const cards = [
-    { titulo: 'Total de Pets', valor: petCount, icone: <PetsIcon />, cor: '#9C72D9' },
-    { titulo: 'Total de Clientes', valor: customerCount, icone: <PeopleIcon />, cor: '#F48FB1' },
-    { titulo: 'Total de Funcionários', valor: employeeCount, icone: <BadgeIcon />, cor: '#81C9C5' },
-    { titulo: 'Em Atendimento', valor: inProgressCount, icone: <MedicalServicesIcon />, cor: '#7EB3E0' },
+    { titulo: 'Total de Pets', valor: petCount, icone: <PetsIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #9C72D9, #7B5BBF)' },
+    { titulo: 'Total de Clientes', valor: customerCount, icone: <PeopleIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #F48FB1, #E57399)' },
+    { titulo: 'Total de Funcionários', valor: employeeCount, icone: <BadgeIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #81C9C5, #5FB8B3)' },
+    { titulo: 'Em Atendimento', valor: inProgressCount, icone: <MedicalServicesIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #7EB3E0, #5A9BD5)' },
   ];
 
   const formatTime = (date?: string) => {
@@ -284,30 +284,13 @@ export default function Dashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {cards.map((card) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={card.titulo}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      {card.titulo}
-                    </Typography>
-                    <Typography variant="h4" fontWeight={700}>
-                      {loading && card.valor === null ? <CircularProgress size={28} /> : (card.valor ?? 0)}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 1,
-                      borderRadius: 2,
-                      backgroundColor: card.cor + '14',
-                      color: card.cor,
-                    }}
-                  >
-                    {card.icone}
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <KPICard
+              label={card.titulo}
+              value={loading && card.valor === null ? '...' : (card.valor ?? 0)}
+              icon={card.icone}
+              gradient={card.gradient}
+              minHeight={120}
+            />
           </Grid>
         ))}
       </Grid>

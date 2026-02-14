@@ -13,8 +13,9 @@ import {
   Badge as BadgeIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
-import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
+import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField, MuiDatePicker } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
+import { useSearchDebounce, formatPhone } from '@app/core';
 import { employeeService } from '../services';
 import type { Employee, EmployeeDto, EmployeeRole, SearchRequest } from '../types';
 
@@ -60,19 +61,14 @@ const EmployeesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const { debouncedValue: searchTerm, inputValue: searchInput, setInputValue: setSearchInput } = useSearchDebounce('', 500);
 
   const [sortField, setSortField] = useState('active');
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
 
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      setSearchTerm(searchInput);
-      setCurrentPage(1);
-    }, 500);
-    return () => clearTimeout(debounceTimer);
-  }, [searchInput]);
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -196,7 +192,7 @@ const EmployeesPage = () => {
     },
     { key: 'cpf', header: 'CPF' },
     { key: 'email', header: 'Email' },
-    { key: 'phone', header: 'Telefone' },
+    { key: 'phone', header: 'Telefone', render: (employee) => employee.phone ? formatPhone(employee.phone) : '-' },
     {
       key: 'role',
       header: 'Cargo',
@@ -303,7 +299,7 @@ const EmployeesPage = () => {
             <TextField fullWidth label="CPF" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} />
             <TextField fullWidth label="Email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
           </Box>
-          <TextField fullWidth label="Telefone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+          <TextField fullWidth label="Telefone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })} placeholder="(00) 00000-0000" />
           <TextField
             fullWidth
             select
@@ -319,13 +315,11 @@ const EmployeesPage = () => {
           {formData.role === 'VETERINARIAN' && (
             <TextField fullWidth label="CRMV" value={formData.crmv} onChange={(e) => setFormData({ ...formData, crmv: e.target.value })} />
           )}
-          <TextField
-            fullWidth
-            label="Data de Contratação"
-            type="date"
+          <MuiDatePicker
+            mode="day"
             value={formData.hireDate}
-            onChange={(e) => setFormData({ ...formData, hireDate: e.target.value })}
-            slotProps={{ inputLabel: { shrink: true } }}
+            onChange={(val) => setFormData({ ...formData, hireDate: val })}
+            placeholder="Data de Contratação"
           />
         </Box>
       </FormDialog>

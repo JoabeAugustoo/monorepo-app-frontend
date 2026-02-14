@@ -31,7 +31,6 @@ export interface Customer {
   publicId?: string;
   name: string;
   cpf?: string;
-  rg?: string;
   email?: string;
   phone?: string;
   secondaryPhone?: string;
@@ -51,7 +50,6 @@ export interface Customer {
 export interface CustomerDto {
   name: string;
   cpf?: string;
-  rg?: string;
   email?: string;
   phone?: string;
   secondaryPhone?: string;

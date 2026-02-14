@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { MuiDatePicker } from '@app/ui';
 import { customerService, addressService, petService } from '../services';
 import type {
   CustomerWithAddresses,
@@ -36,34 +37,38 @@ import type {
   PetGender,
   CepResponse,
 } from '../types';
+import { FaDog, FaCat, FaDove, FaFrog, FaPaw, FaMars, FaVenus, FaGenderless } from 'react-icons/fa6';
+import { formatCpf, formatCep, formatPhone } from '@app/core';
 
 const SPECIES_LABELS: Record<PetSpecies, string> = {
   DOG: 'Cão', CAT: 'Gato', BIRD: 'Ave', REPTILE: 'Réptil', OTHER: 'Outro',
+};
+
+const SPECIES_COLORS: Record<PetSpecies, string> = {
+  DOG: '#9C72D9', CAT: '#F48FB1', BIRD: '#81C9C5', REPTILE: '#7EB3E0', OTHER: '#FFD6A5',
+};
+
+const SPECIES_ICONS: Record<PetSpecies, React.ReactNode> = {
+  DOG: <FaDog />, CAT: <FaCat />, BIRD: <FaDove />, REPTILE: <FaFrog />, OTHER: <FaPaw />,
 };
 
 const GENDER_LABELS: Record<PetGender, string> = {
   MALE: 'Macho', FEMALE: 'Fêmea', UNKNOWN: 'Indefinido',
 };
 
+const GENDER_ICONS: Record<PetGender, React.ReactNode> = {
+  MALE: <FaMars />, FEMALE: <FaVenus />, UNKNOWN: <FaGenderless />,
+};
+
+const GENDER_COLORS: Record<PetGender, string> = {
+  MALE: '#7EB3E0', FEMALE: '#F48FB1', UNKNOWN: '#BDBDBD',
+};
+
 const steps = ['Tutor', 'Endereço', 'Pet'];
-
-const formatCpf = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  return digits
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-};
-
-const formatCep = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-  return digits.replace(/(\d{5})(\d)/, '$1-$2');
-};
 
 interface TutorFormData {
   name: string;
   cpf: string;
-  rg: string;
   email: string;
   phone: string;
   secondaryPhone: string;
@@ -100,7 +105,7 @@ const PetRegisterPage = () => {
 
   // Tutor state
   const [tutorForm, setTutorForm] = useState<TutorFormData>({
-    name: '', cpf: '', rg: '', email: '', phone: '', secondaryPhone: '', notes: '',
+    name: '', cpf: '', email: '', phone: '', secondaryPhone: '', notes: '',
   });
   const [existingCustomer, setExistingCustomer] = useState<CustomerWithAddresses | null>(null);
   const [searchingCpf, setSearchingCpf] = useState(false);
@@ -131,7 +136,6 @@ const PetRegisterPage = () => {
           setTutorForm({
             name: customer.name || '',
             cpf: tutorForm.cpf,
-            rg: '',
             email: customer.email || '',
             phone: customer.phone || '',
             secondaryPhone: customer.secondaryPhone || '',
@@ -202,7 +206,6 @@ const PetRegisterPage = () => {
         const customerData: CustomerDto = {
           name: tutorForm.name,
           cpf: tutorForm.cpf.replace(/\D/g, '') || undefined,
-          rg: tutorForm.rg || undefined,
           email: tutorForm.email || undefined,
           phone: tutorForm.phone || undefined,
           secondaryPhone: tutorForm.secondaryPhone || undefined,
@@ -278,13 +281,6 @@ const PetRegisterPage = () => {
       <Box sx={{ display: 'flex', gap: 2 }}>
         <TextField
           fullWidth
-          label="RG"
-          value={tutorForm.rg}
-          onChange={(e) => setTutorForm({ ...tutorForm, rg: e.target.value })}
-          slotProps={{ input: { readOnly: !!existingCustomer } }}
-        />
-        <TextField
-          fullWidth
           label="Email"
           type="email"
           value={tutorForm.email}
@@ -297,7 +293,8 @@ const PetRegisterPage = () => {
           fullWidth
           label="Telefone *"
           value={tutorForm.phone}
-          onChange={(e) => setTutorForm({ ...tutorForm, phone: e.target.value })}
+          onChange={(e) => setTutorForm({ ...tutorForm, phone: formatPhone(e.target.value) })}
+          placeholder="(00) 00000-0000"
           required
           slotProps={{ input: { readOnly: !!existingCustomer } }}
         />
@@ -305,7 +302,7 @@ const PetRegisterPage = () => {
           fullWidth
           label="Telefone Secundário"
           value={tutorForm.secondaryPhone}
-          onChange={(e) => setTutorForm({ ...tutorForm, secondaryPhone: e.target.value })}
+          onChange={(e) => setTutorForm({ ...tutorForm, secondaryPhone: formatPhone(e.target.value) })}
           slotProps={{ input: { readOnly: !!existingCustomer } }}
         />
       </Box>
@@ -442,7 +439,12 @@ const PetRegisterPage = () => {
         >
           <MuiMenuItem value="">Selecione...</MuiMenuItem>
           {Object.entries(SPECIES_LABELS).map(([value, label]) => (
-            <MuiMenuItem key={value} value={value}>{label}</MuiMenuItem>
+            <MuiMenuItem key={value} value={value}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: SPECIES_COLORS[value as PetSpecies], display: 'flex' }}>{SPECIES_ICONS[value as PetSpecies]}</span>
+                {label}
+              </span>
+            </MuiMenuItem>
           ))}
         </TextField>
         <TextField
@@ -462,7 +464,12 @@ const PetRegisterPage = () => {
         >
           <MuiMenuItem value="">Selecione...</MuiMenuItem>
           {Object.entries(GENDER_LABELS).map(([value, label]) => (
-            <MuiMenuItem key={value} value={value}>{label}</MuiMenuItem>
+            <MuiMenuItem key={value} value={value}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: GENDER_COLORS[value as PetGender], display: 'flex' }}>{GENDER_ICONS[value as PetGender]}</span>
+                {label}
+              </span>
+            </MuiMenuItem>
           ))}
         </TextField>
         <TextField
@@ -473,13 +480,11 @@ const PetRegisterPage = () => {
         />
       </Box>
       <Box sx={{ display: 'flex', gap: 2 }}>
-        <TextField
-          fullWidth
-          label="Data de Nascimento"
-          type="date"
+        <MuiDatePicker
+          mode="day"
           value={petForm.birthDate}
-          onChange={(e) => setPetForm({ ...petForm, birthDate: e.target.value })}
-          slotProps={{ inputLabel: { shrink: true } }}
+          onChange={(val) => setPetForm({ ...petForm, birthDate: val })}
+          placeholder="Data de Nascimento"
         />
         <TextField
           fullWidth

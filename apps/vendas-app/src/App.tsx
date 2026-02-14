@@ -31,6 +31,7 @@ function DatePickerAction() {
       onChange={handleChange}
       mode="month"
       placeholder="Mês/Ano"
+      size="small"
       sx={{ width: 160 }}
     />
   );
