@@ -15,7 +15,6 @@ import {
   TextField,
   Typography,
   Alert,
-  LinearProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -207,7 +206,6 @@ const DocumentsPage = () => {
 
   // --- Vaccination auth ---
   const [generatingVaccAuth, setGeneratingVaccAuth] = useState(false);
-  const [vaccAuthProgress, setVaccAuthProgress] = useState('');
 
   const refreshDocuments = useCallback(async () => {
     if (!customer?.publicId || !selectedPet?.publicId) return;
@@ -401,30 +399,15 @@ const DocumentsPage = () => {
     if (!selectedPet?.publicId) return;
 
     setGeneratingVaccAuth(true);
-    setVaccAuthProgress('Solicitando geração...');
     try {
-      const result = await petService.generateVaccinationAuth(selectedPet.publicId);
-      setVaccAuthProgress('Aguardando geração do PDF...');
-
-      const reportStatus = await documentService.pollReportUntilDone(result.reportId);
-
-      if (reportStatus.status === 'FAILED') {
-        toast.error(`Falha na geração: ${reportStatus.errorMessage || 'Erro desconhecido'}`);
-        return;
-      }
-
-      setVaccAuthProgress('Baixando PDF...');
-      const blob = await documentService.downloadReport(result.reportId);
-      triggerBlobDownload(blob, `autorizacao-vacinacao-${selectedPet.name}.pdf`);
-      toast.success('Autorização de vacinação gerada com sucesso!');
-
+      await petService.generateVaccinationAuth(selectedPet.publicId);
+      toast.success('Autorização de vacinação solicitada com sucesso!');
       await refreshDocuments();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao gerar autorização de vacinação.';
       toast.error(message);
     } finally {
       setGeneratingVaccAuth(false);
-      setVaccAuthProgress('');
     }
   }, [selectedPet, refreshDocuments]);
 
@@ -681,14 +664,6 @@ const DocumentsPage = () => {
                   {generatingVaccAuth ? 'Gerando...' : 'Gerar Autorização de Vacinação'}
                 </Button>
               </Box>
-              {generatingVaccAuth && vaccAuthProgress && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    {vaccAuthProgress}
-                  </Typography>
-                  <LinearProgress />
-                </Box>
-              )}
             </CardContent>
           </Card>
 
