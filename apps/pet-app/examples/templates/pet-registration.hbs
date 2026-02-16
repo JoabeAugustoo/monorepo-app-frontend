@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; line-height: 1.7; max-width: 720px; margin: 0 auto; }
+    h1 { color: #5B2E91; font-size: 22px; border-bottom: 2px solid #9C72D9; padding-bottom: 10px; margin-bottom: 24px; }
+    .section { margin-bottom: 28px; }
+    .section-title { font-size: 16px; font-weight: 700; color: #5B2E91; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #E0D4F0; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 8px 12px; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
+    td.label { font-weight: 600; color: #555; width: 160px; background: #FAFAFA; }
+    .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #eee; font-size: 11px; color: #999; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>{{templateName}}</h1>
+
+  <div class="section">
+    <div class="section-title">Dados do Tutor</div>
+    <table>
+      <tr><td class="label">Nome</td><td>{{customerName}}</td></tr>
+      <tr><td class="label">CPF</td><td>{{customerCpf}}</td></tr>
+      <tr><td class="label">Email</td><td>{{customerEmail}}</td></tr>
+      <tr><td class="label">Telefone</td><td>{{customerPhone}}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Dados do Pet</div>
+    <table>
+      <tr><td class="label">Nome</td><td>{{petName}}</td></tr>
+      <tr><td class="label">Espécie</td><td>{{petSpecies}}</td></tr>
+      <tr><td class="label">Raça</td><td>{{petBreed}}</td></tr>
+      <tr><td class="label">Sexo</td><td>{{petGender}}</td></tr>
+      <tr><td class="label">Nascimento</td><td>{{petBirthDate}}</td></tr>
+      <tr><td class="label">Peso</td><td>{{petWeight}}</td></tr>
+      <tr><td class="label">Cor/Pelagem</td><td>{{petColor}}</td></tr>
+    </table>
+  </div>
+
+  <div class="footer">
+    <p>{{clinicName}} — CNPJ: {{clinicCnpj}}</p>
+    <p>{{clinicAddress}} — Tel: {{clinicPhone}}</p>
+    <p>Ficha gerada em {{currentDateTime}}</p>
+  </div>
+</body>
+</html>

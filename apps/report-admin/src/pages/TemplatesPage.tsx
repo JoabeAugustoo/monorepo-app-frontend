@@ -15,8 +15,8 @@ import { useNavigate } from 'react-router-dom';
 import { DataGrid, SearchField, ConfirmDialog } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
 import { useSearchDebounce, formatDate } from '@app/core';
-import { templateService } from '../services';
-import type { Template, TemplateStatus, SearchRequest } from '../types';
+import { templateService, applicationService } from '../services';
+import type { Template, TemplateStatus, Application, SearchRequest } from '../types';
 import { toast } from 'sonner';
 
 const STATUS_CONFIG: Record<TemplateStatus, { label: string; color: string }> = {
@@ -45,12 +45,21 @@ const TemplatesPage = () => {
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
 
   const [statusFilter, setStatusFilter] = useState('');
+  const [appFilter, setAppFilter] = useState('');
+  const [apps, setApps] = useState<Application[]>([]);
 
   const [deactivateTarget, setDeactivateTarget] = useState<Template | null>(null);
 
+  // Load active applications for filter
+  useEffect(() => {
+    applicationService.getActive()
+      .then(setApps)
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, statusFilter, appFilter]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -61,6 +70,7 @@ const TemplatesPage = () => {
         where.name = { contains: searchTerm.trim() };
       }
       if (statusFilter) where.status = statusFilter;
+      if (appFilter) where.applicationId = appFilter;
 
       const searchRequest: SearchRequest = {
         where,
@@ -84,7 +94,7 @@ const TemplatesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, sortField, sortDirection, statusFilter]);
+  }, [currentPage, pageSize, searchTerm, sortField, sortDirection, statusFilter, appFilter]);
 
   useEffect(() => {
     fetchTemplates();
@@ -114,6 +124,14 @@ const TemplatesPage = () => {
       header: 'Chave',
       render: (t) => (
         <Chip label={t.key} size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }} />
+      ),
+    },
+    {
+      key: 'applicationName',
+      header: 'Aplicação',
+      sortable: true,
+      render: (t) => (
+        <Chip label={t.applicationName} size="small" variant="outlined" sx={{ fontWeight: 500 }} />
       ),
     },
     {
@@ -159,9 +177,22 @@ const TemplatesPage = () => {
       <TextField
         select
         size="small"
+        label="Aplicação"
+        value={appFilter}
+        onChange={(e) => setAppFilter(e.target.value)}
+        sx={{ minWidth: 160 }}
+      >
+        <MuiMenuItem value="">Todas</MuiMenuItem>
+        {apps.map((app) => (
+          <MuiMenuItem key={app.publicId} value={app.publicId}>{app.name}</MuiMenuItem>
+        ))}
+      </TextField>
+      <TextField
+        select
+        size="small"
         label="Status"
         value={statusFilter}
-        onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+        onChange={(e) => setStatusFilter(e.target.value)}
         sx={{ minWidth: 140 }}
       >
         <MuiMenuItem value="">Todos</MuiMenuItem>

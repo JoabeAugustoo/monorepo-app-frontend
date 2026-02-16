@@ -42,7 +42,7 @@ const MedicationStockPage = () => {
     batchNumber: '',
     quantity: '',
     unitCost: '',
-    expirationDate: '',
+    expirationDate: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
@@ -87,7 +87,7 @@ const MedicationStockPage = () => {
   }, [fetchBatches]);
 
   const handleAddNew = () => {
-    setFormData({ batchNumber: '', quantity: '', unitCost: '', expirationDate: '' });
+    setFormData({ batchNumber: '', quantity: '', unitCost: '', expirationDate: new Date().toISOString().split('T')[0] });
     setShowForm(true);
   };
 

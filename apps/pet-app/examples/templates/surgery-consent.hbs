@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; line-height: 1.7; max-width: 720px; margin: 0 auto; }
+    h1 { color: #5B2E91; font-size: 22px; border-bottom: 2px solid #9C72D9; padding-bottom: 10px; margin-bottom: 24px; }
+    .header-info { background: #F5F0FA; padding: 16px 20px; border-radius: 8px; margin-bottom: 24px; }
+    .header-info p { margin: 4px 0; font-size: 14px; }
+    .label { font-weight: 600; color: #5B2E91; }
+    .content { text-align: justify; margin-bottom: 32px; }
+    .content p { margin-bottom: 12px; }
+    .signature-block { margin-top: 80px; text-align: center; }
+    .signature-line { border-top: 1px solid #333; width: 320px; margin: 0 auto 6px; }
+    .signature-name { font-weight: 600; }
+    .signature-label { font-size: 13px; color: #666; }
+    .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #eee; font-size: 11px; color: #999; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>{{templateName}}</h1>
+
+  <div class="header-info">
+    <p><span class="label">Tutor:</span> {{customerName}}</p>
+    <p><span class="label">CPF:</span> {{customerCpf}}</p>
+    <p><span class="label">Pet:</span> {{petName}} — {{petSpecies}} {{#if petBreed}}({{petBreed}}){{/if}}</p>
+    <p><span class="label">Peso:</span> {{petWeight}}</p>
+    <p><span class="label">Data:</span> {{currentDate}}</p>
+  </div>
+
+  <div class="content">
+    <p>Eu, <strong>{{customerName}}</strong>, portador(a) do CPF <strong>{{customerCpf}}</strong>, na qualidade de responsável pelo animal <strong>{{petName}}</strong>, da espécie <strong>{{petSpecies}}</strong>, raça <strong>{{petBreed}}</strong>, declaro que:</p>
+
+    <p>1. Fui devidamente informado(a) pela equipe veterinária de <strong>{{clinicName}}</strong> sobre o procedimento cirúrgico a ser realizado, incluindo sua natureza, finalidade, riscos inerentes, possíveis complicações e alternativas disponíveis.</p>
+
+    <p>2. Compreendo que todo procedimento cirúrgico envolve riscos, incluindo, mas não se limitando a: reações adversas à anestesia, hemorragias, infecções pós-operatórias e, em casos extremos, óbito do animal.</p>
+
+    <p>3. Autorizo a equipe veterinária a realizar o procedimento cirúrgico proposto, bem como quaisquer procedimentos adicionais que se façam necessários durante o ato cirúrgico para preservar a vida e o bem-estar do animal.</p>
+
+    <p>4. Comprometo-me a seguir todas as orientações pós-operatórias fornecidas pela equipe veterinária.</p>
+
+    <p>5. Declaro que todas as informações prestadas sobre o histórico de saúde do animal são verdadeiras e completas.</p>
+  </div>
+
+  {{#if isSignatureRequired}}
+  <div class="signature-block">
+    <div class="signature-line"></div>
+    <p class="signature-name">{{customerName}}</p>
+    <p class="signature-label">Assinatura do Responsável</p>
+  </div>
+
+  <div class="signature-block" style="margin-top: 40px;">
+    <div class="signature-line"></div>
+    <p class="signature-name">Médico(a) Veterinário(a)</p>
+    <p class="signature-label">{{clinicName}}</p>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    <p>{{clinicName}} — CNPJ: {{clinicCnpj}}</p>
+    <p>{{clinicAddress}} — Tel: {{clinicPhone}}</p>
+    <p>Documento gerado em {{currentDateTime}}</p>
+  </div>
+</body>
+</html>

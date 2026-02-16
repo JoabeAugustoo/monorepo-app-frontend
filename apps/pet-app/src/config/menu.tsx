@@ -6,6 +6,7 @@ import AddCircle from '@mui/icons-material/AddCircle';
 import PersonSearch from '@mui/icons-material/PersonSearch';
 import Medication from '@mui/icons-material/Medication';
 import MedicalServices from '@mui/icons-material/MedicalServices';
+import Description from '@mui/icons-material/Description';
 import { MenuItem } from '@app/core';
 
 export const menuItems: MenuItem[] = [
@@ -17,4 +18,5 @@ export const menuItems: MenuItem[] = [
   { label: 'Funcionários', icon: <Badge />, path: '/funcionarios' },
   { label: 'Medicamentos', icon: <Medication />, path: '/medicamentos' },
   { label: 'Procedimentos', icon: <MedicalServices />, path: '/procedimentos' },
+  { label: 'Documentos', icon: <Description />, path: '/documentos' },
 ];

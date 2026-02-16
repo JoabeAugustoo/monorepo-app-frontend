@@ -1,5 +1,5 @@
 import api from './api';
-import type { Pet, PetDto, PetTutorDto, SearchRequest, PaginatedResponse } from '../types';
+import type { Pet, PetDto, PetTutorDto, SearchRequest, PaginatedResponse, GenerateVaccinationAuthResponse } from '../types';
 
 export const petService = {
   getPetById: async (id: string): Promise<Pet> => {
@@ -75,6 +75,11 @@ export const petService = {
 
   deactivatePet: async (id: string): Promise<Pet> => {
     const response = await api.patch(`/pets/${id}/deactivate`);
+    return response.data;
+  },
+
+  generateVaccinationAuth: async (petId: string): Promise<GenerateVaccinationAuthResponse> => {
+    const response = await api.post(`/pets/${petId}/documents/vaccination-auth`);
     return response.data;
   },
 };

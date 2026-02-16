@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; line-height: 1.7; max-width: 720px; margin: 0 auto; }
+    h1 { color: #5B2E91; font-size: 22px; border-bottom: 2px solid #9C72D9; padding-bottom: 10px; margin-bottom: 24px; }
+    .header-info { background: #F5F0FA; padding: 16px 20px; border-radius: 8px; margin-bottom: 24px; }
+    .header-info p { margin: 4px 0; font-size: 14px; }
+    .label { font-weight: 600; color: #5B2E91; }
+    .content { text-align: justify; margin-bottom: 32px; }
+    .content p { margin-bottom: 12px; }
+    .signature-block { margin-top: 80px; text-align: center; }
+    .signature-line { border-top: 1px solid #333; width: 320px; margin: 0 auto 6px; }
+    .signature-name { font-weight: 600; }
+    .signature-label { font-size: 13px; color: #666; }
+    .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #eee; font-size: 11px; color: #999; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>{{templateName}}</h1>
+
+  <div class="header-info">
+    <p><span class="label">Tutor:</span> {{customerName}}</p>
+    <p><span class="label">CPF:</span> {{customerCpf}}</p>
+    <p><span class="label">Contato:</span> {{customerPhone}}</p>
+    <p><span class="label">Pet:</span> {{petName}} — {{petSpecies}} {{#if petBreed}}({{petBreed}}){{/if}}</p>
+    <p><span class="label">Peso:</span> {{petWeight}}</p>
+    <p><span class="label">Data de Internação:</span> {{currentDate}}</p>
+  </div>
+
+  <div class="content">
+    <p>Eu, <strong>{{customerName}}</strong>, portador(a) do CPF <strong>{{customerCpf}}</strong>, autorizo a internação do animal <strong>{{petName}}</strong> nas dependências de <strong>{{clinicName}}</strong>, e declaro estar ciente das seguintes condições:</p>
+
+    <p>1. O animal ficará sob os cuidados da equipe veterinária durante o período de internação, recebendo tratamento conforme prescrição médica.</p>
+
+    <p>2. Visitas poderão ser realizadas em horários previamente acordados com a equipe da clínica.</p>
+
+    <p>3. Autorizo a realização de procedimentos de emergência caso necessário para preservar a vida do animal, mesmo sem contato prévio, quando houver risco iminente.</p>
+
+    <p>4. Estou ciente de que os custos da internação serão calculados por diária e poderão incluir medicamentos, exames e procedimentos adicionais conforme necessidade clínica.</p>
+
+    <p>5. Comprometo-me a manter um telefone de contato disponível durante todo o período de internação: <strong>{{customerPhone}}</strong>.</p>
+
+    <p>6. A alta médica será determinada exclusivamente pela equipe veterinária responsável.</p>
+  </div>
+
+  {{#if isSignatureRequired}}
+  <div class="signature-block">
+    <div class="signature-line"></div>
+    <p class="signature-name">{{customerName}}</p>
+    <p class="signature-label">Assinatura do Responsável</p>
+  </div>
+
+  <div class="signature-block" style="margin-top: 40px;">
+    <div class="signature-line"></div>
+    <p class="signature-name">Médico(a) Veterinário(a) Responsável</p>
+    <p class="signature-label">{{clinicName}}</p>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    <p>{{clinicName}} — CNPJ: {{clinicCnpj}}</p>
+    <p>{{clinicAddress}} — Tel: {{clinicPhone}}</p>
+    <p>Documento gerado em {{currentDateTime}}</p>
+  </div>
+</body>
+</html>

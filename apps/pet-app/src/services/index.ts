@@ -6,4 +6,5 @@ export { addressService } from './addressService';
 export { medicalProcedureService } from './medicalProcedureService';
 export { medicationService } from './medicationService';
 export { stockBatchService } from './stockBatchService';
+export { documentService } from './documentService';
 export { default as api } from './api';

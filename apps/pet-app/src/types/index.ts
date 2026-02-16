@@ -9,7 +9,29 @@ export type GranularRole =
   | 'CUSTOMER_READ'
   | 'CUSTOMER_WRITE'
   | 'EMPLOYEE_READ'
-  | 'EMPLOYEE_WRITE';
+  | 'EMPLOYEE_WRITE'
+  | 'MEDICALPROCEDURE_READ'
+  | 'MEDICALPROCEDURE_WRITE'
+  | 'MEDICATION_READ'
+  | 'MEDICATION_WRITE'
+  | 'STOCKBATCH_READ'
+  | 'STOCKBATCH_WRITE'
+  | 'STOCKMOVEMENT_READ'
+  | 'STOCKMOVEMENT_WRITE'
+  | 'REVENUE_READ'
+  | 'REVENUE_WRITE'
+  | 'EXPENSE_READ'
+  | 'EXPENSE_WRITE'
+  | 'DEBT_READ'
+  | 'DEBT_WRITE'
+  | 'FINANCIALREPORT_READ'
+  | 'TEMPLATE_READ'
+  | 'TEMPLATE_WRITE'
+  | 'DOCUMENT_READ'
+  | 'DOCUMENT_WRITE'
+  | 'REPORT_READ'
+  | 'REPORT_WRITE'
+  | 'APPLICATION_READ';
 
 export interface PetUser {
   id: string;
@@ -311,6 +333,85 @@ export interface StockBatchDto {
   quantity: number;
   unitCost: number;
   expirationDate: string;
+}
+
+// --- Documents & Signatures ---
+export type DocumentType = 'SIGNATURE_REQUIRED' | 'SEND_ONLY';
+export type DocumentStatus = 'PENDING' | 'SENT' | 'AWAITING_SIGNATURE' | 'SIGNED' | 'EXPIRED' | 'CANCELLED';
+export type TemplateEngine = 'HANDLEBARS' | 'HTML';
+export type TemplateStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export interface DocumentTemplate {
+  publicId: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  key: string;
+  name: string;
+  description?: string;
+  engine: TemplateEngine;
+  status: TemplateStatus;
+  documentType: DocumentType;
+  category?: string;
+  applicationId: string;
+  applicationName: string;
+  applicationCode: string;
+  activeVersion?: number;
+}
+
+export interface DocumentRecord {
+  publicId: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  templateKey: string;
+  templateName: string;
+  templateVersion: number;
+  documentType: DocumentType;
+  status: DocumentStatus;
+  petId: string;
+  petName: string;
+  customerId: string;
+  customerName: string;
+  sentAt?: string;
+  signedAt?: string;
+  expiresAt?: string;
+}
+
+export interface SendDocumentDto {
+  templateId: string;
+  petId: string;
+  petName: string;
+  customerId: string;
+  customerName: string;
+  data: Record<string, unknown>;
+}
+
+export interface SignDocumentDto {
+  signatureData: string;
+  signedBy: string;
+}
+
+// --- Reports ---
+
+export interface GenerateVaccinationAuthResponse {
+  reportId: string;
+  status: string;
+  statusUrl: string;
+}
+
+export type ReportStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
+export interface ReportStatusResponse {
+  reportId: string;
+  status: ReportStatus;
+  downloadUrl?: string;
+  errorMessage?: string;
+  createdAt: string;
+  completedAt?: string;
+  contentType?: string;
+  fileExtension?: string;
+  fileSize?: number;
 }
 
 export type { SortField, SearchRequest, PaginatedResponse, CurrencyCode, Language, TranslationSet } from '@app/core';

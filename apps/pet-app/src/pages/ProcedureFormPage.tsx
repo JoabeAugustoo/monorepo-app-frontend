@@ -62,7 +62,7 @@ const ProcedureFormPage = () => {
     type: '' as ProcedureType | '',
     location: 'IN_CLINIC' as ProcedureLocation,
     description: '',
-    date: '',
+    date: new Date().toISOString().split('T')[0],
     time: '',
     cost: '',
     observations: '',

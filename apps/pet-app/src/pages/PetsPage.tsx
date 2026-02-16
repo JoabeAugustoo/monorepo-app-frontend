@@ -80,7 +80,7 @@ const initialFormData: PetFormData = {
   species: '',
   breed: '',
   gender: '',
-  birthDate: '',
+  birthDate: new Date().toISOString().split('T')[0],
   weight: '',
   color: '',
   observations: '',

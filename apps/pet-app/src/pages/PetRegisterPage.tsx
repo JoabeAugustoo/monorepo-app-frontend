@@ -122,7 +122,7 @@ const PetRegisterPage = () => {
 
   // Pet state
   const [petForm, setPetForm] = useState<PetFormData>({
-    name: '', species: '', breed: '', gender: '', birthDate: '', weight: '', color: '', observations: '',
+    name: '', species: '', breed: '', gender: '', birthDate: new Date().toISOString().split('T')[0], weight: '', color: '', observations: '',
   });
 
   // CPF auto-search

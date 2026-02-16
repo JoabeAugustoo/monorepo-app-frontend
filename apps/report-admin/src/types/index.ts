@@ -1,5 +1,6 @@
 export type TemplateStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 export type TemplateEngine = 'HANDLEBARS' | 'HTML';
+export type DocumentType = 'SIGNATURE_REQUIRED' | 'SEND_ONLY';
 
 export interface Template {
   publicId: string;
@@ -11,7 +12,11 @@ export interface Template {
   description?: string;
   engine: TemplateEngine;
   status: TemplateStatus;
-  tenantId?: string;
+  documentType: DocumentType;
+  category?: string;
+  applicationId: string;
+  applicationName: string;
+  applicationCode: string;
   activeVersion?: number;
 }
 
@@ -21,7 +26,11 @@ export interface TemplateDto {
   description?: string;
   engine?: TemplateEngine;
   status?: TemplateStatus;
-  tenantId?: string;
+  documentType?: DocumentType;
+  category?: string;
+  applicationId: string;
+  applicationName: string;
+  applicationCode: string;
 }
 
 export interface TemplateVersion {
@@ -33,6 +42,26 @@ export interface TemplateVersion {
   createdAt: string;
   createdBy?: string;
 }
+
+// --- Application ---
+
+export interface Application {
+  publicId: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+  code: string;
+  description?: string;
+}
+
+export interface ApplicationDto {
+  name: string;
+  code: string;
+  description?: string;
+}
+
+// --- Reports ---
 
 export interface CountResponse {
   total: number;

@@ -34,8 +34,8 @@ import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
 import { formatDate, formatDateTime } from '@app/core';
 import { ConfirmDialog } from '@app/ui';
-import { templateService } from '../services';
-import type { Template, TemplateVersion, TemplateStatus, TemplateEngine, TemplateDto } from '../types';
+import { templateService, applicationService } from '../services';
+import type { Template, TemplateVersion, TemplateStatus, TemplateEngine, DocumentType, TemplateDto, Application } from '../types';
 
 const STATUS_CONFIG: Record<TemplateStatus, { label: string; color: string }> = {
   DRAFT: { label: 'Rascunho', color: '#F59E0B' },
@@ -54,6 +54,11 @@ const STATUS_OPTIONS: { value: TemplateStatus; label: string }[] = [
   { value: 'ARCHIVED', label: 'Arquivado' },
 ];
 
+const DOC_TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
+  { value: 'SEND_ONLY', label: 'Envio Simples' },
+  { value: 'SIGNATURE_REQUIRED', label: 'Requer Assinatura' },
+];
+
 const TemplateDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -63,6 +68,9 @@ const TemplateDetailPage = () => {
   const [versions, setVersions] = useState<TemplateVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Apps for edit dialog
+  const [apps, setApps] = useState<Application[]>([]);
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
@@ -97,6 +105,12 @@ const TemplateDetailPage = () => {
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    applicationService.getActive()
+      .then(setApps)
+      .catch(() => {});
+  }, []);
+
   const handleEdit = () => {
     if (!template) return;
     setEditData({
@@ -105,12 +119,29 @@ const TemplateDetailPage = () => {
       description: template.description || '',
       engine: template.engine,
       status: template.status,
+      documentType: template.documentType,
+      category: template.category || '',
+      applicationId: template.applicationId,
+      applicationName: template.applicationName,
+      applicationCode: template.applicationCode,
     });
     setEditOpen(true);
   };
 
+  const handleAppChange = (appId: string) => {
+    const app = apps.find((a) => a.publicId === appId);
+    if (app) {
+      setEditData({
+        ...editData,
+        applicationId: app.publicId,
+        applicationName: app.name,
+        applicationCode: app.code,
+      });
+    }
+  };
+
   const handleSaveEdit = async () => {
-    if (!id || !editData.key || !editData.name) return;
+    if (!id || !editData.key || !editData.name || !editData.applicationId) return;
     setActionLoading(true);
     try {
       const updated = await templateService.update(id, editData as TemplateDto);
@@ -245,16 +276,29 @@ const TemplateDetailPage = () => {
               <Typography variant="body2" color="text.secondary">Versão Ativa</Typography>
               <Typography>{template.activeVersion != null ? `v${template.activeVersion}` : '-'}</Typography>
             </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="body2" color="text.secondary">Aplicação</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                <Typography fontWeight={500}>{template.applicationName}</Typography>
+                <Chip label={template.applicationCode} size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} />
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="body2" color="text.secondary">Tipo de Documento</Typography>
+              <Typography>
+                {template.documentType === 'SIGNATURE_REQUIRED' ? 'Requer Assinatura' : 'Envio Simples'}
+              </Typography>
+            </Grid>
+            {template.category && (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Typography variant="body2" color="text.secondary">Categoria</Typography>
+                <Typography>{template.category}</Typography>
+              </Grid>
+            )}
             {template.description && (
               <Grid size={{ xs: 12 }}>
                 <Typography variant="body2" color="text.secondary">Descrição</Typography>
                 <Typography>{template.description}</Typography>
-              </Grid>
-            )}
-            {template.tenantId && (
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body2" color="text.secondary">Tenant</Typography>
-                <Typography sx={{ fontFamily: 'monospace' }}>{template.tenantId}</Typography>
               </Grid>
             )}
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -342,6 +386,17 @@ const TemplateDetailPage = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
               fullWidth
+              select
+              label="Aplicação"
+              value={editData.applicationId || ''}
+              onChange={(e) => handleAppChange(e.target.value)}
+            >
+              {apps.map((app) => (
+                <MuiMenuItem key={app.publicId} value={app.publicId}>{app.name} ({app.code})</MuiMenuItem>
+              ))}
+            </TextField>
+            <TextField
+              fullWidth
               label="Nome"
               value={editData.name || ''}
               onChange={(e) => setEditData({ ...editData, name: e.target.value })}
@@ -376,6 +431,19 @@ const TemplateDetailPage = () => {
               <TextField
                 fullWidth
                 select
+                label="Tipo de Documento"
+                value={editData.documentType || ''}
+                onChange={(e) => setEditData({ ...editData, documentType: e.target.value as DocumentType })}
+              >
+                {DOC_TYPE_OPTIONS.map((opt) => (
+                  <MuiMenuItem key={opt.value} value={opt.value}>{opt.label}</MuiMenuItem>
+                ))}
+              </TextField>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                fullWidth
+                select
                 label="Status"
                 value={editData.status || ''}
                 onChange={(e) => setEditData({ ...editData, status: e.target.value as TemplateStatus })}
@@ -384,6 +452,12 @@ const TemplateDetailPage = () => {
                   <MuiMenuItem key={opt.value} value={opt.value}>{opt.label}</MuiMenuItem>
                 ))}
               </TextField>
+              <TextField
+                fullWidth
+                label="Categoria"
+                value={editData.category || ''}
+                onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+              />
             </Box>
           </Box>
         </DialogContent>

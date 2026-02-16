@@ -14,7 +14,7 @@ import {
 import { toast } from 'sonner';
 import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
-import { formatPhone } from '@app/core';
+import { formatPhone, formatCpf, formatCep } from '@app/core';
 import { customerService } from '../services';
 import type { Customer, CustomerDto, SearchRequest } from '../types';
 
@@ -312,7 +312,7 @@ const CustomersPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
           <Typography variant="subtitle2" color="text.secondary">Dados Pessoais</Typography>
           <TextField fullWidth label="Nome" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextField fullWidth label="CPF" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} />
+          <TextField fullWidth label="CPF" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: formatCpf(e.target.value) })} placeholder="000.000.000-00" />
           <TextField fullWidth label="Email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField fullWidth label="Telefone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })} placeholder="(00) 00000-0000" />
@@ -331,7 +331,7 @@ const CustomersPage = () => {
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField fullWidth label="Estado" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
-            <TextField fullWidth label="CEP" value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} />
+            <TextField fullWidth label="CEP" value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: formatCep(e.target.value) })} placeholder="00000-000" />
           </Box>
 
           <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>Observações</Typography>

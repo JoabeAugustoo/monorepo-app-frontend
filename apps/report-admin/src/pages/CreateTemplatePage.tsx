@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -15,8 +15,8 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { templateService } from '../services';
-import type { TemplateEngine, TemplateStatus } from '../types';
+import { templateService, applicationService } from '../services';
+import type { TemplateEngine, TemplateStatus, DocumentType, Application } from '../types';
 
 const ENGINE_OPTIONS: { value: TemplateEngine; label: string }[] = [
   { value: 'HANDLEBARS', label: 'Handlebars' },
@@ -27,6 +27,11 @@ const STATUS_OPTIONS: { value: TemplateStatus; label: string }[] = [
   { value: 'DRAFT', label: 'Rascunho' },
   { value: 'PUBLISHED', label: 'Publicado' },
   { value: 'ARCHIVED', label: 'Arquivado' },
+];
+
+const DOC_TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
+  { value: 'SEND_ONLY', label: 'Envio Simples' },
+  { value: 'SIGNATURE_REQUIRED', label: 'Requer Assinatura' },
 ];
 
 const slugify = (text: string): string =>
@@ -41,6 +46,7 @@ const CreateTemplatePage = () => {
   const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
+  const [apps, setApps] = useState<Application[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -48,9 +54,18 @@ const CreateTemplatePage = () => {
     description: '',
     engine: 'HANDLEBARS' as TemplateEngine,
     status: 'DRAFT' as TemplateStatus,
+    documentType: 'SEND_ONLY' as DocumentType,
+    category: '',
+    applicationId: '',
   });
 
   const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
+
+  useEffect(() => {
+    applicationService.getActive()
+      .then(setApps)
+      .catch(() => {});
+  }, []);
 
   const handleNameChange = (value: string) => {
     const newState = { ...formData, name: value };
@@ -65,9 +80,15 @@ const CreateTemplatePage = () => {
     setFormData({ ...formData, key: value });
   };
 
+  const selectedApp = apps.find((a) => a.publicId === formData.applicationId);
+
   const handleSave = async () => {
     if (!formData.name.trim() || !formData.key.trim()) {
       toast.error('Preencha os campos obrigatórios (Nome e Chave).');
+      return;
+    }
+    if (!selectedApp) {
+      toast.error('Selecione uma aplicação.');
       return;
     }
 
@@ -79,6 +100,11 @@ const CreateTemplatePage = () => {
         description: formData.description.trim() || undefined,
         engine: formData.engine,
         status: formData.status,
+        documentType: formData.documentType,
+        category: formData.category.trim() || undefined,
+        applicationId: selectedApp.publicId,
+        applicationName: selectedApp.name,
+        applicationCode: selectedApp.code,
       });
       toast.success('Template criado com sucesso!');
       navigate(`/templates/${created.publicId}`);
@@ -99,6 +125,19 @@ const CreateTemplatePage = () => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              fullWidth
+              select
+              label="Aplicação *"
+              value={formData.applicationId}
+              onChange={(e) => setFormData({ ...formData, applicationId: e.target.value })}
+            >
+              <MuiMenuItem value="" disabled>Selecione uma aplicação</MuiMenuItem>
+              {apps.map((app) => (
+                <MuiMenuItem key={app.publicId} value={app.publicId}>{app.name} ({app.code})</MuiMenuItem>
+              ))}
+            </TextField>
+
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
@@ -140,6 +179,20 @@ const CreateTemplatePage = () => {
               <TextField
                 fullWidth
                 select
+                label="Tipo de Documento"
+                value={formData.documentType}
+                onChange={(e) => setFormData({ ...formData, documentType: e.target.value as DocumentType })}
+              >
+                {DOC_TYPE_OPTIONS.map((opt) => (
+                  <MuiMenuItem key={opt.value} value={opt.value}>{opt.label}</MuiMenuItem>
+                ))}
+              </TextField>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                fullWidth
+                select
                 label="Status"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as TemplateStatus })}
@@ -148,6 +201,13 @@ const CreateTemplatePage = () => {
                   <MuiMenuItem key={opt.value} value={opt.value}>{opt.label}</MuiMenuItem>
                 ))}
               </TextField>
+              <TextField
+                fullWidth
+                label="Categoria"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                helperText="Ex: Cirurgia, Vacinação, Consulta"
+              />
             </Box>
           </Box>
         </CardContent>

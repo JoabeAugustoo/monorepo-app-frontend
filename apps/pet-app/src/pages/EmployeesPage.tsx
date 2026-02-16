@@ -11,11 +11,15 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Badge as BadgeIcon,
+  MedicalServices as VetIcon,
+  SupportAgent as AttendantIcon,
+  Work as AdminIcon,
+  SupervisorAccount as ManagerIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField, MuiDatePicker } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
-import { useSearchDebounce, formatPhone } from '@app/core';
+import { useSearchDebounce, formatPhone, formatCpf } from '@app/core';
 import { employeeService } from '../services';
 import type { Employee, EmployeeDto, EmployeeRole, SearchRequest } from '../types';
 
@@ -24,6 +28,20 @@ const ROLE_LABELS: Record<EmployeeRole, string> = {
   ATTENDANT: 'Atendente',
   ADMINISTRATIVE: 'Administrativo',
   MANAGER: 'Gerente',
+};
+
+const ROLE_ICONS: Record<EmployeeRole, React.ReactNode> = {
+  VETERINARIAN: <VetIcon sx={{ fontSize: 16 }} />,
+  ATTENDANT: <AttendantIcon sx={{ fontSize: 16 }} />,
+  ADMINISTRATIVE: <AdminIcon sx={{ fontSize: 16 }} />,
+  MANAGER: <ManagerIcon sx={{ fontSize: 16 }} />,
+};
+
+const ROLE_COLORS: Record<EmployeeRole, string> = {
+  VETERINARIAN: '#9C72D9',
+  ATTENDANT: '#81C9C5',
+  ADMINISTRATIVE: '#7EB3E0',
+  MANAGER: '#F48FB1',
 };
 
 interface EmployeeFormData {
@@ -43,7 +61,7 @@ const initialFormData: EmployeeFormData = {
   phone: '',
   role: '',
   crmv: '',
-  hireDate: '',
+  hireDate: new Date().toISOString().split('T')[0],
 };
 
 const EmployeesPage = () => {
@@ -196,7 +214,12 @@ const EmployeesPage = () => {
     {
       key: 'role',
       header: 'Cargo',
-      render: (employee) => employee.role ? ROLE_LABELS[employee.role] || employee.role : '-',
+      render: (employee) => employee.role ? (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: ROLE_COLORS[employee.role], display: 'flex' }}>{ROLE_ICONS[employee.role]}</span>
+          {ROLE_LABELS[employee.role] || employee.role}
+        </span>
+      ) : '-',
     },
     {
       key: 'crmv',
@@ -296,7 +319,7 @@ const EmployeesPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
           <TextField fullWidth label="Nome" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField fullWidth label="CPF" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} />
+            <TextField fullWidth label="CPF" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: formatCpf(e.target.value) })} placeholder="000.000.000-00" />
             <TextField fullWidth label="Email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
           </Box>
           <TextField fullWidth label="Telefone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })} placeholder="(00) 00000-0000" />
@@ -309,7 +332,12 @@ const EmployeesPage = () => {
           >
             <MuiMenuItem value="">Selecione...</MuiMenuItem>
             {Object.entries(ROLE_LABELS).map(([value, label]) => (
-              <MuiMenuItem key={value} value={value}>{label}</MuiMenuItem>
+              <MuiMenuItem key={value} value={value}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: ROLE_COLORS[value as EmployeeRole], display: 'flex' }}>{ROLE_ICONS[value as EmployeeRole]}</span>
+                  {label}
+                </span>
+              </MuiMenuItem>
             ))}
           </TextField>
           {formData.role === 'VETERINARIAN' && (

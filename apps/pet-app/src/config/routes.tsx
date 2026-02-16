@@ -10,6 +10,7 @@ import MedicationStockPage from '../pages/MedicationStockPage';
 import ProceduresPage from '../pages/ProceduresPage';
 import ProcedureFormPage from '../pages/ProcedureFormPage';
 import ProcedureDetailPage from '../pages/ProcedureDetailPage';
+import DocumentsPage from '../pages/DocumentsPage';
 
 export const routes: AppRoute[] = [
   { path: '/', element: <DashboardPage />, index: true },
@@ -23,4 +24,5 @@ export const routes: AppRoute[] = [
   { path: '/procedimentos', element: <ProceduresPage /> },
   { path: '/procedimentos/novo', element: <ProcedureFormPage /> },
   { path: '/procedimentos/:id', element: <ProcedureDetailPage /> },
+  { path: '/documentos', element: <DocumentsPage /> },
 ];
