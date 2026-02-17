@@ -12,7 +12,9 @@ import {
   DialogTitle,
   Grid2 as Grid,
   IconButton,
+  MenuItem as MuiMenuItem,
   TextField,
+  Tooltip,
   Typography,
   Alert,
 } from '@mui/material';
@@ -25,10 +27,14 @@ import {
   Download as DownloadIcon,
   Draw as SignIcon,
   Vaccines as VaccineIcon,
+  Pets as PetsIcon,
+  Person as TutorIcon,
+  LocalHospital as VetIcon,
 } from '@mui/icons-material';
 import { DataGrid } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
 import { formatCpf, formatPhone, formatDateTime } from '@app/core';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { customerService, petService, documentService } from '../services';
 import type {
@@ -38,6 +44,7 @@ import type {
   DocumentRecord,
   DocumentType,
   DocumentStatus,
+  TemplateCategory,
 } from '../types';
 
 const TYPE_CONFIG: Record<DocumentType, { label: string; color: string; bg: string }> = {
@@ -169,6 +176,9 @@ function triggerBlobDownload(blob: Blob, filename: string) {
 
 // --- Main Page ---
 const DocumentsPage = () => {
+  const location = useLocation();
+  const locationState = location.state as { customerId?: string; petId?: string } | null;
+
   // --- Tutor search ---
   const [cpfInput, setCpfInput] = useState('');
   const [searching, setSearching] = useState(false);
@@ -182,7 +192,13 @@ const DocumentsPage = () => {
 
   // --- Documents ---
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
+  const [tplPage, setTplPage] = useState(1);
+  const [tplPageSize, setTplPageSize] = useState(10);
+  const [tplTotal, setTplTotal] = useState(0);
   const [sentDocuments, setSentDocuments] = useState<DocumentRecord[]>([]);
+  const [docPage, setDocPage] = useState(1);
+  const [docPageSize, setDocPageSize] = useState(10);
+  const [docTotal, setDocTotal] = useState(0);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
 
@@ -204,21 +220,33 @@ const DocumentsPage = () => {
   const [reprocessingId, setReprocessingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
+  // --- Category filter ---
+  const [categories, setCategories] = useState<TemplateCategory[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState('');
+
   // --- Vaccination auth ---
   const [generatingVaccAuth, setGeneratingVaccAuth] = useState(false);
+
+  // Load categories on mount
+  useEffect(() => {
+    documentService.getCategories().then(setCategories).catch(() => {});
+  }, []);
 
   const refreshDocuments = useCallback(async () => {
     if (!customer?.publicId || !selectedPet?.publicId) return;
     try {
-      const docs = await documentService.getDocumentsByCustomerAndPet(
-        customer.publicId,
-        selectedPet.publicId,
-      );
-      setSentDocuments(docs);
+      const response = await documentService.searchDocuments({
+        customerId: customer.publicId,
+        petId: selectedPet.publicId,
+        skip: (docPage - 1) * docPageSize,
+        take: docPageSize,
+      });
+      setSentDocuments(response.data || []);
+      setDocTotal(response.total ?? (response.data || []).length);
     } catch {
       // error handled by interceptor
     }
-  }, [customer, selectedPet]);
+  }, [customer, selectedPet, docPage, docPageSize]);
 
   const handleSearch = useCallback(async () => {
     const digits = cpfInput.replace(/\D/g, '');
@@ -256,35 +284,84 @@ const DocumentsPage = () => {
 
   const handleSelectPet = useCallback((pet: Pet) => {
     setSelectedPet(pet);
+    setTplPage(1);
+    setDocPage(1);
   }, []);
 
-  // Load templates and history when pet is selected
+  // Deep-link: auto-load customer and select pet from notification navigation
   useEffect(() => {
-    if (!selectedPet?.publicId || !customer?.publicId) {
-      setTemplates([]);
-      setSentDocuments([]);
+    if (!locationState?.customerId || !locationState?.petId) return;
+
+    // If already viewing this customer+pet, just refresh documents
+    if (customer?.publicId === locationState.customerId && selectedPet?.publicId === locationState.petId) {
+      refreshDocuments();
       return;
     }
 
     const load = async () => {
-      setLoadingTemplates(true);
-      setLoadingDocuments(true);
+      setSearching(true);
       try {
-        const [tpls, docs] = await Promise.all([
-          documentService.getTemplates(),
-          documentService.getDocumentsByCustomerAndPet(customer.publicId!, selectedPet.publicId!),
-        ]);
-        setTemplates(tpls);
-        setSentDocuments(docs);
+        const found = await customerService.getCustomerById(locationState.customerId!);
+        setCustomer(found);
+        setSearched(true);
+        setCpfInput(found.cpf ? formatCpf(found.cpf) : '');
+
+        const customerPets = await petService.findByCustomer(found.publicId!);
+        setPets(customerPets);
+
+        const target = customerPets.find((p) => p.publicId === locationState.petId);
+        if (target) {
+          setSelectedPet(target);
+        }
       } catch {
-        toast.error('Erro ao carregar documentos.');
+        toast.error('Erro ao carregar dados da notificação.');
       } finally {
-        setLoadingTemplates(false);
-        setLoadingDocuments(false);
+        setSearching(false);
       }
     };
     load();
-  }, [selectedPet, customer]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
+
+  // Load templates with pagination
+  const fetchTemplates = useCallback(async () => {
+    if (!selectedPet?.publicId || !customer?.publicId) {
+      setTemplates([]);
+      setTplTotal(0);
+      return;
+    }
+    setLoadingTemplates(true);
+    try {
+      const request: Record<string, unknown> = {
+        status: 'PUBLISHED',
+        skip: (tplPage - 1) * tplPageSize,
+        take: tplPageSize,
+      };
+      if (categoryFilter) request.categoryId = categoryFilter;
+      const response = await documentService.searchTemplates(request as any);
+      setTemplates(response.data || []);
+      setTplTotal(response.total ?? (response.data || []).length);
+    } catch {
+      setTemplates([]);
+      setTplTotal(0);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  }, [selectedPet, customer, tplPage, tplPageSize, categoryFilter]);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  // Reset docs when pet changes
+  useEffect(() => {
+    if (!selectedPet?.publicId || !customer?.publicId) {
+      setSentDocuments([]);
+      setDocTotal(0);
+      return;
+    }
+    refreshDocuments();
+  }, [refreshDocuments]);
 
   const handlePreview = useCallback(
     async (templateId: string, templateName: string) => {
@@ -415,10 +492,10 @@ const DocumentsPage = () => {
   const templateColumns: DataGridColumn<DocumentTemplate>[] = [
     { key: 'name', header: 'Nome', render: (t) => t.name },
     {
-      key: 'category',
+      key: 'categoryName',
       header: 'Categoria',
       render: (t) =>
-        t.category ? <Chip label={t.category} size="small" variant="outlined" /> : '-',
+        t.categoryName ? <Chip label={t.categoryName} size="small" variant="outlined" /> : '-',
     },
     {
       key: 'documentType',
@@ -431,6 +508,38 @@ const DocumentsPage = () => {
             size="small"
             sx={{ backgroundColor: cfg.bg, color: cfg.color, fontWeight: 600 }}
           />
+        );
+      },
+    },
+    {
+      key: 'speciesSpecific',
+      header: 'Espécie',
+      render: (t) => {
+        if (t.speciesSpecific === 'YES') return <Chip icon={<PetsIcon sx={{ fontSize: 16 }} />} label="Sim" size="small" sx={{ backgroundColor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />;
+        if (t.speciesSpecific === 'DEPENDS') return <Chip icon={<PetsIcon sx={{ fontSize: 16 }} />} label="Depende" size="small" sx={{ backgroundColor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
+        return <Chip label="Não" size="small" sx={{ backgroundColor: '#F5F5F5', color: '#757575', fontWeight: 600 }} />;
+      },
+    },
+    {
+      key: 'signatures',
+      header: 'Assinaturas',
+      render: (t) => {
+        const tutor = t.tutorSignature !== 'NO';
+        const vet = t.vetSignature !== 'NO';
+        if (!tutor && !vet) return <Typography variant="body2" color="text.secondary">-</Typography>;
+        return (
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            {tutor && (
+              <Tooltip title={`Tutor: ${t.tutorSignature === 'YES' ? 'Obrigatória' : 'Opcional'}`}>
+                <TutorIcon sx={{ fontSize: 20, color: t.tutorSignature === 'YES' ? '#E65100' : '#9E9E9E' }} />
+              </Tooltip>
+            )}
+            {vet && (
+              <Tooltip title={`Veterinário: ${t.vetSignature === 'YES' ? 'Obrigatória' : 'Opcional'}`}>
+                <VetIcon sx={{ fontSize: 20, color: t.vetSignature === 'YES' ? '#1565C0' : '#9E9E9E' }} />
+              </Tooltip>
+            )}
+          </Box>
         );
       },
     },
@@ -680,7 +789,27 @@ const DocumentsPage = () => {
                 actions={templateActions}
                 loading={loadingTemplates}
                 emptyMessage="Nenhum modelo disponível"
-                pageSize={10}
+                pageSize={tplPageSize}
+                serverSidePagination
+                page={tplPage}
+                totalRows={tplTotal}
+                onPageChange={setTplPage}
+                onPageSizeChange={(size) => { setTplPageSize(size); setTplPage(1); }}
+                headerActions={
+                  <TextField
+                    select
+                    size="small"
+                    label="Categoria"
+                    value={categoryFilter}
+                    onChange={(e) => { setCategoryFilter(e.target.value); setTplPage(1); }}
+                    sx={{ minWidth: 180 }}
+                  >
+                    <MuiMenuItem value="">Todas</MuiMenuItem>
+                    {categories.map((cat) => (
+                      <MuiMenuItem key={cat.publicId} value={cat.publicId}>{cat.name}</MuiMenuItem>
+                    ))}
+                  </TextField>
+                }
               />
             </CardContent>
           </Card>
@@ -698,7 +827,12 @@ const DocumentsPage = () => {
                 actions={sentActions}
                 loading={loadingDocuments}
                 emptyMessage="Nenhum documento enviado ainda"
-                pageSize={10}
+                pageSize={docPageSize}
+                serverSidePagination
+                page={docPage}
+                totalRows={docTotal}
+                onPageChange={setDocPage}
+                onPageSizeChange={(size) => { setDocPageSize(size); setDocPage(1); }}
               />
             </CardContent>
           </Card>

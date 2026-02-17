@@ -15,6 +15,10 @@ export { formatCpf, formatCep, formatPhone, formatDate, formatDateTime } from '.
 export { DateProvider, useDate } from './contexts/DateContext';
 export { RefreshProvider, useRefresh } from './contexts/RefreshContext';
 export { I18nProvider, useI18n } from './contexts/I18nContext';
+export { NotificationProvider, useNotifications, useNotificationsOptional } from './contexts/NotificationContext';
+export { NotificationBell } from './components/NotificationBell';
+export { NotificationSocketService } from './services/notificationSocketService';
+export { NotificationType } from './types';
 export type {
   MenuItem,
   UserMenuItem,
@@ -33,7 +37,10 @@ export type {
   SortField,
   SearchRequest,
   PaginatedResponse,
+  AppNotification,
+  NotificationConfig,
 } from './types';
 export type { DateContextValue } from './contexts/DateContext';
 export type { RefreshContextValue, RefreshProviderProps, RefreshTriggers } from './contexts/RefreshContext';
 export type { I18nContextValue, I18nProviderProps } from './contexts/I18nContext';
+export type { NotificationContextValue } from './contexts/NotificationContext';

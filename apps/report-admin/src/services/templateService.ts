@@ -60,6 +60,11 @@ export const templateService = {
     return response.data;
   },
 
+  getRaw: async (id: string): Promise<string> => {
+    const response = await api.get(`/templates/${id}/raw`);
+    return response.data;
+  },
+
   // Versions
   getVersions: async (templateId: string): Promise<TemplateVersion[]> => {
     const response = await api.get(`/templates/${templateId}/versions`);

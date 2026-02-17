@@ -341,6 +341,9 @@ export type DocumentStatus = 'PENDING' | 'SENT' | 'AWAITING_SIGNATURE' | 'SIGNED
 export type TemplateEngine = 'HANDLEBARS' | 'HTML';
 export type TemplateStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
+export type SpeciesSpecific = 'NO' | 'YES' | 'DEPENDS';
+export type SignatureRequirement = 'NO' | 'YES' | 'OPTIONAL';
+
 export interface DocumentTemplate {
   publicId: string;
   active: boolean;
@@ -352,11 +355,47 @@ export interface DocumentTemplate {
   engine: TemplateEngine;
   status: TemplateStatus;
   documentType: DocumentType;
-  category?: string;
+  categoryId?: string;
+  categoryName?: string;
   applicationId: string;
   applicationName: string;
   applicationCode: string;
   activeVersion?: number;
+  speciesSpecific: SpeciesSpecific;
+  tutorSignature: SignatureRequirement;
+  vetSignature: SignatureRequirement;
+}
+
+export interface TemplateCategory {
+  publicId: string;
+  name: string;
+  description?: string;
+  applicationId: string;
+  applicationName?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TemplateSearchRequest {
+  name?: string;
+  key?: string;
+  status?: TemplateStatus;
+  engine?: TemplateEngine;
+  documentType?: DocumentType;
+  categoryId?: string;
+  skip?: number;
+  take?: number;
+}
+
+export interface TemplateSearchResponse {
+  data: DocumentTemplate[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 export interface DocumentRecord {
@@ -390,6 +429,25 @@ export interface SendDocumentDto {
 export interface SignDocumentDto {
   signatureData: string;
   signedBy: string;
+}
+
+// --- Document Search ---
+
+export interface DocumentSearchRequest {
+  customerId?: string;
+  petId?: string;
+  skip?: number;
+  take?: number;
+}
+
+export interface DocumentSearchResponse {
+  data: DocumentRecord[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 // --- Reports ---

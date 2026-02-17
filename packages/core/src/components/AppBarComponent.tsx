@@ -26,6 +26,7 @@ interface AppBarComponentProps {
   larguraSidebar?: number;
   showHamburger?: boolean;
   appBarActions?: ReactNode;
+  notificationSlot?: ReactNode;
   tema?: SidebarTema;
 }
 
@@ -38,6 +39,7 @@ export function AppBarComponent({
   larguraSidebar = 260,
   showHamburger = true,
   appBarActions,
+  notificationSlot,
   tema,
 }: AppBarComponentProps) {
   const temaIcon = tema ? TEMA_OPTIONS.find((o) => o.value === tema)?.icon : null;
@@ -105,6 +107,7 @@ export function AppBarComponent({
           </Box>
         )}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {notificationSlot}
           {onAbrirConfiguracoes && (
             <Tooltip title="Configurações">
               <IconButton onClick={onAbrirConfiguracoes} size="small">

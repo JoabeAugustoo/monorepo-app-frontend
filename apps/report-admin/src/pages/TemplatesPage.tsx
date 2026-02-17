@@ -3,20 +3,32 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   MenuItem as MuiMenuItem,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   Add as AddIcon,
+  Code as CodeIcon,
+  Close as CloseIcon,
+  ContentCopy as CopyIcon,
   Visibility as ViewIcon,
+  Web as WebIcon,
   Block as DeactivateIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { DataGrid, SearchField, ConfirmDialog } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
 import { useSearchDebounce, formatDate } from '@app/core';
-import { templateService, applicationService } from '../services';
-import type { Template, TemplateStatus, Application, SearchRequest } from '../types';
+import { templateService, applicationService, templateCategoryService } from '../services';
+import type { Template, TemplateCategory, TemplateStatus, Application, SearchRequest } from '../types';
 import { toast } from 'sonner';
 
 const STATUS_CONFIG: Record<TemplateStatus, { label: string; color: string }> = {
@@ -46,9 +58,18 @@ const TemplatesPage = () => {
 
   const [statusFilter, setStatusFilter] = useState('');
   const [appFilter, setAppFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [apps, setApps] = useState<Application[]>([]);
+  const [categories, setCategories] = useState<TemplateCategory[]>([]);
 
   const [deactivateTarget, setDeactivateTarget] = useState<Template | null>(null);
+
+  // Raw preview
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [previewContent, setPreviewContent] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'page' | 'html'>('page');
 
   // Load active applications for filter
   useEffect(() => {
@@ -57,9 +78,23 @@ const TemplatesPage = () => {
       .catch(() => {});
   }, []);
 
+  // Load categories when appFilter changes
+  useEffect(() => {
+    setCategoryFilter('');
+    if (appFilter) {
+      templateCategoryService.getActiveByApplication(appFilter)
+        .then(setCategories)
+        .catch(() => setCategories([]));
+    } else {
+      templateCategoryService.getActive()
+        .then(setCategories)
+        .catch(() => setCategories([]));
+    }
+  }, [appFilter]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, appFilter]);
+  }, [searchTerm, statusFilter, appFilter, categoryFilter]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -71,6 +106,7 @@ const TemplatesPage = () => {
       }
       if (statusFilter) where.status = statusFilter;
       if (appFilter) where.applicationId = appFilter;
+      if (categoryFilter) where.categoryId = categoryFilter;
 
       const searchRequest: SearchRequest = {
         where,
@@ -94,7 +130,7 @@ const TemplatesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, sortField, sortDirection, statusFilter, appFilter]);
+  }, [currentPage, pageSize, searchTerm, sortField, sortDirection, statusFilter, appFilter, categoryFilter]);
 
   useEffect(() => {
     fetchTemplates();
@@ -110,6 +146,27 @@ const TemplatesPage = () => {
     } catch {
       // error handled by interceptor
     }
+  };
+
+  const handlePreview = async (t: Template) => {
+    setPreviewTemplate(t);
+    setPreviewContent('');
+    setPreviewMode('page');
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    try {
+      const raw = await templateService.getRaw(t.publicId);
+      setPreviewContent(typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2));
+    } catch {
+      setPreviewContent('Erro ao carregar conteúdo do template.');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleCopyContent = () => {
+    navigator.clipboard.writeText(previewContent);
+    toast.success('Conteúdo copiado!');
   };
 
   const columns: DataGridColumn<Template>[] = [
@@ -132,6 +189,15 @@ const TemplatesPage = () => {
       sortable: true,
       render: (t) => (
         <Chip label={t.applicationName} size="small" variant="outlined" sx={{ fontWeight: 500 }} />
+      ),
+    },
+    {
+      key: 'categoryName',
+      header: 'Categoria',
+      render: (t) => t.categoryName ? (
+        <Chip label={t.categoryName} size="small" variant="outlined" sx={{ fontWeight: 500 }} />
+      ) : (
+        <Chip label="Global" size="small" sx={{ backgroundColor: '#9E9E9E14', color: '#9E9E9E', fontWeight: 500 }} />
       ),
     },
     {
@@ -190,6 +256,19 @@ const TemplatesPage = () => {
       <TextField
         select
         size="small"
+        label="Categoria"
+        value={categoryFilter}
+        onChange={(e) => setCategoryFilter(e.target.value)}
+        sx={{ minWidth: 160 }}
+      >
+        <MuiMenuItem value="">Todas</MuiMenuItem>
+        {categories.map((cat) => (
+          <MuiMenuItem key={cat.publicId} value={cat.publicId}>{cat.name}</MuiMenuItem>
+        ))}
+      </TextField>
+      <TextField
+        select
+        size="small"
         label="Status"
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value)}
@@ -207,6 +286,12 @@ const TemplatesPage = () => {
   );
 
   const actions = [
+    {
+      icon: <CodeIcon fontSize="small" />,
+      tooltip: 'Visualizar Template',
+      onClick: (t: Template) => handlePreview(t),
+      color: 'info',
+    },
     {
       icon: <ViewIcon fontSize="small" />,
       tooltip: 'Detalhes',
@@ -252,6 +337,79 @@ const TemplatesPage = () => {
         onConfirm={handleDeactivate}
         onClose={() => setDeactivateTarget(null)}
       />
+
+      {/* Raw Template Preview */}
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CodeIcon />
+            {previewTemplate?.name}
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ToggleButtonGroup
+              value={previewMode}
+              exclusive
+              onChange={(_, v) => v && setPreviewMode(v)}
+              size="small"
+            >
+              <ToggleButton value="page">
+                <WebIcon fontSize="small" sx={{ mr: 0.5 }} /> Página
+              </ToggleButton>
+              <ToggleButton value="html">
+                <CodeIcon fontSize="small" sx={{ mr: 0.5 }} /> HTML
+              </ToggleButton>
+            </ToggleButtonGroup>
+            {previewMode === 'html' && (
+              <IconButton size="small" onClick={handleCopyContent} disabled={previewLoading || !previewContent} title="Copiar">
+                <CopyIcon fontSize="small" />
+              </IconButton>
+            )}
+            <IconButton size="small" onClick={() => setPreviewOpen(false)}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: previewMode === 'page' ? 0 : undefined }}>
+          {previewLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : previewMode === 'page' ? (
+            <iframe
+              srcDoc={previewContent}
+              title="Preview"
+              style={{ width: '100%', height: '60vh', border: 'none' }}
+              sandbox="allow-same-origin"
+            />
+          ) : (
+            <Box
+              component="pre"
+              sx={{
+                fontFamily: 'monospace',
+                fontSize: '0.85rem',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                m: 0,
+                p: 1,
+                backgroundColor: 'grey.50',
+                borderRadius: 1,
+                maxHeight: '60vh',
+                overflow: 'auto',
+              }}
+            >
+              {previewContent}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewOpen(false)}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

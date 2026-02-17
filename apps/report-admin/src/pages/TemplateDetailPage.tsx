@@ -34,8 +34,8 @@ import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
 import { formatDate, formatDateTime } from '@app/core';
 import { ConfirmDialog } from '@app/ui';
-import { templateService, applicationService } from '../services';
-import type { Template, TemplateVersion, TemplateStatus, TemplateEngine, DocumentType, TemplateDto, Application } from '../types';
+import { templateService, applicationService, templateCategoryService } from '../services';
+import type { Template, TemplateCategory, TemplateVersion, TemplateStatus, TemplateEngine, DocumentType, TemplateDto, Application } from '../types';
 
 const STATUS_CONFIG: Record<TemplateStatus, { label: string; color: string }> = {
   DRAFT: { label: 'Rascunho', color: '#F59E0B' },
@@ -69,8 +69,9 @@ const TemplateDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Apps for edit dialog
+  // Apps and categories for edit dialog
   const [apps, setApps] = useState<Application[]>([]);
+  const [categories, setCategories] = useState<TemplateCategory[]>([]);
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
@@ -120,11 +121,17 @@ const TemplateDetailPage = () => {
       engine: template.engine,
       status: template.status,
       documentType: template.documentType,
-      category: template.category || '',
+      categoryId: template.categoryId || '',
       applicationId: template.applicationId,
       applicationName: template.applicationName,
       applicationCode: template.applicationCode,
     });
+    // Load categories for the template's application
+    if (template.applicationId) {
+      templateCategoryService.getActiveByApplication(template.applicationId)
+        .then(setCategories)
+        .catch(() => setCategories([]));
+    }
     setEditOpen(true);
   };
 
@@ -136,7 +143,11 @@ const TemplateDetailPage = () => {
         applicationId: app.publicId,
         applicationName: app.name,
         applicationCode: app.code,
+        categoryId: '',
       });
+      templateCategoryService.getActiveByApplication(app.publicId)
+        .then(setCategories)
+        .catch(() => setCategories([]));
     }
   };
 
@@ -144,7 +155,8 @@ const TemplateDetailPage = () => {
     if (!id || !editData.key || !editData.name || !editData.applicationId) return;
     setActionLoading(true);
     try {
-      const updated = await templateService.update(id, editData as TemplateDto);
+      const dto = { ...editData, categoryId: editData.categoryId || undefined } as TemplateDto;
+      const updated = await templateService.update(id, dto);
       setTemplate(updated);
       setEditOpen(false);
       toast.success('Template atualizado!');
@@ -289,12 +301,10 @@ const TemplateDetailPage = () => {
                 {template.documentType === 'SIGNATURE_REQUIRED' ? 'Requer Assinatura' : 'Envio Simples'}
               </Typography>
             </Grid>
-            {template.category && (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Typography variant="body2" color="text.secondary">Categoria</Typography>
-                <Typography>{template.category}</Typography>
-              </Grid>
-            )}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="body2" color="text.secondary">Categoria</Typography>
+              <Typography>{template.categoryName || 'Global'}</Typography>
+            </Grid>
             {template.description && (
               <Grid size={{ xs: 12 }}>
                 <Typography variant="body2" color="text.secondary">Descrição</Typography>
@@ -454,10 +464,16 @@ const TemplateDetailPage = () => {
               </TextField>
               <TextField
                 fullWidth
+                select
                 label="Categoria"
-                value={editData.category || ''}
-                onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-              />
+                value={editData.categoryId || ''}
+                onChange={(e) => setEditData({ ...editData, categoryId: e.target.value })}
+              >
+                <MuiMenuItem value="">Sem categoria (Global)</MuiMenuItem>
+                {categories.map((cat) => (
+                  <MuiMenuItem key={cat.publicId} value={cat.publicId}>{cat.name}</MuiMenuItem>
+                ))}
+              </TextField>
             </Box>
           </Box>
         </DialogContent>

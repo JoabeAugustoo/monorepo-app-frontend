@@ -23,7 +23,8 @@ import { ConfigDrawer } from './ConfigDrawer';
 import { useSidebar } from '../hooks/useSidebar';
 import { useAuthOpcional } from '../hooks/useAuth';
 import { createThemeForTema } from '../theme/createAppTheme';
-import { MenuItem, SidebarTema, UserMenuConfig } from '../types';
+import { MenuItem, NotificationConfig, SidebarTema, UserMenuConfig } from '../types';
+import { NotificationBell } from './NotificationBell';
 
 const LARGURA_SIDEBAR = 260;
 const STORAGE_KEY = 'pet-sidebar-tema';
@@ -46,6 +47,7 @@ interface LayoutProps {
   appBarActions?: ReactNode;
   themeOptions?: ThemeOptions;
   themeApiUrl?: string;
+  notifications?: NotificationConfig;
 }
 
 export type LayoutContext = {
@@ -54,7 +56,7 @@ export type LayoutContext = {
   appName: string;
 };
 
-export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 'vertical', appBarActions, themeOptions, themeApiUrl }: LayoutProps) {
+export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 'vertical', appBarActions, themeOptions, themeApiUrl, notifications }: LayoutProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isHorizontal = menuLayout === 'horizontal';
@@ -127,6 +129,7 @@ export function Layout({ menuItems, userMenu, appName, appLogo, menuLayout = 've
         larguraSidebar={LARGURA_SIDEBAR}
         showHamburger={showHamburger}
         appBarActions={appBarActions}
+        notificationSlot={notifications?.enabled ? <NotificationBell /> : undefined}
         tema={sidebarTema}
       />
       <ConfigDrawer

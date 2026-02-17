@@ -15,8 +15,8 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { templateService, applicationService } from '../services';
-import type { TemplateEngine, TemplateStatus, DocumentType, Application } from '../types';
+import { templateService, applicationService, templateCategoryService } from '../services';
+import type { TemplateEngine, TemplateStatus, DocumentType, Application, TemplateCategory } from '../types';
 
 const ENGINE_OPTIONS: { value: TemplateEngine; label: string }[] = [
   { value: 'HANDLEBARS', label: 'Handlebars' },
@@ -47,6 +47,7 @@ const CreateTemplatePage = () => {
 
   const [saving, setSaving] = useState(false);
   const [apps, setApps] = useState<Application[]>([]);
+  const [categories, setCategories] = useState<TemplateCategory[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -55,7 +56,7 @@ const CreateTemplatePage = () => {
     engine: 'HANDLEBARS' as TemplateEngine,
     status: 'DRAFT' as TemplateStatus,
     documentType: 'SEND_ONLY' as DocumentType,
-    category: '',
+    categoryId: '',
     applicationId: '',
   });
 
@@ -66,6 +67,18 @@ const CreateTemplatePage = () => {
       .then(setApps)
       .catch(() => {});
   }, []);
+
+  // Load categories when applicationId changes
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, categoryId: '' }));
+    if (formData.applicationId) {
+      templateCategoryService.getActiveByApplication(formData.applicationId)
+        .then(setCategories)
+        .catch(() => setCategories([]));
+    } else {
+      setCategories([]);
+    }
+  }, [formData.applicationId]);
 
   const handleNameChange = (value: string) => {
     const newState = { ...formData, name: value };
@@ -101,7 +114,7 @@ const CreateTemplatePage = () => {
         engine: formData.engine,
         status: formData.status,
         documentType: formData.documentType,
-        category: formData.category.trim() || undefined,
+        categoryId: formData.categoryId || undefined,
         applicationId: selectedApp.publicId,
         applicationName: selectedApp.name,
         applicationCode: selectedApp.code,
@@ -203,11 +216,18 @@ const CreateTemplatePage = () => {
               </TextField>
               <TextField
                 fullWidth
+                select
                 label="Categoria"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                helperText="Ex: Cirurgia, Vacinação, Consulta"
-              />
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                helperText={!formData.applicationId ? 'Selecione uma aplicação primeiro' : undefined}
+                disabled={!formData.applicationId}
+              >
+                <MuiMenuItem value="">Sem categoria (Global)</MuiMenuItem>
+                {categories.map((cat) => (
+                  <MuiMenuItem key={cat.publicId} value={cat.publicId}>{cat.name}</MuiMenuItem>
+                ))}
+              </TextField>
             </Box>
           </Box>
         </CardContent>

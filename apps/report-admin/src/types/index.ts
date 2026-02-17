@@ -13,7 +13,8 @@ export interface Template {
   engine: TemplateEngine;
   status: TemplateStatus;
   documentType: DocumentType;
-  category?: string;
+  categoryId?: string;
+  categoryName?: string;
   applicationId: string;
   applicationName: string;
   applicationCode: string;
@@ -27,7 +28,7 @@ export interface TemplateDto {
   engine?: TemplateEngine;
   status?: TemplateStatus;
   documentType?: DocumentType;
-  category?: string;
+  categoryId?: string;
   applicationId: string;
   applicationName: string;
   applicationCode: string;
@@ -41,6 +42,25 @@ export interface TemplateVersion {
   isActive: boolean;
   createdAt: string;
   createdBy?: string;
+}
+
+// --- TemplateCategory ---
+
+export interface TemplateCategory {
+  publicId: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+  description?: string;
+  applicationId: string;
+  applicationName?: string;
+}
+
+export interface TemplateCategoryDto {
+  name: string;
+  description?: string;
+  applicationId: string;
 }
 
 // --- Application ---
@@ -69,18 +89,31 @@ export interface CountResponse {
   inactive: number;
 }
 
+export type ReportStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
+export interface ReportSearchRequest {
+  applicationId?: string;
+  templateKey?: string;
+  status?: ReportStatus;
+  categoryId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  skip?: number;
+  take?: number;
+}
+
 export interface GenerateReportDto {
   templateKey: string;
+  applicationId: string;
   data: Record<string, unknown>;
   format?: string;
+  callbackUrl?: string;
 }
 
 export interface GenerateReportResponseDto {
   reportId: string;
-  file: string;
-  version: number;
-  contentType: string;
-  applicationName: string;
+  status: string;
+  statusUrl: string;
 }
 
 export interface GeneratedReport {
@@ -95,6 +128,12 @@ export interface GeneratedReport {
   applicationName: string;
   format?: string;
   fileSize?: number;
+  status: ReportStatus;
+  downloadUrl?: string;
+  errorMessage?: string;
+  completedAt?: string;
+  fileExtension?: string;
+  categoryName?: string;
   data?: Record<string, unknown>;
 }
 

@@ -1,5 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
+import { authService } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_PET_API_URL || 'http://localhost:8084/api';
 
@@ -18,19 +19,67 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// --- Refresh token logic ---
+let refreshPromise: Promise<string> | null = null;
+
+function forceLogout() {
+  authService.logout();
+  window.location.href = '/login';
+}
+
+async function handleRefresh(): Promise<string> {
+  // Deduplicate: if a refresh is already in-flight, reuse it
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = authService
+    .refreshToken()
+    .then((data) => {
+      refreshPromise = null;
+      return data.accessToken;
+    })
+    .catch((err) => {
+      refreshPromise = null;
+      throw err;
+    });
+
+  return refreshPromise;
+}
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error: AxiosError) => {
     const status = error.response?.status;
-    const message = error.response?.data?.message || error.response?.data?.error || error.message;
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const message =
+      (error.response?.data as Record<string, string>)?.message ||
+      (error.response?.data as Record<string, string>)?.error ||
+      error.message;
 
-    if (status === 401) {
+    // 401 — try refresh before kicking the user out
+    if (status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = localStorage.getItem('pet-auth-refresh');
+      if (!refreshToken) {
+        forceLogout();
+        return Promise.reject(error);
+      }
+
+      try {
+        const newToken = await handleRefresh();
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch {
+        toast.error('Sessão expirada. Faça login novamente.');
+        forceLogout();
+        return Promise.reject(error);
+      }
+    }
+
+    // 401 after retry — refresh also failed
+    if (status === 401 && originalRequest._retry) {
       toast.error('Sessão expirada. Faça login novamente.');
-      localStorage.removeItem('pet-auth-token');
-      localStorage.removeItem('pet-auth-refresh');
-      localStorage.removeItem('pet-auth-user');
-      localStorage.removeItem('pet-auth-login-data');
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(error);
     }
 

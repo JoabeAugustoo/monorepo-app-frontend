@@ -1,9 +1,28 @@
 import api from './api';
-import type { DocumentTemplate, DocumentRecord, SendDocumentDto, SignDocumentDto, ReportStatusResponse } from '../types';
+import type { DocumentTemplate, DocumentRecord, SendDocumentDto, SignDocumentDto, ReportStatusResponse, DocumentSearchRequest, DocumentSearchResponse, TemplateSearchRequest, TemplateSearchResponse, TemplateCategory } from '../types';
 
 export const documentService = {
   getTemplates: async (): Promise<DocumentTemplate[]> => {
     const response = await api.get('/templates/active');
+    return response.data;
+  },
+
+  getCategories: async (): Promise<TemplateCategory[]> => {
+    const response = await api.get('/template-categories');
+    return response.data;
+  },
+
+  searchTemplates: async (request: TemplateSearchRequest = {}): Promise<TemplateSearchResponse> => {
+    const response = await api.post('/templates/search', {
+      skip: 0,
+      take: 10,
+      ...request,
+    });
+    return response.data;
+  },
+
+  searchDocuments: async (request: DocumentSearchRequest): Promise<DocumentSearchResponse> => {
+    const response = await api.post('/documents/search', request);
     return response.data;
   },
 

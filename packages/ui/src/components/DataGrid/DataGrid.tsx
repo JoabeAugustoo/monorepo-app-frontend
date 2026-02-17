@@ -45,7 +45,7 @@ export function DataGrid<T>(props: DataGridProps<T>) {
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
 
   const page = serverSidePagination ? props.page : localPage;
-  const totalRows = serverSidePagination ? props.totalRows : data.length;
+  const totalRows = serverSidePagination ? (props.totalRows || data.length) : data.length;
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
 
   const currentData = useMemo(() => {

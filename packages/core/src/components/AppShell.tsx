@@ -6,6 +6,7 @@ import { Layout } from './Layout';
 import { LoginPage } from './LoginPage';
 import { AppShellConfig } from '../types';
 import { AuthContext, useAuth, useAuthState } from '../hooks/useAuth';
+import { NotificationProvider } from '../contexts/NotificationContext';
 
 interface AppShellProps {
   config: AppShellConfig;
@@ -65,6 +66,7 @@ export function AppShell({ config }: AppShellProps) {
                     appBarActions={config.appBarActions}
                     themeOptions={config.themeOptions}
                     themeApiUrl={config.themeApiUrl}
+                    notifications={config.notifications}
                   />
                 </RotaProtegida>
               ),
@@ -95,6 +97,7 @@ export function AppShell({ config }: AppShellProps) {
             menuLayout={config.menuLayout}
             themeOptions={config.themeOptions}
             themeApiUrl={config.themeApiUrl}
+            notifications={config.notifications}
           />
         ),
         children: [
@@ -107,15 +110,27 @@ export function AppShell({ config }: AppShellProps) {
         ],
       },
     ]);
-  }, [config.menuItems, config.userMenu, config.routes, config.appName, config.appLogo, config.loginPage, config.menuLayout, config.appBarActions]);
+  }, [config.menuItems, config.userMenu, config.routes, config.appName, config.appLogo, config.loginPage, config.menuLayout, config.appBarActions, config.notifications]);
 
   const conteudo = <RouterProvider router={router} />;
+
+  const allProviders = useMemo(() => {
+    const providers = [...(config.providers || [])];
+    if (config.notifications?.enabled) {
+      const notifConfig = config.notifications;
+      const WrappedNotificationProvider = ({ children }: { children: ReactNode }) => (
+        <NotificationProvider config={notifConfig}>{children}</NotificationProvider>
+      );
+      providers.push(WrappedNotificationProvider);
+    }
+    return providers;
+  }, [config.providers, config.notifications]);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {config.providers && config.providers.length > 0 ? (
-        <ComposeProviders providers={config.providers}>{conteudo}</ComposeProviders>
+      {allProviders.length > 0 ? (
+        <ComposeProviders providers={allProviders}>{conteudo}</ComposeProviders>
       ) : (
         conteudo
       )}

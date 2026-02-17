@@ -1,6 +1,10 @@
 import { ReactNode } from 'react';
 import { ThemeOptions } from '@mui/material';
 import { NavigateFunction } from 'react-router-dom';
+import { NotificationConfig } from './notification';
+
+export { NotificationType } from './notification';
+export type { AppNotification, NotificationConfig } from './notification';
 
 export interface MenuItem {
   label: string;
@@ -71,6 +75,7 @@ export interface AppShellConfig {
   menuLayout?: 'vertical' | 'horizontal';
   appBarActions?: ReactNode;
   themeApiUrl?: string;
+  notifications?: NotificationConfig;
 }
 
 // --- Generic types ---

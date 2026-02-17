@@ -1,19 +1,17 @@
 import api from './api';
 import type {
   GeneratedReport,
-  SearchRequest,
+  ReportSearchRequest,
   PaginatedResponse,
 } from '../types';
 
 export const reportService = {
-  search: async (searchRequest: SearchRequest = {}): Promise<PaginatedResponse<GeneratedReport>> => {
-    const defaultRequest: SearchRequest = {
-      where: {},
+  search: async (searchRequest: ReportSearchRequest = {}): Promise<PaginatedResponse<GeneratedReport>> => {
+    const request: ReportSearchRequest = {
       skip: 0,
       take: 10,
-      sort: [{ field: 'createdAt', direction: 'DESC' }],
+      ...searchRequest,
     };
-    const request = { ...defaultRequest, ...searchRequest };
     const response = await api.post('/reports/search', request);
     return response.data;
   },

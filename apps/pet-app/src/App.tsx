@@ -7,6 +7,9 @@ import { themeOptions } from './config/theme';
 import { createUserMenuConfig } from './config/user';
 import { authService } from './services/authService';
 
+const PET_API_URL = import.meta.env.VITE_PET_API_URL || 'http://localhost:8084/api';
+const NOTIFICATION_URL = import.meta.env.VITE_PET_NOTIFICATION_URL || 'http://localhost:8087';
+
 function AppContent() {
   return (
     <AppShell
@@ -18,6 +21,17 @@ function AppContent() {
         userMenu: (navigate, logout) => createUserMenuConfig(navigate, logout),
         themeApiUrl: `${import.meta.env.VITE_PET_AUTH_URL || 'http://localhost:8084'}/api/auth/theme`,
         menuLayout: 'vertical',
+        notifications: {
+          enabled: true,
+          notificationUrl: NOTIFICATION_URL,
+          getAuthToken: () => localStorage.getItem('pet-auth-token'),
+          onNotificationClick: (notification, navigate) => {
+            const meta = notification.metadata;
+            if (meta?.route) {
+              navigate(meta.route as string, meta.routeState ? { state: meta.routeState } : undefined);
+            }
+          },
+        },
         loginPage: {
           mode: 'username',
           logo: <img src="/logo.svg" alt="PetManager" style={{ width: 72, height: 72 }} />,
