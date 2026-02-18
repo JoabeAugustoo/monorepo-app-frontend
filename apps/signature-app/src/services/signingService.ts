@@ -1,10 +1,10 @@
-import { publicApi } from './api';
+import { publicApi, API_URL } from './api';
 import type { SigningInfo, SigningTokenResponse, OtpRequest, OtpVerifyRequest } from '../types';
 
 export const signingService = {
   validateToken: async (token: string): Promise<SigningInfo> => {
     const response = await publicApi.post<SigningTokenResponse>(`/api/signing/${token}`);
-    const { signer, document } = response.data;
+    const { signer, document, previewUrl } = response.data;
     return {
       documentId: document.publicId,
       documentName: document.fileName,
@@ -14,6 +14,7 @@ export const signingService = {
       signerEmail: signer.email,
       signerPhone: signer.phone,
       status: signer.status,
+      previewUrl: `${API_URL}${previewUrl}`,
     };
   },
 

@@ -19,7 +19,6 @@ import InfoIcon from '@mui/icons-material/Info';
 import PeopleIcon from '@mui/icons-material/People';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import DrawIcon from '@mui/icons-material/Draw';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import DownloadDoneIcon from '@mui/icons-material/DownloadDone';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -29,7 +28,6 @@ import { formatDateTime } from '@app/core';
 import { documentService } from '../services';
 import { DocumentStatusChip } from '../components/shared/DocumentStatusChip';
 import { SignCompanyDialog } from '../components/documents/SignCompanyDialog';
-import { AddSignerDialog } from '../components/documents/AddSignerDialog';
 import { DocumentSignersTab } from '../components/documents/DocumentSignersTab';
 import { DocumentTimelineTab } from '../components/documents/DocumentTimelineTab';
 import { DocumentStatus, type DocumentDetail } from '../types';
@@ -55,8 +53,6 @@ const DocumentDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [showSignDialog, setShowSignDialog] = useState(false);
-  const [showAddSigner, setShowAddSigner] = useState(false);
-  const [signersRefreshKey, setSignersRefreshKey] = useState(0);
 
   const fetchDocument = async () => {
     if (!id) return;
@@ -95,6 +91,7 @@ const DocumentDetailPage = () => {
 
   const canSign = doc.status === DocumentStatus.PENDING || doc.status === DocumentStatus.SIGNING;
   const hasSigned = doc.status === DocumentStatus.COMPLETED || doc.status === DocumentStatus.SIGNING;
+  const canAddSigners = doc.status === DocumentStatus.PENDING || doc.status === DocumentStatus.SIGNING;
 
   const handleDownload = async (version: 'original' | 'current') => {
     try {
@@ -204,22 +201,13 @@ const DocumentDetailPage = () => {
 
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
             {canSign && (
-              <>
-                <Button
-                  variant="contained"
-                  startIcon={<DrawIcon />}
-                  onClick={() => setShowSignDialog(true)}
-                >
-                  Assinar pela Empresa
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<PersonAddIcon />}
-                  onClick={() => setShowAddSigner(true)}
-                >
-                  Adicionar Signatario
-                </Button>
-              </>
+              <Button
+                variant="contained"
+                startIcon={<DrawIcon />}
+                onClick={() => setShowSignDialog(true)}
+              >
+                Assinar pela Empresa
+              </Button>
             )}
             <Button
               variant="outlined"
@@ -244,7 +232,12 @@ const DocumentDetailPage = () => {
 
       {/* Tab: Signers */}
       <TabPanel value={tabValue} index={1}>
-        <DocumentSignersTab documentPublicId={doc.publicId} refreshKey={signersRefreshKey} />
+        <DocumentSignersTab
+          documentPublicId={doc.publicId}
+          signersFinalized={doc.signersFinalized}
+          canAddSigners={canAddSigners}
+          onDocumentRefresh={fetchDocument}
+        />
       </TabPanel>
 
       {/* Tab: Timeline */}
@@ -260,17 +253,6 @@ const DocumentDetailPage = () => {
         onClose={() => setShowSignDialog(false)}
         onSuccess={() => {
           setShowSignDialog(false);
-          fetchDocument();
-        }}
-      />
-      <AddSignerDialog
-        open={showAddSigner}
-        documentPublicId={doc.publicId}
-        onClose={() => setShowAddSigner(false)}
-        onSuccess={() => {
-          setShowAddSigner(false);
-          setTabValue(1);
-          setSignersRefreshKey((k) => k + 1);
           fetchDocument();
         }}
       />

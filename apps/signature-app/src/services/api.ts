@@ -9,5 +9,5 @@ const { api, publicApi } = createApiClient({
   refreshUrl: '/api/auth/refresh',
 });
 
-export { api, publicApi };
+export { api, publicApi, API_URL };
 export default api;

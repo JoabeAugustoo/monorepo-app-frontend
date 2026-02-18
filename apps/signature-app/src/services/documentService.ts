@@ -48,4 +48,9 @@ export const documentService = {
     const response = await api.get<DocumentTimelineResponse>(`/api/documents/${id}/timeline`);
     return response.data;
   },
+
+  finalizeSigners: async (documentPublicId: string): Promise<{ completed: boolean }> => {
+    const response = await api.post<{ completed: boolean }>(`/api/documents/${documentPublicId}/finalize-signers`);
+    return response.data;
+  },
 };

@@ -1,15 +1,11 @@
-import { Box, Typography, Button, Stack } from '@mui/material';
+import { Box, Typography, Stack } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import VerifiedIcon from '@mui/icons-material/Verified';
-import { useNavigate } from 'react-router-dom';
 
 interface SigningSuccessProps {
-  documentId: string;
+  signerName?: string;
 }
 
-export function SigningSuccess({ documentId }: SigningSuccessProps) {
-  const navigate = useNavigate();
-
+export function SigningSuccess({ signerName }: SigningSuccessProps) {
   return (
     <Stack spacing={3} alignItems="center" sx={{ py: 4 }}>
       <Box
@@ -31,17 +27,15 @@ export function SigningSuccess({ documentId }: SigningSuccessProps) {
       </Typography>
 
       <Typography variant="body1" color="text.secondary" textAlign="center">
-        Sua assinatura foi registrada e a cadeia de evidencias foi atualizada.
+        {signerName
+          ? `${signerName}, sua assinatura foi registrada e a cadeia de evidencias foi atualizada.`
+          : 'Sua assinatura foi registrada e a cadeia de evidencias foi atualizada.'
+        }
       </Typography>
 
-      <Button
-        variant="contained"
-        startIcon={<VerifiedIcon />}
-        onClick={() => navigate(`/verify/${documentId}`)}
-        sx={{ mt: 2, py: 1.5, px: 4 }}
-      >
-        Verificar Documento
-      </Button>
+      <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ maxWidth: 360 }}>
+        Voce pode fechar esta pagina. Quando todas as assinaturas forem concluidas, o documento estara disponivel para download.
+      </Typography>
     </Stack>
   );
 }

@@ -132,6 +132,7 @@ export interface Document {
   currentHash: string;
   status: DocumentStatus;
   chainValid: boolean;
+  signersFinalized: boolean;
   metadata?: Record<string, unknown>;
 }
 
@@ -226,6 +227,7 @@ export interface SigningTokenResponse {
       cnpj: string;
     };
   };
+  previewUrl: string;
 }
 
 export interface SigningInfo {
@@ -237,6 +239,7 @@ export interface SigningInfo {
   signerEmail: string;
   signerPhone?: string;
   status: SignerStatus;
+  previewUrl: string;
 }
 
 export interface OtpRequest {

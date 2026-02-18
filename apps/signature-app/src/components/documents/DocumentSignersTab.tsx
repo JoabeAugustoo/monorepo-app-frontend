@@ -1,24 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Typography } from '@mui/material';
-import { ContentCopy as CopyIcon } from '@mui/icons-material';
+import { Typography, Button, Box } from '@mui/material';
+import {
+  ContentCopy as CopyIcon,
+  PersonAdd as PersonAddIcon,
+  CheckCircle as FinalizeIcon,
+} from '@mui/icons-material';
 import { toast } from 'sonner';
 import { DataGrid } from '@app/ui';
 import type { DataGridColumn, DataGridAction } from '@app/ui';
 import { SignerStatusChip } from '../shared/SignerStatusChip';
-import { signerService } from '../../services';
+import { AddSignerDialog } from './AddSignerDialog';
+import { signerService, documentService } from '../../services';
 import { SignerStatus, type Signer, type SearchRequest } from '../../types';
 
 interface DocumentSignersTabProps {
   documentPublicId: string;
-  refreshKey?: number;
+  signersFinalized: boolean;
+  canAddSigners: boolean;
+  onDocumentRefresh: () => void;
 }
 
-export function DocumentSignersTab({ documentPublicId, refreshKey }: DocumentSignersTabProps) {
+export function DocumentSignersTab({
+  documentPublicId,
+  signersFinalized,
+  canAddSigners,
+  onDocumentRefresh,
+}: DocumentSignersTabProps) {
   const [signers, setSigners] = useState<Signer[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
+  const [showAddSigner, setShowAddSigner] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
 
   const fetchSigners = useCallback(async () => {
     try {
@@ -48,13 +62,38 @@ export function DocumentSignersTab({ documentPublicId, refreshKey }: DocumentSig
 
   useEffect(() => {
     fetchSigners();
-  }, [fetchSigners, refreshKey]);
+  }, [fetchSigners]);
 
   const copySignLink = (token: string) => {
     const link = `${window.location.origin}/sign/${token}`;
     navigator.clipboard.writeText(link).then(() => {
       toast.success('Link copiado!');
     });
+  };
+
+  const handleFinalizeSigners = async () => {
+    try {
+      setFinalizing(true);
+      const result = await documentService.finalizeSigners(documentPublicId);
+      if (result.completed) {
+        toast.success('Signatarios finalizados! Todos ja assinaram.');
+      } else {
+        toast.success('Adicao de signatarios finalizada! Aguardando assinaturas.');
+      }
+      onDocumentRefresh();
+    } catch (error: unknown) {
+      console.error('Erro ao finalizar signatarios:', error);
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erro ao finalizar signatarios';
+      toast.error(message);
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
+  const handleSignerAdded = () => {
+    setShowAddSigner(false);
+    fetchSigners();
+    onDocumentRefresh();
   };
 
   const columns: DataGridColumn<Signer>[] = [
@@ -105,20 +144,50 @@ export function DocumentSignersTab({ documentPublicId, refreshKey }: DocumentSig
     },
   ];
 
+  const headerActions = canAddSigners && !signersFinalized ? (
+    <Box sx={{ display: 'flex', gap: 1.5 }}>
+      <Button
+        variant="outlined"
+        startIcon={<PersonAddIcon />}
+        onClick={() => setShowAddSigner(true)}
+      >
+        Adicionar Signatario
+      </Button>
+      <Button
+        variant="contained"
+        startIcon={<FinalizeIcon />}
+        onClick={handleFinalizeSigners}
+        disabled={finalizing || totalItems === 0}
+      >
+        {finalizing ? 'Finalizando...' : 'Finalizar Signatarios'}
+      </Button>
+    </Box>
+  ) : undefined;
+
   return (
-    <DataGrid<Signer>
-      data={signers}
-      columns={columns}
-      actions={actions}
-      getRowId={(row) => row.publicId}
-      emptyMessage="Nenhum signatario adicionado"
-      loading={loading}
-      serverSidePagination
-      page={currentPage}
-      pageSize={pageSize}
-      totalRows={totalItems}
-      onPageChange={setCurrentPage}
-      onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
-    />
+    <>
+      <DataGrid<Signer>
+        data={signers}
+        columns={columns}
+        actions={actions}
+        getRowId={(row) => row.publicId}
+        headerActions={headerActions}
+        emptyMessage="Nenhum signatario adicionado"
+        loading={loading}
+        serverSidePagination
+        page={currentPage}
+        pageSize={pageSize}
+        totalRows={totalItems}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+      />
+
+      <AddSignerDialog
+        open={showAddSigner}
+        documentPublicId={documentPublicId}
+        onClose={() => setShowAddSigner(false)}
+        onSuccess={handleSignerAdded}
+      />
+    </>
   );
 }

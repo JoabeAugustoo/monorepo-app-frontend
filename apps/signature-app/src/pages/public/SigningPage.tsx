@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -13,6 +13,7 @@ import { SigningIdentification } from '../../components/signing/SigningIdentific
 import { SigningOtp } from '../../components/signing/SigningOtp';
 import { SigningSign } from '../../components/signing/SigningSign';
 import { SigningSuccess } from '../../components/signing/SigningSuccess';
+import { signingService } from '../../services';
 import type { SigningInfo } from '../../types';
 
 const steps = ['Identificacao', 'Verificacao', 'Assinatura', 'Concluido'];
@@ -21,7 +22,17 @@ const SigningPage = () => {
   const { token } = useParams<{ token: string }>();
   const [activeStep, setActiveStep] = useState(0);
   const [signingInfo, setSigningInfo] = useState<SigningInfo | null>(null);
-  const [documentId, setDocumentId] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState('');
+
+  const refreshPreviewUrl = useCallback(async () => {
+    if (!token) return;
+    try {
+      const info = await signingService.validateToken(token);
+      setPreviewUrl(info.previewUrl);
+    } catch {
+      // ignore - will be handled by the viewer
+    }
+  }, [token]);
 
   if (!token) {
     return (
@@ -43,7 +54,7 @@ const SigningPage = () => {
         px: 2,
       }}
     >
-      <Box sx={{ width: '100%', maxWidth: 480 }}>
+      <Box sx={{ width: activeStep === 2 ? '80%' : '100%', maxWidth: activeStep === 2 ? 'none' : 480, transition: 'all 0.3s ease' }}>
         {/* Logo/Header */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <img src="/logo.svg" alt="Signature" style={{ width: 48, height: 48 }} />
@@ -69,6 +80,7 @@ const SigningPage = () => {
                 token={token}
                 onNext={(info) => {
                   setSigningInfo(info);
+                  setPreviewUrl(info.previewUrl);
                   setActiveStep(1);
                 }}
               />
@@ -84,14 +96,13 @@ const SigningPage = () => {
               <SigningSign
                 token={token}
                 info={signingInfo}
-                onNext={(docId) => {
-                  setDocumentId(docId);
-                  setActiveStep(3);
-                }}
+                previewUrl={previewUrl}
+                onPreviewError={refreshPreviewUrl}
+                onNext={() => setActiveStep(3)}
               />
             )}
             {activeStep === 3 && (
-              <SigningSuccess documentId={documentId} />
+              <SigningSuccess signerName={signingInfo?.signerName} />
             )}
           </CardContent>
         </Card>
