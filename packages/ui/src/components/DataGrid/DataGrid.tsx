@@ -33,6 +33,7 @@ export function DataGrid<T>(props: DataGridProps<T>) {
     actions,
     onSelectionChange,
     onPageSizeChange,
+    onRowClick,
     sortField = null,
     sortDirection = null,
     onSortChange,
@@ -269,8 +270,10 @@ export function DataGrid<T>(props: DataGridProps<T>) {
                   <TableRow
                     key={rowId}
                     hover
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
                     sx={(theme) => ({
                       transition: 'background-color 0.15s',
+                      ...(onRowClick && { cursor: 'pointer' }),
                       ...(theme.palette.mode === 'dark' && {
                         bgcolor: rowIndex % 2 === 0 ? theme.palette.background.default : theme.palette.background.paper,
                         '&.MuiTableRow-hover:hover': {

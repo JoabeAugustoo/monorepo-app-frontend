@@ -5,7 +5,8 @@ export { AppBarComponent } from './components/AppBarComponent';
 export { ConfigDrawer } from './components/ConfigDrawer';
 export { LoginPage } from './components/LoginPage';
 export { useSidebar } from './hooks/useSidebar';
-export { useAuth, useAuthOpcional } from './hooks/useAuth';
+export { useAuth, useAuthOpcional, useAuthState, AuthContext } from './hooks/useAuth';
+export type { AuthContextValue } from './hooks/useAuth';
 export { useSearchDebounce } from './hooks/useSearchDebounce';
 export { createAppTheme, createAppThemeDark, createDarkTheme, createThemeForTema } from './theme/createAppTheme';
 export { darkTokens, darkThemeRegistry, getThemeTokens } from './theme/darkThemeTokens';
@@ -18,6 +19,8 @@ export { I18nProvider, useI18n } from './contexts/I18nContext';
 export { NotificationProvider, useNotifications, useNotificationsOptional } from './contexts/NotificationContext';
 export { NotificationBell } from './components/NotificationBell';
 export { NotificationSocketService } from './services/notificationSocketService';
+export { createApiClient } from './services/createApiClient';
+export type { ApiClientConfig, ApiClientResult } from './services/createApiClient';
 export { NotificationType } from './types';
 export type {
   MenuItem,
