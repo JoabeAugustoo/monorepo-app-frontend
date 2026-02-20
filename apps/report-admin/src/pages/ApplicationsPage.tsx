@@ -95,14 +95,14 @@ const ApplicationsPage = () => {
 
   const openCreateDialog = () => {
     setEditingApp(null);
-    setFormData({ name: '', code: '', description: '' });
+    setFormData({ name: '', code: '', externalId: '', description: '' });
     setCodeManuallyEdited(false);
     setDialogOpen(true);
   };
 
   const openEditDialog = (app: Application) => {
     setEditingApp(app);
-    setFormData({ name: app.name, code: app.code, description: app.description || '' });
+    setFormData({ name: app.name, code: app.code, externalId: app.externalId || '', description: app.description || '' });
     setCodeManuallyEdited(true);
     setDialogOpen(true);
   };
@@ -131,6 +131,7 @@ const ApplicationsPage = () => {
       const dto: ApplicationDto = {
         name: formData.name.trim(),
         code: formData.code.trim(),
+        externalId: formData.externalId?.trim() || undefined,
         description: formData.description?.trim() || undefined,
       };
 
@@ -176,6 +177,15 @@ const ApplicationsPage = () => {
       sortable: true,
       render: (a) => (
         <Chip label={a.code} size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }} />
+      ),
+    },
+    {
+      key: 'externalId',
+      header: 'External ID',
+      render: (a) => (
+        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          {a.externalId || '-'}
+        </span>
       ),
     },
     {
@@ -255,6 +265,7 @@ const ApplicationsPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        onRefresh={fetchApplications}
       />
 
       {/* Create / Edit Dialog */}
@@ -275,6 +286,14 @@ const ApplicationsPage = () => {
               value={formData.code}
               onChange={(e) => handleCodeChange(e.target.value)}
               helperText="Identificador único (slug)"
+              slotProps={{ input: { sx: { fontFamily: 'monospace' } } }}
+            />
+            <TextField
+              fullWidth
+              label="External ID"
+              value={formData.externalId}
+              onChange={(e) => setFormData({ ...formData, externalId: e.target.value })}
+              helperText="Identificador externo (opcional)"
               slotProps={{ input: { sx: { fontFamily: 'monospace' } } }}
             />
             <TextField

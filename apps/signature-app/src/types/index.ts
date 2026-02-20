@@ -121,6 +121,7 @@ export interface Certificate {
 
 export interface Document {
   publicId: string;
+  trackingPublicId?: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;

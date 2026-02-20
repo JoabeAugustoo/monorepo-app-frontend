@@ -155,6 +155,7 @@ export function ApplicationRolesTab({ applicationId }: ApplicationRolesTabProps)
         setPageSize(size);
         setCurrentPage(1);
       }}
+      onRefresh={fetchRoles}
     />
   );
 }

@@ -324,6 +324,7 @@ const ProductsPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        onRefresh={fetchProducts}
       />
 
       {/* Form Dialog */}

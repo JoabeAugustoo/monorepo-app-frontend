@@ -7,7 +7,7 @@ import {
   Add as AddIcon,
   Visibility as ViewIcon,
   FileDownload as DownloadOriginalIcon,
-  DownloadDone as DownloadSignedIcon,
+  VerifiedUser as DownloadSignedIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { DataGrid, SearchField } from '@app/ui';
@@ -92,11 +92,11 @@ const DocumentsPage = () => {
 
   const columns: DataGridColumn<Document>[] = [
     {
-      key: 'publicId',
+      key: 'trackingPublicId',
       header: 'ID',
       render: (doc: Document) => (
         <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} noWrap>
-          {doc.publicId}
+          {doc.trackingPublicId || doc.publicId}
         </Typography>
       ),
     },
@@ -233,6 +233,7 @@ const DocumentsPage = () => {
         actions={actions}
         emptyMessage="Nenhum documento cadastrado"
         loading={loading}
+        onRefresh={fetchDocuments}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}

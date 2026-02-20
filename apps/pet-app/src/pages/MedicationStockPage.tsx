@@ -219,6 +219,7 @@ const MedicationStockPage = () => {
         headerActions={headerActions}
         emptyMessage="Nenhum lote encontrado"
         loading={loading}
+        onRefresh={fetchBatches}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}

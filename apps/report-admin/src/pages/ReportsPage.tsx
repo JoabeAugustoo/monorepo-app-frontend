@@ -5,6 +5,7 @@ import {
   Chip,
   MenuItem as MuiMenuItem,
   TextField,
+  Typography,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -147,6 +148,15 @@ const ReportsPage = () => {
   };
 
   const columns: DataGridColumn<GeneratedReport>[] = [
+    {
+      key: 'trackingPublicId',
+      header: 'ID',
+      render: (r) => (
+        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} noWrap>
+          {r.trackingPublicId || r.publicId}
+        </Typography>
+      ),
+    },
     {
       key: 'templateKey',
       header: 'Template',
@@ -337,6 +347,7 @@ const ReportsPage = () => {
       totalRows={totalItems}
       onPageChange={setCurrentPage}
       onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+      onRefresh={fetchReports}
     />
   );
 };

@@ -305,6 +305,7 @@ const TemplateCategoriesPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        onRefresh={fetchCategories}
       />
 
       {/* Create / Edit Dialog */}

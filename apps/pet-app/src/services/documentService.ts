@@ -1,5 +1,5 @@
 import api from './api';
-import type { DocumentTemplate, DocumentRecord, SendDocumentDto, SignDocumentDto, ReportStatusResponse, DocumentSearchRequest, DocumentSearchResponse, TemplateSearchRequest, TemplateSearchResponse, TemplateCategory } from '../types';
+import type { DocumentTemplate, DocumentRecord, DocumentTracking, SendDocumentDto, GenerateReportDto, GenerateReportResponse, SignDocumentDto, ReportStatusResponse, DocumentSearchRequest, DocumentSearchResponse, DocumentTrackingSearchResponse, TemplateSearchRequest, TemplateSearchResponse, TemplateCategory } from '../types';
 
 export const documentService = {
   getTemplates: async (): Promise<DocumentTemplate[]> => {
@@ -21,8 +21,8 @@ export const documentService = {
     return response.data;
   },
 
-  searchDocuments: async (request: DocumentSearchRequest): Promise<DocumentSearchResponse> => {
-    const response = await api.post('/documents/search', request);
+  searchDocuments: async (request: DocumentSearchRequest): Promise<DocumentTrackingSearchResponse> => {
+    const response = await api.post('/document-tracking/search', request);
     return response.data;
   },
 
@@ -40,6 +40,11 @@ export const documentService = {
 
   sendDocument: async (dto: SendDocumentDto): Promise<DocumentRecord> => {
     const response = await api.post('/documents/send', dto);
+    return response.data;
+  },
+
+  generateReport: async (dto: GenerateReportDto): Promise<GenerateReportResponse> => {
+    const response = await api.post('/petflow-reports/generate', dto);
     return response.data;
   },
 
@@ -64,7 +69,14 @@ export const documentService = {
   },
 
   downloadDocument: async (id: string): Promise<Blob> => {
-    const response = await api.get(`/documents/${id}/download`, {
+    const response = await api.get(`/document-tracking/${id}/download`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  downloadSignedDocument: async (id: string): Promise<Blob> => {
+    const response = await api.get(`/document-tracking/${id}/download-signed`, {
       responseType: 'blob',
     });
     return response.data;

@@ -1,5 +1,5 @@
 import api from './api';
-import type { Employee, EmployeeDto, SearchRequest, PaginatedResponse } from '../types';
+import type { Employee, EmployeeDto, EmployeeCreateResponse, SearchRequest, PaginatedResponse } from '../types';
 
 export const employeeService = {
   getEmployeeById: async (id: string): Promise<Employee> => {
@@ -7,8 +7,8 @@ export const employeeService = {
     return response.data;
   },
 
-  createEmployee: async (data: EmployeeDto): Promise<Employee> => {
-    const response = await api.post('/employees', data);
+  createEmployee: async (data: EmployeeDto): Promise<EmployeeCreateResponse> => {
+    const response = await api.post<EmployeeCreateResponse>('/employees', data);
     return response.data;
   },
 

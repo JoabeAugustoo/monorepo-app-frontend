@@ -72,12 +72,14 @@ export interface Application {
   updatedAt: string;
   name: string;
   code: string;
+  externalId?: string;
   description?: string;
 }
 
 export interface ApplicationDto {
   name: string;
   code: string;
+  externalId?: string;
   description?: string;
 }
 
@@ -118,6 +120,7 @@ export interface GenerateReportResponseDto {
 
 export interface GeneratedReport {
   publicId: string;
+  trackingPublicId?: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;

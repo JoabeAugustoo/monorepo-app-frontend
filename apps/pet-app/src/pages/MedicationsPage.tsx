@@ -248,6 +248,7 @@ const MedicationsPage = () => {
         actions={actions}
         emptyMessage="Nenhum medicamento cadastrado"
         loading={loading}
+        onRefresh={fetchMedications}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}

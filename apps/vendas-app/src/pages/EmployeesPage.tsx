@@ -362,6 +362,7 @@ const EmployeesPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        onRefresh={fetchEmployees}
       />
 
       {/* Form Dialog */}

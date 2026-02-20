@@ -31,7 +31,9 @@ export type GranularRole =
   | 'DOCUMENT_WRITE'
   | 'REPORT_READ'
   | 'REPORT_WRITE'
-  | 'APPLICATION_READ';
+  | 'APPLICATION_READ'
+  | 'CLINIC_READ'
+  | 'CLINIC_WRITE';
 
 export interface PetUser {
   id: string;
@@ -99,6 +101,8 @@ export interface Employee {
   role?: EmployeeRole;
   crmv?: string;
   hireDate?: string;
+  hasAuthAccess?: boolean;
+  authUserGuid?: string;
   active?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -112,6 +116,13 @@ export interface EmployeeDto {
   role?: EmployeeRole;
   crmv?: string;
   hireDate?: string;
+  createAuthUser?: boolean;
+}
+
+export interface EmployeeCreateResponse extends Employee {
+  generatedUserName?: string;
+  generatedPassword?: string;
+  isExistingUser?: boolean;
 }
 
 // --- Pet ---
@@ -338,6 +349,19 @@ export interface StockBatchDto {
 // --- Documents & Signatures ---
 export type DocumentType = 'SIGNATURE_REQUIRED' | 'SEND_ONLY';
 export type DocumentStatus = 'PENDING' | 'SENT' | 'AWAITING_SIGNATURE' | 'SIGNED' | 'EXPIRED' | 'CANCELLED';
+
+export type DocumentLifecycleStatus =
+  | 'GENERATING'
+  | 'REPORT_FAILED'
+  | 'REPORT_COMPLETED'
+  | 'NO_SIGNATURE_REQUIRED'
+  | 'UPLOADING_TO_SIGNATURE'
+  | 'AWAITING_SIGNATURES'
+  | 'PARTIALLY_SIGNED'
+  | 'COMPLETED'
+  | 'EXPIRED'
+  | 'FAILED'
+  | 'CANCELLED';
 export type TemplateEngine = 'HANDLEBARS' | 'HTML';
 export type TemplateStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
@@ -417,6 +441,21 @@ export interface DocumentRecord {
   expiresAt?: string;
 }
 
+export interface DocumentTracking {
+  publicId: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  reportId?: string;
+  templateKey: string;
+  status: DocumentLifecycleStatus;
+  errorMessage?: string;
+  signatureDocumentId?: string;
+  petId: string;
+  customerId: string;
+  documentName: string;
+}
+
 export interface SendDocumentDto {
   templateId: string;
   petId: string;
@@ -424,6 +463,20 @@ export interface SendDocumentDto {
   customerId: string;
   customerName: string;
   data: Record<string, unknown>;
+}
+
+export interface GenerateReportDto {
+  templateKey: string;
+  data: Record<string, unknown>;
+  documentName: string;
+  petId: string;
+  customerId: string;
+}
+
+export interface GenerateReportResponse {
+  trackingPublicId: string;
+  reportId: string;
+  status: DocumentLifecycleStatus;
 }
 
 export interface SignDocumentDto {
@@ -442,6 +495,16 @@ export interface DocumentSearchRequest {
 
 export interface DocumentSearchResponse {
   data: DocumentRecord[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export interface DocumentTrackingSearchResponse {
+  data: DocumentTracking[];
   total: number;
   page: number;
   size: number;
@@ -470,6 +533,47 @@ export interface ReportStatusResponse {
   contentType?: string;
   fileExtension?: string;
   fileSize?: number;
+}
+
+// --- Clinic ---
+
+export interface Clinic {
+  publicId: string;
+  tradeName: string;
+  legalName: string;
+  cnpj: string;
+  phone: string;
+  email: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClinicCertificate {
+  publicId: string;
+  name: string;
+  subjectCn: string;
+  issuerCn: string;
+  serialNumber?: string;
+  fingerprint?: string;
+  validFrom: string;
+  validTo: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface ClinicDto {
+  tradeName: string;
+  legalName: string;
+  cnpj: string;
+  phone: string;
+  email: string;
+  address?: string;
+  city?: string;
+  state?: string;
 }
 
 export type { SortField, SearchRequest, PaginatedResponse, CurrencyCode, Language, TranslationSet } from '@app/core';

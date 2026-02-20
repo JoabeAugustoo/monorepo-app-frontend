@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -9,9 +9,11 @@ import {
   Grid2 as Grid,
   IconButton,
   TextField,
+  Tooltip,
   Typography,
   CircularProgress,
   Alert,
+  alpha,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -20,14 +22,30 @@ import {
   Edit as EditIcon,
   MedicalServices as MedicalIcon,
   History as HistoryIcon,
+  Male as MaleIcon,
+  Female as FemaleIcon,
+  Scale as WeightIcon,
+  Cake as BirthIcon,
+  Palette as ColorIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { formatCpf, formatPhone } from '@app/core';
+import { FaDog, FaCat, FaDove, FaFrog, FaPaw } from 'react-icons/fa6';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { formatCpf, formatPhone, formatDate } from '@app/core';
 import { customerService, petService, medicalProcedureService } from '../services';
-import type { CustomerWithAddresses, Pet, MedicalProcedure } from '../types';
+import type { CustomerWithAddresses, Pet, PetSpecies, MedicalProcedure } from '../types';
+
+const SPECIES_CONFIG: Record<string, { icon: React.ReactNode; color: string; gradient: string; label: string }> = {
+  DOG: { icon: <FaDog size={22} />, color: '#9C72D9', gradient: 'linear-gradient(135deg, #9C72D9, #7B5BBF)', label: 'Cão' },
+  CAT: { icon: <FaCat size={22} />, color: '#F48FB1', gradient: 'linear-gradient(135deg, #F48FB1, #E91E63)', label: 'Gato' },
+  BIRD: { icon: <FaDove size={22} />, color: '#4DB6AC', gradient: 'linear-gradient(135deg, #4DB6AC, #00897B)', label: 'Ave' },
+  REPTILE: { icon: <FaFrog size={22} />, color: '#7EB3E0', gradient: 'linear-gradient(135deg, #7EB3E0, #42A5F5)', label: 'Réptil' },
+  OTHER: { icon: <FaPaw size={22} />, color: '#FFB74D', gradient: 'linear-gradient(135deg, #FFB74D, #FF9800)', label: 'Outro' },
+};
 
 const TutorPanelPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as { cpf?: string } | null;
   const [cpfInput, setCpfInput] = useState('');
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -36,8 +54,7 @@ const TutorPanelPage = () => {
   const [petProcedures, setPetProcedures] = useState<Record<string, MedicalProcedure[]>>({});
   const [loadingPets, setLoadingPets] = useState(false);
 
-  const handleSearch = useCallback(async () => {
-    const digits = cpfInput.replace(/\D/g, '');
+  const handleSearchByCpf = useCallback(async (digits: string) => {
     if (digits.length !== 11) return;
 
     setSearching(true);
@@ -86,7 +103,21 @@ const TutorPanelPage = () => {
     } finally {
       setSearching(false);
     }
-  }, [cpfInput]);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    const digits = cpfInput.replace(/\D/g, '');
+    handleSearchByCpf(digits);
+  }, [cpfInput, handleSearchByCpf]);
+
+  // Auto-load from navigation state (e.g. after pet registration)
+  useEffect(() => {
+    if (locationState?.cpf) {
+      setCpfInput(formatCpf(locationState.cpf));
+      handleSearchByCpf(locationState.cpf);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
 
   return (
     <Box>
@@ -200,27 +231,69 @@ const TutorPanelPage = () => {
               ) : pets.length === 0 ? (
                 <Typography color="text.secondary">Nenhum pet encontrado.</Typography>
               ) : (
-                <Grid container spacing={2}>
+                <Grid container spacing={2.5}>
                   {pets.map((pet) => {
                     const hasActiveProcedure = pet.publicId && petProcedures[pet.publicId]?.length > 0;
+                    const speciesCfg = SPECIES_CONFIG[pet.species || 'OTHER'] || SPECIES_CONFIG.OTHER;
+
                     return (
                       <Grid size={{ xs: 12, sm: 6, md: 4 }} key={pet.publicId || pet.id}>
-                        <Card variant="outlined" sx={{ borderColor: 'rgba(156, 114, 217, 0.2)' }}>
-                          <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                              <Box>
-                                <Typography variant="subtitle1" fontWeight={600}>{pet.name}</Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                  {pet.species} {pet.breed ? `- ${pet.breed}` : ''}
+                        <Card
+                          sx={{
+                            borderRadius: '16px',
+                            border: '1px solid',
+                            borderColor: (t) => alpha(speciesCfg.color, t.palette.mode === 'dark' ? 0.3 : 0.15),
+                            boxShadow: `0 2px 8px ${alpha(speciesCfg.color, 0.08)}`,
+                            transition: 'all 0.25s ease',
+                            overflow: 'visible',
+                            '&:hover': {
+                              transform: 'translateY(-3px)',
+                              boxShadow: `0 8px 24px ${alpha(speciesCfg.color, 0.18)}`,
+                              borderColor: alpha(speciesCfg.color, 0.35),
+                            },
+                          }}
+                        >
+                          {/* Top accent bar */}
+                          <Box sx={{
+                            height: 4,
+                            borderRadius: '16px 16px 0 0',
+                            background: speciesCfg.gradient,
+                          }} />
+
+                          <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+                            {/* Header: icon + name + status */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                              <Box sx={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: '14px',
+                                background: speciesCfg.gradient,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#fff',
+                                flexShrink: 0,
+                                boxShadow: `0 4px 12px ${alpha(speciesCfg.color, 0.3)}`,
+                              }}>
+                                {speciesCfg.icon}
+                              </Box>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography variant="subtitle1" fontWeight={700} noWrap>
+                                  {pet.name}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" noWrap>
+                                  {speciesCfg.label}{pet.breed ? ` - ${pet.breed}` : ''}
                                 </Typography>
                               </Box>
                               <Chip
-                                label={hasActiveProcedure ? 'Em atendimento' : 'Sem atendimento'}
                                 size="small"
+                                label={hasActiveProcedure ? 'Em atendimento' : 'Disponível'}
                                 sx={{
-                                  backgroundColor: hasActiveProcedure ? '#FCE4EC' : '#f5f5f5',
-                                  color: hasActiveProcedure ? '#C2185B' : '#9e9e9e',
-                                  fontWeight: 600,
+                                  backgroundColor: hasActiveProcedure ? '#FCE4EC' : alpha(speciesCfg.color, 0.08),
+                                  color: hasActiveProcedure ? '#C2185B' : speciesCfg.color,
+                                  fontWeight: 700,
+                                  fontSize: '0.68rem',
+                                  height: 24,
                                   animation: hasActiveProcedure ? 'pulse 2s infinite' : 'none',
                                   '@keyframes pulse': {
                                     '0%, 100%': { opacity: 1 },
@@ -229,31 +302,97 @@ const TutorPanelPage = () => {
                                 }}
                               />
                             </Box>
-                            <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                title="Histórico"
-                                onClick={() => pet.publicId && navigate(`/procedimentos?petId=${pet.publicId}`)}
-                              >
-                                <HistoryIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                color="success"
-                                title="Novo Procedimento"
-                                onClick={() => navigate(`/procedimentos/novo?petId=${pet.publicId}`)}
-                              >
-                                <MedicalIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                color="info"
-                                title="Editar Pet"
-                                onClick={() => navigate(`/pets`)}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
+
+                            {/* Pet details */}
+                            <Box sx={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 1,
+                              mb: 2,
+                              p: 1.5,
+                              borderRadius: '10px',
+                              bgcolor: (t) => t.palette.mode === 'dark' ? alpha(speciesCfg.color, 0.06) : alpha(speciesCfg.color, 0.03),
+                            }}>
+                              {pet.gender && pet.gender !== 'UNKNOWN' && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                                  {pet.gender === 'MALE'
+                                    ? <MaleIcon sx={{ fontSize: 16, color: '#42A5F5' }} />
+                                    : <FemaleIcon sx={{ fontSize: 16, color: '#F48FB1' }} />
+                                  }
+                                  <Typography variant="caption" color="text.secondary">
+                                    {pet.gender === 'MALE' ? 'Macho' : 'Fêmea'}
+                                  </Typography>
+                                </Box>
+                              )}
+                              {pet.birthDate && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                                  <BirthIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {formatDate(pet.birthDate)}
+                                  </Typography>
+                                </Box>
+                              )}
+                              {pet.weight != null && pet.weight > 0 && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                                  <WeightIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {pet.weight} kg
+                                  </Typography>
+                                </Box>
+                              )}
+                              {pet.color && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                                  <ColorIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {pet.color}
+                                  </Typography>
+                                </Box>
+                              )}
+                              {!pet.gender && !pet.birthDate && !pet.weight && !pet.color && (
+                                <Typography variant="caption" color="text.disabled">
+                                  Sem detalhes adicionais
+                                </Typography>
+                              )}
+                            </Box>
+
+                            {/* Actions */}
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <Tooltip title="Histórico">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => pet.publicId && navigate(`/procedimentos?petId=${pet.publicId}`)}
+                                  sx={{
+                                    color: speciesCfg.color,
+                                    '&:hover': { bgcolor: alpha(speciesCfg.color, 0.1) },
+                                  }}
+                                >
+                                  <HistoryIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Novo Procedimento">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => navigate(`/procedimentos/novo?petId=${pet.publicId}`)}
+                                  sx={{
+                                    color: '#4CAF50',
+                                    '&:hover': { bgcolor: alpha('#4CAF50', 0.1) },
+                                  }}
+                                >
+                                  <MedicalIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Editar Pet">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => navigate(`/pets`)}
+                                  sx={{
+                                    color: 'text.secondary',
+                                    '&:hover': { bgcolor: alpha(speciesCfg.color, 0.1) },
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
                             </Box>
                           </CardContent>
                         </Card>

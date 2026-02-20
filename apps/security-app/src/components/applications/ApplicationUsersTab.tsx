@@ -203,6 +203,7 @@ export function ApplicationUsersTab({ applicationId, applicationName }: Applicat
           setPageSize(size);
           setCurrentPage(1);
         }}
+        onRefresh={fetchUsers}
       />
 
       <ConfirmDialog

@@ -17,6 +17,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { alpha } from '@mui/material/styles';
 import type { DataGridProps, SortDirection } from './DataGrid.types';
 
@@ -34,6 +35,8 @@ export function DataGrid<T>(props: DataGridProps<T>) {
     onSelectionChange,
     onPageSizeChange,
     onRowClick,
+    refreshable = true,
+    onRefresh,
     sortField = null,
     sortDirection = null,
     onSortChange,
@@ -130,7 +133,7 @@ export function DataGrid<T>(props: DataGridProps<T>) {
       }}
     >
       {/* Header */}
-      {(headerActions || selectable) && (
+      {(headerActions || selectable || refreshable) && (
         <Box
           sx={{
             px: 3,
@@ -153,7 +156,18 @@ export function DataGrid<T>(props: DataGridProps<T>) {
             {selectedIds.size > 0 &&
               ` (${selectedIds.size} selecionado${selectedIds.size > 1 ? 's' : ''})`}
           </Typography>
-          {headerActions && <Box>{headerActions}</Box>}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {headerActions}
+            {refreshable && (
+              <Tooltip title="Atualizar">
+                <span>
+                  <IconButton size="small" onClick={onRefresh} disabled={!onRefresh}>
+                    <RefreshIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+          </Box>
         </Box>
       )}
 

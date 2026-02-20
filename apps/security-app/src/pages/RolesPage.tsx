@@ -287,6 +287,7 @@ const RolesPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        onRefresh={fetchRoles}
       />
 
       <FormDialog

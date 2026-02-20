@@ -204,6 +204,7 @@ const CertificatesPage = () => {
         actions={actions}
         emptyMessage="Nenhum certificado cadastrado"
         loading={loading}
+        onRefresh={fetchCertificates}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}

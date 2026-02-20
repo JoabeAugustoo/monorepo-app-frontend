@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -7,7 +7,6 @@ import {
   Chip,
   CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Grid2 as Grid,
@@ -25,7 +24,7 @@ import {
   Refresh as RefreshIcon,
   Close as CloseIcon,
   Download as DownloadIcon,
-  Draw as SignIcon,
+  VerifiedUser as SignedIcon,
   Vaccines as VaccineIcon,
   Pets as PetsIcon,
   Person as TutorIcon,
@@ -41,9 +40,9 @@ import type {
   CustomerWithAddresses,
   Pet,
   DocumentTemplate,
-  DocumentRecord,
+  DocumentTracking,
   DocumentType,
-  DocumentStatus,
+  DocumentLifecycleStatus,
   TemplateCategory,
 } from '../types';
 
@@ -52,114 +51,18 @@ const TYPE_CONFIG: Record<DocumentType, { label: string; color: string; bg: stri
   SEND_ONLY: { label: 'Envio Simples', color: '#2E7D32', bg: '#E8F5E9' },
 };
 
-const STATUS_CONFIG: Record<DocumentStatus, { label: string; color: string; bg: string }> = {
-  PENDING: { label: 'Pendente', color: '#757575', bg: '#F5F5F5' },
-  SENT: { label: 'Enviado', color: '#1565C0', bg: '#E3F2FD' },
-  AWAITING_SIGNATURE: { label: 'Aguardando Assinatura', color: '#E65100', bg: '#FFF3E0' },
-  SIGNED: { label: 'Assinado', color: '#2E7D32', bg: '#E8F5E9' },
+const STATUS_CONFIG: Record<DocumentLifecycleStatus, { label: string; color: string; bg: string }> = {
+  GENERATING: { label: 'Gerando', color: '#1565C0', bg: '#E3F2FD' },
+  REPORT_FAILED: { label: 'Falha no Relatório', color: '#C62828', bg: '#FFEBEE' },
+  REPORT_COMPLETED: { label: 'Relatório Pronto', color: '#2E7D32', bg: '#E8F5E9' },
+  NO_SIGNATURE_REQUIRED: { label: 'Sem Assinatura', color: '#558B2F', bg: '#F1F8E9' },
+  UPLOADING_TO_SIGNATURE: { label: 'Enviando p/ Assinatura', color: '#E65100', bg: '#FFF3E0' },
+  AWAITING_SIGNATURES: { label: 'Aguardando Assinaturas', color: '#E65100', bg: '#FFF3E0' },
+  PARTIALLY_SIGNED: { label: 'Parcialmente Assinado', color: '#F57F17', bg: '#FFFDE7' },
+  COMPLETED: { label: 'Concluído', color: '#2E7D32', bg: '#E8F5E9' },
   EXPIRED: { label: 'Expirado', color: '#C62828', bg: '#FFEBEE' },
+  FAILED: { label: 'Falha', color: '#C62828', bg: '#FFEBEE' },
   CANCELLED: { label: 'Cancelado', color: '#9E9E9E', bg: '#FAFAFA' },
-};
-
-// --- Signature Pad Component ---
-const SignaturePad = ({
-  onSignatureChange,
-}: {
-  onSignatureChange: (data: string | null) => void;
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isDrawingRef = useRef(false);
-
-  const getCtx = () => canvasRef.current?.getContext('2d') ?? null;
-
-  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    if ('touches' in e) {
-      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-    }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
-
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    const ctx = getCtx();
-    if (!ctx) return;
-    isDrawingRef.current = true;
-    const { x, y } = getPos(e);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawingRef.current) return;
-    const ctx = getCtx();
-    if (!ctx) return;
-    const { x, y } = getPos(e);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  };
-
-  const stopDraw = () => {
-    if (!isDrawingRef.current) return;
-    isDrawingRef.current = false;
-    const canvas = canvasRef.current;
-    if (canvas) {
-      onSignatureChange(canvas.toDataURL('image/png'));
-    }
-  };
-
-  const clear = () => {
-    const canvas = canvasRef.current;
-    const ctx = getCtx();
-    if (canvas && ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      onSignatureChange(null);
-    }
-  };
-
-  useEffect(() => {
-    const ctx = getCtx();
-    if (ctx) {
-      ctx.strokeStyle = '#1a1a1a';
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-    }
-  }, []);
-
-  return (
-    <Box>
-      <Box
-        sx={{
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          overflow: 'hidden',
-          touchAction: 'none',
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          width={460}
-          height={180}
-          style={{ display: 'block', width: '100%', cursor: 'crosshair', background: '#fafafa' }}
-          onMouseDown={startDraw}
-          onMouseMove={draw}
-          onMouseUp={stopDraw}
-          onMouseLeave={stopDraw}
-          onTouchStart={startDraw}
-          onTouchMove={draw}
-          onTouchEnd={stopDraw}
-        />
-      </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-        <Button size="small" onClick={clear}>
-          Limpar
-        </Button>
-      </Box>
-    </Box>
-  );
 };
 
 // --- Helpers ---
@@ -195,7 +98,7 @@ const DocumentsPage = () => {
   const [tplPage, setTplPage] = useState(1);
   const [tplPageSize, setTplPageSize] = useState(10);
   const [tplTotal, setTplTotal] = useState(0);
-  const [sentDocuments, setSentDocuments] = useState<DocumentRecord[]>([]);
+  const [sentDocuments, setSentDocuments] = useState<DocumentTracking[]>([]);
   const [docPage, setDocPage] = useState(1);
   const [docPageSize, setDocPageSize] = useState(10);
   const [docTotal, setDocTotal] = useState(0);
@@ -208,17 +111,11 @@ const DocumentsPage = () => {
   const [previewTitle, setPreviewTitle] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  // --- Signature dialog ---
-  const [signDialogOpen, setSignDialogOpen] = useState(false);
-  const [signingDoc, setSigningDoc] = useState<DocumentRecord | null>(null);
-  const [signedBy, setSignedBy] = useState('');
-  const [signatureData, setSignatureData] = useState<string | null>(null);
-  const [signingLoading, setSigning] = useState(false);
-
   // --- Action states ---
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [reprocessingId, setReprocessingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadingSignedId, setDownloadingSignedId] = useState<string | null>(null);
 
   // --- Category filter ---
   const [categories, setCategories] = useState<TemplateCategory[]>([]);
@@ -387,22 +284,17 @@ const DocumentsPage = () => {
       if (!customer?.publicId || !selectedPet?.publicId) return;
       setSendingId(template.publicId);
       try {
-        await documentService.sendDocument({
-          templateId: template.publicId,
-          petId: selectedPet.publicId,
-          petName: selectedPet.name,
-          customerId: customer.publicId,
-          customerName: customer.name,
+        await documentService.generateReport({
+          templateKey: template.key,
           data: {},
+          documentName: `${template.name} - ${selectedPet.name}`,
+          petId: selectedPet.publicId,
+          customerId: customer.publicId,
         });
-        toast.success(
-          template.documentType === 'SIGNATURE_REQUIRED'
-            ? 'Documento enviado para assinatura!'
-            : 'Documento enviado com sucesso!',
-        );
+        toast.success('Documento solicitado! Acompanhe o status abaixo.');
         await refreshDocuments();
       } catch {
-        toast.error('Erro ao enviar documento.');
+        toast.error('Erro ao gerar documento.');
       } finally {
         setSendingId(null);
       }
@@ -411,7 +303,7 @@ const DocumentsPage = () => {
   );
 
   const handleReprocess = useCallback(
-    async (doc: DocumentRecord) => {
+    async (doc: DocumentTracking) => {
       if (!customer?.publicId || !selectedPet?.publicId) return;
       setReprocessingId(doc.publicId);
       try {
@@ -427,11 +319,11 @@ const DocumentsPage = () => {
     [customer, selectedPet, refreshDocuments],
   );
 
-  const handleDownload = useCallback(async (doc: DocumentRecord) => {
+  const handleDownload = useCallback(async (doc: DocumentTracking) => {
     setDownloadingId(doc.publicId);
     try {
       const blob = await documentService.downloadDocument(doc.publicId);
-      triggerBlobDownload(blob, `${doc.templateKey}-${doc.petName}.pdf`);
+      triggerBlobDownload(blob, `${doc.documentName || doc.templateKey}.pdf`);
     } catch {
       toast.error('Erro ao baixar documento. O PDF pode ainda estar sendo gerado.');
     } finally {
@@ -439,37 +331,18 @@ const DocumentsPage = () => {
     }
   }, []);
 
-  // --- Signature ---
-  const openSignDialog = useCallback((doc: DocumentRecord) => {
-    setSigningDoc(doc);
-    setSignedBy('');
-    setSignatureData(null);
-    setSignDialogOpen(true);
-  }, []);
-
-  const handleSign = useCallback(async () => {
-    if (!signingDoc || !signedBy.trim() || !signatureData) {
-      toast.error('Preencha o nome e desenhe a assinatura.');
-      return;
-    }
-
-    setSigning(true);
+  // --- Download signed ---
+  const handleDownloadSigned = useCallback(async (doc: DocumentTracking) => {
+    setDownloadingSignedId(doc.publicId);
     try {
-      // Remove the data:image/png;base64, prefix
-      const base64 = signatureData.split(',')[1] || signatureData;
-      await documentService.signDocument(signingDoc.publicId, {
-        signatureData: base64,
-        signedBy: signedBy.trim(),
-      });
-      toast.success('Documento assinado com sucesso!');
-      setSignDialogOpen(false);
-      await refreshDocuments();
+      const blob = await documentService.downloadSignedDocument(doc.publicId);
+      triggerBlobDownload(blob, `${doc.documentName || doc.templateKey}-assinado.pdf`);
     } catch {
-      toast.error('Erro ao assinar documento.');
+      toast.error('Erro ao baixar documento assinado.');
     } finally {
-      setSigning(false);
+      setDownloadingSignedId(null);
     }
-  }, [signingDoc, signedBy, signatureData, refreshDocuments]);
+  }, []);
 
   // --- Vaccination Auth ---
   const handleGenerateVaccinationAuth = useCallback(async () => {
@@ -502,12 +375,14 @@ const DocumentsPage = () => {
       header: 'Tipo',
       render: (t) => {
         const cfg = TYPE_CONFIG[t.documentType];
-        return (
+        return cfg ? (
           <Chip
             label={cfg.label}
             size="small"
             sx={{ backgroundColor: cfg.bg, color: cfg.color, fontWeight: 600 }}
           />
+        ) : (
+          <Chip label={t.documentType || '-'} size="small" variant="outlined" />
         );
       },
     },
@@ -562,21 +437,23 @@ const DocumentsPage = () => {
   ];
 
   // --- Sent document columns ---
-  const sentColumns: DataGridColumn<DocumentRecord>[] = [
-    { key: 'templateName', header: 'Documento', render: (d) => d.templateName },
+  const sentColumns: DataGridColumn<DocumentTracking>[] = [
     {
-      key: 'documentType',
-      header: 'Tipo',
-      render: (d) => {
-        const cfg = TYPE_CONFIG[d.documentType];
-        return (
-          <Chip
-            label={cfg.label}
-            size="small"
-            sx={{ backgroundColor: cfg.bg, color: cfg.color, fontWeight: 600 }}
-          />
-        );
-      },
+      key: 'publicId',
+      header: 'ID',
+      render: (d) => (
+        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} noWrap>
+          {d.publicId}
+        </Typography>
+      ),
+    },
+    { key: 'documentName', header: 'Documento', render: (d) => d.documentName || d.templateKey },
+    {
+      key: 'templateKey',
+      header: 'Template',
+      render: (d) => (
+        <Chip label={d.templateKey} size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} />
+      ),
     },
     {
       key: 'status',
@@ -595,14 +472,9 @@ const DocumentsPage = () => {
       },
     },
     {
-      key: 'sentAt',
-      header: 'Enviado em',
-      render: (d) => formatDateTime(d.sentAt),
-    },
-    {
-      key: 'signedAt',
-      header: 'Assinado em',
-      render: (d) => formatDateTime(d.signedAt),
+      key: 'createdAt',
+      header: 'Criado em',
+      render: (d) => formatDateTime(d.createdAt),
     },
   ];
 
@@ -610,22 +482,24 @@ const DocumentsPage = () => {
     {
       icon: <DownloadIcon fontSize="small" />,
       tooltip: 'Baixar PDF',
-      onClick: (d: DocumentRecord) => handleDownload(d),
-      disabled: (d: DocumentRecord) => downloadingId === d.publicId,
+      onClick: (d: DocumentTracking) => handleDownload(d),
+      disabled: (d: DocumentTracking) => downloadingId === d.publicId || ['GENERATING', 'REPORT_FAILED'].includes(d.status),
       color: 'primary',
     },
     {
-      icon: <SignIcon fontSize="small" />,
-      tooltip: 'Assinar',
-      onClick: (d: DocumentRecord) => openSignDialog(d),
-      hidden: (d: DocumentRecord) => d.status !== 'AWAITING_SIGNATURE',
+      icon: <SignedIcon fontSize="small" />,
+      tooltip: 'Baixar Assinado',
+      onClick: (d: DocumentTracking) => handleDownloadSigned(d),
+      disabled: (d: DocumentTracking) => downloadingSignedId === d.publicId,
+      hidden: (d: DocumentTracking) => d.status !== 'COMPLETED',
       color: 'success',
     },
     {
       icon: <RefreshIcon fontSize="small" />,
       tooltip: 'Reprocessar',
-      onClick: (d: DocumentRecord) => handleReprocess(d),
-      disabled: (d: DocumentRecord) => reprocessingId === d.publicId,
+      onClick: (d: DocumentTracking) => handleReprocess(d),
+      disabled: (d: DocumentTracking) => reprocessingId === d.publicId,
+      hidden: (d: DocumentTracking) => d.status !== 'REPORT_FAILED' && d.status !== 'FAILED',
       color: 'warning',
     },
   ];
@@ -789,6 +663,7 @@ const DocumentsPage = () => {
                 actions={templateActions}
                 loading={loadingTemplates}
                 emptyMessage="Nenhum modelo disponível"
+                onRefresh={fetchTemplates}
                 pageSize={tplPageSize}
                 serverSidePagination
                 page={tplPage}
@@ -820,13 +695,14 @@ const DocumentsPage = () => {
               <Typography variant="h6" fontWeight={600} gutterBottom>
                 Documentos Enviados
               </Typography>
-              <DataGrid<DocumentRecord>
+              <DataGrid<DocumentTracking>
                 data={sentDocuments}
                 columns={sentColumns}
                 getRowId={(row) => row.publicId}
                 actions={sentActions}
                 loading={loadingDocuments}
                 emptyMessage="Nenhum documento enviado ainda"
+                onRefresh={refreshDocuments}
                 pageSize={docPageSize}
                 serverSidePagination
                 page={docPage}
@@ -867,59 +743,6 @@ const DocumentsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Signature Dialog */}
-      <Dialog
-        open={signDialogOpen}
-        onClose={() => !signingLoading && setSignDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          Assinar Documento
-        </DialogTitle>
-        <DialogContent>
-          {signingDoc && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <Alert severity="info" sx={{ mb: 1 }}>
-                <strong>{signingDoc.templateName}</strong>
-                <br />
-                Pet: {signingDoc.petName} | Tutor: {signingDoc.customerName}
-              </Alert>
-
-              <TextField
-                label="Nome completo do assinante"
-                value={signedBy}
-                onChange={(e) => setSignedBy(e.target.value)}
-                fullWidth
-                autoFocus
-              />
-
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Desenhe sua assinatura abaixo:
-              </Typography>
-              <SignaturePad onSignatureChange={setSignatureData} />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setSignDialogOpen(false)}
-            disabled={signingLoading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSign}
-            disabled={signingLoading || !signedBy.trim() || !signatureData}
-            startIcon={
-              signingLoading ? <CircularProgress size={20} color="inherit" /> : <SignIcon />
-            }
-          >
-            {signingLoading ? 'Assinando...' : 'Confirmar Assinatura'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

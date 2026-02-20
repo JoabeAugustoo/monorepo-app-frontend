@@ -140,7 +140,10 @@ export function DocumentSignersTab({
       tooltip: 'Copiar link de assinatura',
       onClick: (signer: Signer) => copySignLink(signer.token),
       color: 'primary' as const,
-      hidden: (signer: Signer) => signer.status !== SignerStatus.PENDING,
+      hidden: (signer: Signer) =>
+        signer.status === SignerStatus.SIGNED ||
+        signer.status === SignerStatus.REJECTED ||
+        signer.status === SignerStatus.EXPIRED,
     },
   ];
 
@@ -180,6 +183,8 @@ export function DocumentSignersTab({
         totalRows={totalItems}
         onPageChange={setCurrentPage}
         onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+        refreshable
+        onRefresh={fetchSigners}
       />
 
       <AddSignerDialog

@@ -251,6 +251,7 @@ const CompaniesPage = () => {
         actions={actions}
         emptyMessage="Nenhuma empresa cadastrada"
         loading={loading}
+        onRefresh={fetchCompanies}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}

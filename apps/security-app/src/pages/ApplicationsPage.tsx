@@ -326,6 +326,7 @@ const ApplicationsPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        onRefresh={fetchApps}
       />
 
       <FormDialog

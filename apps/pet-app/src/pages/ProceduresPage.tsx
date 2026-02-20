@@ -203,6 +203,7 @@ const ProceduresPage = () => {
       actions={actions}
       emptyMessage="Nenhum procedimento encontrado"
       loading={loading}
+      onRefresh={fetchProcedures}
       serverSidePagination
       page={currentPage}
       totalRows={totalItems}

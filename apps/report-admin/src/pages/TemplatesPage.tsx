@@ -329,6 +329,7 @@ const TemplatesPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        onRefresh={fetchTemplates}
       />
       <ConfirmDialog
         open={!!deactivateTarget}

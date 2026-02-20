@@ -7,10 +7,12 @@ import PersonSearch from '@mui/icons-material/PersonSearch';
 import Medication from '@mui/icons-material/Medication';
 import MedicalServices from '@mui/icons-material/MedicalServices';
 import Description from '@mui/icons-material/Description';
+import Business from '@mui/icons-material/Business';
 import { MenuItem } from '@app/core';
 
 export const menuItems: MenuItem[] = [
   { label: 'Painel', icon: <Dashboard />, path: '/' },
+  { label: 'Minha Clínica', icon: <Business />, path: '/clinica' },
   { label: 'Cadastro Pet', icon: <AddCircle />, path: '/cadastro-pet' },
   { label: 'Painel Tutor', icon: <PersonSearch />, path: '/painel-tutor' },
   { label: 'Clientes', icon: <People />, path: '/clientes' },

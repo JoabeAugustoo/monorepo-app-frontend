@@ -343,6 +343,7 @@ const PetsPage = () => {
         emptyMessage="Nenhum pet cadastrado"
         onSelectionChange={setSelectedPets}
         loading={loading}
+        onRefresh={fetchPets}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}

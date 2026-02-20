@@ -34,6 +34,8 @@ interface DataGridBaseProps<T> {
   onSelectionChange?: (ids: (string | number)[]) => void;
   onPageSizeChange?: (size: number) => void;
   onRowClick?: (row: T) => void;
+  refreshable?: boolean;
+  onRefresh?: () => void;
   sortField?: string | null;
   sortDirection?: SortDirection | null;
   onSortChange?: (field: string, direction: SortDirection) => void;

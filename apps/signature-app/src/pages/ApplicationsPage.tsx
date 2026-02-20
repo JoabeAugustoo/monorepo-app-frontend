@@ -241,6 +241,7 @@ const ApplicationsPage = () => {
         actions={actions}
         emptyMessage="Nenhuma aplicacao cadastrada"
         loading={loading}
+        onRefresh={fetchApplications}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}

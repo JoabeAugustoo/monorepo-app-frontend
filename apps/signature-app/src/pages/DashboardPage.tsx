@@ -94,31 +94,32 @@ const DashboardPage = () => {
   const [loadingApplication, setLoadingApplication] = useState(true);
 
   // Fetch KPIs + recent docs
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [companies, certs, apps, docs] = await Promise.all([
-          companyService.count(),
-          certificateService.count(),
-          applicationService.count(),
-          documentService.search({
-            skip: 0,
-            take: 10,
-            sort: [{ field: 'createdAt', direction: 'DESC' }],
-          }),
-        ]);
-        setCompanyStats(companies);
-        setCertStats(certs);
-        setAppStats(apps);
-        setRecentDocs(docs.data || []);
-      } catch (error) {
-        console.error('Erro ao carregar dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const [companies, certs, apps, docs] = await Promise.all([
+        companyService.count(),
+        certificateService.count(),
+        applicationService.count(),
+        documentService.search({
+          skip: 0,
+          take: 10,
+          sort: [{ field: 'createdAt', direction: 'DESC' }],
+        }),
+      ]);
+      setCompanyStats(companies);
+      setCertStats(certs);
+      setAppStats(apps);
+      setRecentDocs(docs.data || []);
+    } catch (error) {
+      console.error('Erro ao carregar dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   // Fetch charts
   const fetchCharts = useCallback(() => {
@@ -329,6 +330,7 @@ const DashboardPage = () => {
         getRowId={(row) => row.publicId}
         emptyMessage="Nenhum documento recente"
         loading={false}
+        onRefresh={fetchDashboard}
       />
     </Box>
   );

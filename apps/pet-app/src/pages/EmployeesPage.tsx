@@ -5,6 +5,9 @@ import {
   Button,
   Typography,
   MenuItem as MuiMenuItem,
+  FormControlLabel,
+  Checkbox,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -15,16 +18,20 @@ import {
   SupportAgent as AttendantIcon,
   Work as AdminIcon,
   SupervisorAccount as ManagerIcon,
+
+  Block as BlockIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField, MuiDatePicker } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
 import { useSearchDebounce, formatPhone, formatCpf } from '@app/core';
 import { employeeService } from '../services';
-import type { Employee, EmployeeDto, EmployeeRole, SearchRequest } from '../types';
+import { EmployeeCredentialsDialog } from '../components/employees/EmployeeCredentialsDialog';
+import type { Employee, EmployeeDto, EmployeeCreateResponse, EmployeeRole, SearchRequest } from '../types';
 
 const ROLE_LABELS: Record<EmployeeRole, string> = {
-  VETERINARIAN: 'Veterinário',
+  VETERINARIAN: 'Veterinario',
   ATTENDANT: 'Atendente',
   ADMINISTRATIVE: 'Administrativo',
   MANAGER: 'Gerente',
@@ -52,6 +59,7 @@ interface EmployeeFormData {
   role: EmployeeRole | '';
   crmv: string;
   hireDate: string;
+  createAuthUser: boolean;
 }
 
 const initialFormData: EmployeeFormData = {
@@ -62,6 +70,7 @@ const initialFormData: EmployeeFormData = {
   role: '',
   crmv: '',
   hireDate: new Date().toISOString().split('T')[0],
+  createAuthUser: true,
 };
 
 const EmployeesPage = () => {
@@ -75,6 +84,9 @@ const EmployeesPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [isInactivating, setIsInactivating] = useState(false);
+
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [credentialsData, setCredentialsData] = useState<EmployeeCreateResponse | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -111,7 +123,7 @@ const EmployeesPage = () => {
         setTotalItems(0);
       }
     } catch (error) {
-      console.error('Erro ao carregar funcionários:', error);
+      console.error('Erro ao carregar funcionarios:', error);
       setEmployees([]);
       setTotalItems(0);
     } finally {
@@ -133,6 +145,7 @@ const EmployeesPage = () => {
       role: employee.role || '',
       crmv: employee.crmv || '',
       hireDate: employee.hireDate || '',
+      createAuthUser: false,
     });
     setShowForm(true);
   };
@@ -147,12 +160,12 @@ const EmployeesPage = () => {
     try {
       setIsInactivating(true);
       await employeeService.deactivateEmployee(employeeToDelete.publicId);
-      toast.success(`Funcionário "${employeeToDelete.name}" foi inativado com sucesso!`);
+      toast.success(`Funcionario "${employeeToDelete.name}" foi inativado com sucesso!`);
       setShowDeleteModal(false);
       setEmployeeToDelete(null);
       fetchEmployees();
     } catch (error) {
-      console.error('Erro ao inativar funcionário:', error);
+      console.error('Erro ao inativar funcionario:', error);
     } finally {
       setIsInactivating(false);
     }
@@ -162,6 +175,22 @@ const EmployeesPage = () => {
     setEditingEmployee(null);
     setFormData(initialFormData);
     setShowForm(true);
+  };
+
+  const handleToggleAccess = async (employee: Employee) => {
+    if (!employee.publicId) return;
+    try {
+      if (employee.hasAuthAccess) {
+        await employeeService.deactivateEmployee(employee.publicId);
+        toast.success(`Acesso de "${employee.name}" desativado`);
+      } else {
+        await employeeService.activateEmployee(employee.publicId);
+        toast.success(`Acesso de "${employee.name}" ativado`);
+      }
+      fetchEmployees();
+    } catch (error) {
+      console.error('Erro ao alterar acesso:', error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -180,17 +209,24 @@ const EmployeesPage = () => {
 
       if (editingEmployee?.publicId) {
         await employeeService.updateEmployee(editingEmployee.publicId, employeeData);
-        toast.success('Funcionário atualizado com sucesso!');
+        toast.success('Funcionario atualizado com sucesso!');
       } else {
-        await employeeService.createEmployee(employeeData);
-        toast.success('Funcionário criado com sucesso!');
+        employeeData.createAuthUser = formData.createAuthUser;
+        const result = await employeeService.createEmployee(employeeData);
+
+        if (formData.createAuthUser && (result.generatedUserName || result.generatedPassword)) {
+          setCredentialsData(result);
+          setShowCredentials(true);
+        } else {
+          toast.success('Funcionario criado com sucesso!');
+        }
       }
 
       setShowForm(false);
       setCurrentPage(1);
       fetchEmployees();
     } catch (error) {
-      console.error('Erro ao salvar funcionário:', error);
+      console.error('Erro ao salvar funcionario:', error);
     } finally {
       setLoading(false);
     }
@@ -222,9 +258,18 @@ const EmployeesPage = () => {
       ) : '-',
     },
     {
-      key: 'crmv',
-      header: 'CRMV',
-      render: (employee) => employee.crmv || '-',
+      key: 'hasAuthAccess',
+      header: 'Acesso',
+      render: (employee) => {
+        if (employee.hasAuthAccess === undefined || employee.hasAuthAccess === null) {
+          return <Chip label="Sem usuario" size="small" variant="outlined" sx={{ fontSize: 12 }} />;
+        }
+        return employee.hasAuthAccess ? (
+          <Chip label="Ativo" size="small" color="success" sx={{ fontSize: 12 }} />
+        ) : (
+          <Chip label="Inativo" size="small" color="default" sx={{ fontSize: 12 }} />
+        );
+      },
     },
     {
       key: 'active',
@@ -239,7 +284,7 @@ const EmployeesPage = () => {
       <SearchField
         value={searchInput}
         onChange={setSearchInput}
-        placeholder="Buscar funcionários..."
+        placeholder="Buscar funcionarios..."
       />
       {selectedEmployees.length > 0 && (
         <Button
@@ -248,9 +293,9 @@ const EmployeesPage = () => {
           startIcon={<DeleteIcon />}
           onClick={async () => {
             const count = selectedEmployees.length;
-            if (window.confirm(`Tem certeza que deseja inativar ${count} funcionário${count > 1 ? 's' : ''}?`)) {
+            if (window.confirm(`Tem certeza que deseja inativar ${count} funcionario${count > 1 ? 's' : ''}?`)) {
               await Promise.all(selectedEmployees.map((id) => employeeService.deactivateEmployee(String(id))));
-              toast.success(`${count} funcionário${count > 1 ? 's inativados' : ' inativado'} com sucesso!`);
+              toast.success(`${count} funcionario${count > 1 ? 's inativados' : ' inativado'} com sucesso!`);
               setSelectedEmployees([]);
               fetchEmployees();
             }
@@ -260,7 +305,7 @@ const EmployeesPage = () => {
         </Button>
       )}
       <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNew}>
-        Novo Funcionário
+        Novo Funcionario
       </Button>
     </div>
   );
@@ -271,6 +316,20 @@ const EmployeesPage = () => {
       tooltip: 'Editar',
       onClick: (employee: Employee) => handleEdit(employee),
       color: 'primary',
+    },
+    {
+      icon: <BlockIcon fontSize="small" />,
+      tooltip: 'Desativar Acesso',
+      onClick: (employee: Employee) => handleToggleAccess(employee),
+      color: 'warning',
+      hidden: (employee: Employee) => !employee.hasAuthAccess,
+    },
+    {
+      icon: <CheckCircleIcon fontSize="small" />,
+      tooltip: 'Ativar Acesso',
+      onClick: (employee: Employee) => handleToggleAccess(employee),
+      color: 'success',
+      hidden: (employee: Employee) => employee.hasAuthAccess !== false,
     },
     {
       icon: <DeleteIcon fontSize="small" />,
@@ -290,9 +349,10 @@ const EmployeesPage = () => {
         selectable
         headerActions={headerActions}
         actions={actions}
-        emptyMessage="Nenhum funcionário cadastrado"
+        emptyMessage="Nenhum funcionario cadastrado"
         onSelectionChange={setSelectedEmployees}
         loading={loading}
+        onRefresh={fetchEmployees}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}
@@ -311,7 +371,7 @@ const EmployeesPage = () => {
         open={showForm}
         onClose={() => setShowForm(false)}
         onSubmit={handleSubmit}
-        title={editingEmployee ? 'Editar Funcionário' : 'Novo Funcionário'}
+        title={editingEmployee ? 'Editar Funcionario' : 'Novo Funcionario'}
         titleIcon={<BadgeIcon sx={{ color: '#9C72D9' }} />}
         submitLabel={loading ? 'Salvando...' : editingEmployee ? 'Atualizar' : 'Criar'}
         loading={loading}
@@ -347,23 +407,49 @@ const EmployeesPage = () => {
             mode="day"
             value={formData.hireDate}
             onChange={(val) => setFormData({ ...formData, hireDate: val })}
-            placeholder="Data de Contratação"
+            placeholder="Data de Contratacao"
           />
+          {!editingEmployee && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.createAuthUser}
+                  onChange={(e) => setFormData({ ...formData, createAuthUser: e.target.checked })}
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    Criar acesso ao sistema
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Um usuario e senha serao gerados automaticamente para o funcionario acessar o sistema
+                  </Typography>
+                </Box>
+              }
+            />
+          )}
         </Box>
       </FormDialog>
+
+      <EmployeeCredentialsDialog
+        open={showCredentials}
+        data={credentialsData}
+        onClose={() => { setShowCredentials(false); setCredentialsData(null); }}
+      />
 
       <ConfirmDialog
         open={showDeleteModal}
         onClose={() => { setShowDeleteModal(false); setEmployeeToDelete(null); }}
         onConfirm={confirmDelete}
-        title="Confirmar Inativação"
+        title="Confirmar Inativacao"
         titleIcon={<DeleteIcon sx={{ color: '#ef4444' }} />}
-        message="Tem certeza que deseja inativar este funcionário?"
-        confirmLabel="Inativar Funcionário"
+        message="Tem certeza que deseja inativar este funcionario?"
+        confirmLabel="Inativar Funcionario"
         confirmIcon={<DeleteIcon />}
         loading={isInactivating}
         loadingLabel="Inativando..."
-        footer="O funcionário será marcado como inativo."
+        footer="O funcionario sera marcado como inativo."
       >
         {employeeToDelete && (
           <Box sx={{ p: 2, backgroundColor: '#f8fafc', borderRadius: 1, border: '1px solid #e5e7eb' }}>

@@ -286,6 +286,7 @@ const CustomersPage = () => {
         emptyMessage="Nenhum cliente cadastrado"
         onSelectionChange={setSelectedCustomers}
         loading={loading}
+        onRefresh={fetchCustomers}
         serverSidePagination
         page={currentPage}
         totalRows={totalItems}

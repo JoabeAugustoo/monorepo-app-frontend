@@ -242,7 +242,8 @@ const PetRegisterPage = () => {
       await petService.createPet(petData);
 
       toast.success('Pet cadastrado com sucesso!');
-      navigate('/pets');
+      const cpfDigits = tutorForm.cpf.replace(/\D/g, '');
+      navigate('/painel-tutor', { state: { cpf: cpfDigits } });
     } catch (error) {
       console.error('Erro ao cadastrar:', error);
     } finally {

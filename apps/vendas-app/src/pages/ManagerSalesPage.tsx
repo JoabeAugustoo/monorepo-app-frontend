@@ -357,6 +357,7 @@ const ManagerSalesPage = () => {
                 setPageSize(newSize);
                 setCurrentPage(1);
               }}
+              onRefresh={fetchEmployeeSummary}
             />
           )}
         </CardContent>
@@ -403,6 +404,7 @@ const ManagerSalesPage = () => {
                   setDialogSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
                   setDialogPage(1);
                 }}
+                onRefresh={fetchEmployeeSales}
               />
             )}
           </Box>
