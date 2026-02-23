@@ -33,7 +33,9 @@ export type GranularRole =
   | 'REPORT_WRITE'
   | 'APPLICATION_READ'
   | 'CLINIC_READ'
-  | 'CLINIC_WRITE';
+  | 'CLINIC_WRITE'
+  | 'ATENDIMENTO_READ'
+  | 'ATENDIMENTO_WRITE';
 
 export interface PetUser {
   id: string;
@@ -55,6 +57,7 @@ export interface Customer {
   publicId?: string;
   name: string;
   cpf?: string;
+  rg?: string;
   email?: string;
   phone?: string;
   secondaryPhone?: string;
@@ -74,6 +77,7 @@ export interface Customer {
 export interface CustomerDto {
   name: string;
   cpf?: string;
+  rg?: string;
   email?: string;
   phone?: string;
   secondaryPhone?: string;
@@ -131,17 +135,30 @@ export type PetSpecies = 'DOG' | 'CAT' | 'BIRD' | 'REPTILE' | 'OTHER';
 export type PetGender = 'MALE' | 'FEMALE' | 'UNKNOWN';
 export type PetStatus = 'ACTIVE' | 'INACTIVE' | 'DECEASED' | 'TRANSFERRED';
 
+export type PetTutorRole = 'PRIMARY' | 'SECONDARY' | 'TEMPORARY';
+
 export interface PetTutor {
-  id?: string;
   publicId?: string;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   customerId?: string;
   customerName?: string;
-  primary?: boolean;
+  role: PetTutorRole;
+  relationship?: string;
+  canAuthorize?: boolean;
+  canPickup?: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface PetTutorDto {
   customerId: string;
-  primary?: boolean;
+  role: PetTutorRole;
+  relationship?: string;
+  canAuthorize?: boolean;
+  canPickup?: boolean;
+  endDate?: string;
 }
 
 export interface Pet {
@@ -158,6 +175,7 @@ export interface Pet {
   tutors?: PetTutor[];
   primaryTutorId?: string;
   primaryTutorName?: string;
+  primaryTutorCpf?: string;
   status?: PetStatus;
   active?: boolean;
   createdAt?: string;
@@ -283,6 +301,7 @@ export interface MedicalProcedureDto {
   observations?: string;
   petId: string;
   veterinarianId: string;
+  clinicalVisitId?: string;
   medications?: ProcedureMedicationDto[];
   notes?: MedicalNoteDto[];
 }
@@ -454,6 +473,7 @@ export interface DocumentTracking {
   petId: string;
   customerId: string;
   documentName: string;
+  clinicalVisitId?: string;
 }
 
 export interface SendDocumentDto {
@@ -471,6 +491,7 @@ export interface GenerateReportDto {
   documentName: string;
   petId: string;
   customerId: string;
+  clinicalVisitId?: string;
 }
 
 export interface GenerateReportResponse {
@@ -482,6 +503,11 @@ export interface GenerateReportResponse {
 export interface SignDocumentDto {
   signatureData: string;
   signedBy: string;
+}
+
+export interface GenerateMedicalDischargeDto {
+  procedureId: string;
+  clinicalVisitId?: string;
 }
 
 // --- Document Search ---
@@ -547,6 +573,8 @@ export interface Clinic {
   address?: string;
   city?: string;
   state?: string;
+  logoUrl?: string;
+  logoSvg?: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -574,6 +602,96 @@ export interface ClinicDto {
   address?: string;
   city?: string;
   state?: string;
+}
+
+// --- Clinical Visit (Atendimento) ---
+
+export type ClinicalVisitType = 'CONSULTATION' | 'HOSPITALIZATION' | 'FOLLOW_UP' | 'EMERGENCY';
+export type ClinicalVisitStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+export interface ClinicalVisitSummary {
+  procedureCount: number;
+  medicationCount: number;
+  documentCount: number;
+  totalCost: number;
+}
+
+export interface ClinicalVisit {
+  publicId?: string;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  type: ClinicalVisitType;
+  status?: ClinicalVisitStatus;
+  chiefComplaint?: string;
+  notes?: string;
+  startedAt?: string;
+  completedAt?: string;
+  petId: string;
+  petName?: string;
+  customerId: string;
+  customerName?: string;
+  veterinarianId: string;
+  veterinarianName?: string;
+  lastUpdatedAt?: string;
+  summary?: ClinicalVisitSummary;
+}
+
+export interface ClinicalVisitDto {
+  type: ClinicalVisitType;
+  petId: string;
+  customerId: string;
+  veterinarianId: string;
+  chiefComplaint?: string;
+  notes?: string;
+}
+
+// --- Timeline ---
+
+export type TimelineEntryType = 'VISIT_STARTED' | 'PROCEDURE' | 'DOCUMENT' | 'VISIT_COMPLETED' | 'VISIT_CANCELLED';
+
+export interface TimelineEntry {
+  entryType: TimelineEntryType;
+  date: string;
+  publicId: string;
+  title: string;
+  status: string;
+  updatedAt?: string;
+  procedure?: MedicalProcedure;
+  document?: DocumentTracking;
+}
+
+// --- Dashboard ---
+
+export interface DashboardKpis {
+  activeVisits: number;
+  hospitalizations: number;
+  documentsAwaitingSignature: number;
+  completedVisits: number;
+}
+
+export interface VisitsPerDayItem {
+  date: string;
+  count: number;
+}
+
+export interface ProceduresByTypeItem {
+  type: string;
+  count: number;
+}
+
+export interface ProceduresByStatusItem {
+  status: string;
+  count: number;
+}
+
+export interface MedicationStockItem {
+  publicId: string;
+  name: string;
+  type: string;
+  currentStock: number;
+  minimumStock: number;
+  lowStock: boolean;
 }
 
 export type { SortField, SearchRequest, PaginatedResponse, CurrencyCode, Language, TranslationSet } from '@app/core';

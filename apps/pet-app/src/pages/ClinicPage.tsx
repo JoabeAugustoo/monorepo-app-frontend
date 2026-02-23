@@ -33,6 +33,9 @@ import {
   InsertDriveFile as FileIcon,
   Close as CloseIcon,
   Lock as LockIcon,
+  CameraAlt as CameraIcon,
+  Delete as DeleteIcon,
+  Image as ImageIcon,
 } from '@mui/icons-material';
 import { formatCnpj, formatPhone, formatDate, formatDateTime } from '@app/core';
 import { toast } from 'sonner';
@@ -457,6 +460,11 @@ const ClinicPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // --- Logo ---
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   // --- Certificado Digital ---
   const [certificate, setCertificate] = useState<ClinicCertificate | null>(null);
   const [certFile, setCertFile] = useState<File | null>(null);
@@ -465,6 +473,15 @@ const ClinicPage = () => {
   const [uploadingCert, setUploadingCert] = useState(false);
 
   const isEditing = !!clinic;
+
+  const loadLogo = useCallback(async () => {
+    try {
+      const url = await clinicService.getLogo();
+      setLogoUrl(url);
+    } catch {
+      setLogoUrl(null);
+    }
+  }, []);
 
   const loadCertificate = useCallback(async () => {
     try {
@@ -490,14 +507,14 @@ const ClinicPage = () => {
         city: data.city || '',
         state: data.state || '',
       });
-      await loadCertificate();
+      await Promise.all([loadCertificate(), loadLogo()]);
     } catch {
       setClinic(null);
       setForm(EMPTY_FORM);
     } finally {
       setLoading(false);
     }
-  }, [loadCertificate]);
+  }, [loadCertificate, loadLogo]);
 
   useEffect(() => {
     loadClinic();
@@ -580,6 +597,27 @@ const ClinicPage = () => {
     }
   };
 
+  const handleLogoUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem (PNG, JPG, etc.)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB');
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      await clinicService.uploadLogo(file);
+      toast.success('Logo atualizada com sucesso!');
+      await loadLogo();
+    } catch {
+      toast.error('Erro ao enviar logo.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
@@ -638,6 +676,7 @@ const ClinicPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
+                onClick={() => isEditing && logoInputRef.current?.click()}
                 sx={{
                   width: 56,
                   height: 56,
@@ -647,9 +686,54 @@ const ClinicPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  cursor: isEditing ? 'pointer' : 'default',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  transition: 'all 0.2s',
+                  '&:hover': isEditing ? {
+                    background: 'rgba(255,255,255,0.25)',
+                    '& .logo-overlay': { opacity: 1 },
+                  } : {},
                 }}
               >
-                <StorefrontIcon sx={{ fontSize: 30 }} />
+                {logoUrl ? (
+                  <Box
+                    component="img"
+                    src={logoUrl}
+                    alt="Logo"
+                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <StorefrontIcon sx={{ fontSize: 30 }} />
+                )}
+                {isEditing && (
+                  <Box
+                    className="logo-overlay"
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      bgcolor: 'rgba(0,0,0,0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                    }}
+                  >
+                    <CameraIcon sx={{ fontSize: 20 }} />
+                  </Box>
+                )}
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleLogoUpload(file);
+                    e.target.value = '';
+                  }}
+                />
               </Box>
               <Box>
                 <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: '-0.02em' }}>
@@ -719,6 +803,109 @@ const ClinicPage = () => {
         >
           Nenhuma clínica cadastrada ainda. Preencha os dados abaixo para começar.
         </Alert>
+      )}
+
+      {/* Logo da Empresa */}
+      {isEditing && (
+        <Card sx={cardSx}>
+          <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+            <SectionHeader
+              icon={<ImageIcon sx={{ fontSize: 20 }} />}
+              title="Logo da Empresa"
+              subtitle="Imagem exibida nos documentos e relatórios"
+            />
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+              {/* Preview */}
+              <Box
+                onClick={() => logoInputRef.current?.click()}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: '16px',
+                  border: '2px dashed',
+                  borderColor: logoUrl ? 'transparent' : 'divider',
+                  bgcolor: logoUrl ? 'transparent' : alpha('#9C72D9', 0.04),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  flexShrink: 0,
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    borderColor: '#9C72D9',
+                    borderStyle: 'solid',
+                    '& .upload-overlay': { opacity: 1 },
+                  },
+                }}
+              >
+                {logoUrl ? (
+                  <Box
+                    component="img"
+                    src={logoUrl}
+                    alt="Logo"
+                    sx={{ width: '100%', height: '100%', objectFit: 'contain', p: 0.5 }}
+                  />
+                ) : (
+                  <Box sx={{ textAlign: 'center' }}>
+                    <UploadIcon sx={{ fontSize: 32, color: '#9C72D9', opacity: 0.5 }} />
+                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                      Enviar
+                    </Typography>
+                  </Box>
+                )}
+                {logoUrl && (
+                  <Box
+                    className="upload-overlay"
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      borderRadius: '14px',
+                    }}
+                  >
+                    <CameraIcon sx={{ color: '#fff', fontSize: 28 }} />
+                  </Box>
+                )}
+              </Box>
+
+              {/* Info */}
+              <Box sx={{ flex: 1, minWidth: 200 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  {logoUrl
+                    ? 'Clique na imagem ou no botão para substituir a logo.'
+                    : 'Envie a logo da sua clínica. Formatos aceitos: PNG, JPG, SVG. Tamanho máximo: 5MB.'}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={uploadingLogo ? <CircularProgress size={16} /> : <UploadIcon />}
+                    disabled={uploadingLogo}
+                    onClick={() => logoInputRef.current?.click()}
+                    sx={{
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      borderColor: alpha('#9C72D9', 0.4),
+                      color: '#9C72D9',
+                      '&:hover': { borderColor: '#9C72D9', bgcolor: alpha('#9C72D9', 0.04) },
+                    }}
+                  >
+                    {uploadingLogo ? 'Enviando...' : logoUrl ? 'Substituir' : 'Enviar Logo'}
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
       )}
 
       {/* Identificação */}

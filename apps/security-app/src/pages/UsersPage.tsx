@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Button, TextField, Box, Stack, Typography, alpha } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button, TextField, Box, Stack, Typography, alpha, Grid2 as Grid, InputAdornment } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -7,6 +7,9 @@ import {
   Person as PersonIcon,
   CheckCircle as ActivateIcon,
   Block as DeactivateIcon,
+  Email as EmailIcon,
+  Lock as LockIcon,
+  Badge as BadgeIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
@@ -29,6 +32,18 @@ const userSchema = z.object({
 });
 
 type UserFormData = z.infer<typeof userSchema>;
+
+const SectionHeader = ({ icon, title, subtitle, gradient }: { icon: React.ReactNode; title: string; subtitle?: string; gradient?: string }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+    <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: gradient || 'linear-gradient(135deg, #9C72D9, #7B5BBF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+      {icon}
+    </Box>
+    <Box>
+      <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>{title}</Typography>
+      {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
+    </Box>
+  </Box>
+);
 
 const UsersPage = () => {
   const { triggerMultipleRefresh } = useRefresh();
@@ -343,51 +358,100 @@ const UsersPage = () => {
         titleIcon={<PersonIcon sx={{ color: '#3F51B5' }} />}
         submitLabel={isSubmitting ? 'Salvando...' : editingUser ? 'Atualizar' : 'Criar'}
         loading={isSubmitting}
-        maxWidth="sm"
+        maxWidth="md"
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <Controller
-            name="userName"
-            control={control}
-            render={({ field }) => (
-              <TextField {...field} fullWidth label="Username" required error={!!errors.userName} helperText={errors.userName?.message} />
-            )}
-          />
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-              <TextField {...field} fullWidth label="Email" type="email" required error={!!errors.email} helperText={errors.email?.message} />
-            )}
-          />
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                fullWidth
-                label="Senha"
-                type="password"
-                helperText={editingUser ? 'Deixe em branco para manter a senha atual' : undefined}
-              />
-            )}
-          />
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Controller
-              name="firstName"
-              control={control}
-              render={({ field }) => (
-                <TextField {...field} fullWidth label="Nome" />
-              )}
-            />
-            <Controller
-              name="lastName"
-              control={control}
-              render={({ field }) => (
-                <TextField {...field} fullWidth label="Sobrenome" />
-              )}
-            />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+          {/* Credenciais */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<PersonIcon sx={{ fontSize: 20 }} />} title="Credenciais" subtitle="Login e autenticacao" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name="userName"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label="Username"
+                      required
+                      error={!!errors.userName}
+                      helperText={errors.userName?.message}
+                      InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#9C72D9', fontSize: 20 }} /></InputAdornment> }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name="email"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label="Email"
+                      type="email"
+                      required
+                      error={!!errors.email}
+                      helperText={errors.email?.message}
+                      InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#9C72D9', fontSize: 20 }} /></InputAdornment> }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name="password"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label="Senha"
+                      type="password"
+                      helperText={editingUser ? 'Deixe em branco para manter a senha atual' : undefined}
+                      InputProps={{ startAdornment: <InputAdornment position="start"><LockIcon sx={{ color: '#9C72D9', fontSize: 20 }} /></InputAdornment> }}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Dados Pessoais */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<BadgeIcon sx={{ fontSize: 20 }} />} title="Dados Pessoais" subtitle="Nome completo do usuario" gradient="linear-gradient(135deg, #F48FB1, #E57399)" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name="firstName"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label="Nome"
+                      InputProps={{ startAdornment: <InputAdornment position="start"><BadgeIcon sx={{ color: '#F48FB1', fontSize: 20 }} /></InputAdornment> }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name="lastName"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label="Sobrenome"
+                      InputProps={{ startAdornment: <InputAdornment position="start"><BadgeIcon sx={{ color: '#F48FB1', fontSize: 20 }} /></InputAdornment> }}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
           </Box>
         </Box>
       </FormDialog>

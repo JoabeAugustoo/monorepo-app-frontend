@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Button, TextField, Box, Stack, Typography, alpha } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button, TextField, Box, Stack, Typography, alpha, Grid2 as Grid, InputAdornment } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -7,6 +7,7 @@ import {
   Security as SecurityIcon,
   CheckCircle as ActivateIcon,
   Block as DeactivateIcon,
+  Description as DescriptionIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
@@ -25,6 +26,18 @@ const roleSchema = z.object({
 });
 
 type RoleFormData = z.infer<typeof roleSchema>;
+
+const SectionHeader = ({ icon, title, subtitle, gradient }: { icon: React.ReactNode; title: string; subtitle?: string; gradient?: string }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+    <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: gradient || 'linear-gradient(135deg, #9C72D9, #7B5BBF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+      {icon}
+    </Box>
+    <Box>
+      <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>{title}</Typography>
+      {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
+    </Box>
+  </Box>
+);
 
 const RolesPage = () => {
   const { triggerMultipleRefresh } = useRefresh();
@@ -298,23 +311,32 @@ const RolesPage = () => {
         titleIcon={<SecurityIcon sx={{ color: '#3F51B5' }} />}
         submitLabel={isSubmitting ? 'Salvando...' : editingRole ? 'Atualizar' : 'Criar'}
         loading={isSubmitting}
-        maxWidth="sm"
+        maxWidth="md"
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <Controller
-            name="name"
-            control={control}
-            render={({ field }) => (
-              <TextField {...field} fullWidth label="Nome" required error={!!errors.name} helperText={errors.name?.message} />
-            )}
-          />
-          <Controller
-            name="description"
-            control={control}
-            render={({ field }) => (
-              <TextField {...field} fullWidth label="Descricao" multiline rows={3} />
-            )}
-          />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<SecurityIcon sx={{ fontSize: 20 }} />} title="Informações da Role" subtitle="Nome e descricao da role" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} fullWidth label="Nome" required error={!!errors.name} helperText={errors.name?.message} InputProps={{ startAdornment: <InputAdornment position="start"><SecurityIcon sx={{ color: '#9C72D9', fontSize: 20 }} /></InputAdornment> }} />
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} fullWidth label="Descricao" multiline rows={3} InputProps={{ startAdornment: <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1 }}><DescriptionIcon sx={{ color: '#9C72D9', fontSize: 20 }} /></InputAdornment> }} />
+                  )}
+                />
+              </Grid>
+            </Grid>
+          </Box>
         </Box>
       </FormDialog>
 

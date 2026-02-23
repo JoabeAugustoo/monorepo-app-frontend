@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  TextField,
   Box,
   Button,
   Typography,
-  MenuItem as MuiMenuItem,
-  FormControlLabel,
-  Checkbox,
   Chip,
+  alpha,
+  Avatar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -18,17 +16,18 @@ import {
   SupportAgent as AttendantIcon,
   Work as AdminIcon,
   SupervisorAccount as ManagerIcon,
-
+  Email as EmailIcon,
+  Phone as PhoneIcon,
   Block as BlockIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
-import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField, MuiDatePicker } from '@app/ui';
+import { useNavigate } from 'react-router-dom';
+import { DataGrid, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
-import { useSearchDebounce, formatPhone, formatCpf } from '@app/core';
+import { useSearchDebounce, formatPhone } from '@app/core';
 import { employeeService } from '../services';
-import { EmployeeCredentialsDialog } from '../components/employees/EmployeeCredentialsDialog';
-import type { Employee, EmployeeDto, EmployeeCreateResponse, EmployeeRole, SearchRequest } from '../types';
+import type { Employee, EmployeeRole, SearchRequest } from '../types';
 
 const ROLE_LABELS: Record<EmployeeRole, string> = {
   VETERINARIAN: 'Veterinario',
@@ -51,42 +50,29 @@ const ROLE_COLORS: Record<EmployeeRole, string> = {
   MANAGER: '#F48FB1',
 };
 
-interface EmployeeFormData {
-  name: string;
-  cpf: string;
-  email: string;
-  phone: string;
-  role: EmployeeRole | '';
-  crmv: string;
-  hireDate: string;
-  createAuthUser: boolean;
+const AVATAR_PALETTE = ['#9C72D9', '#F48FB1', '#81C9C5', '#7EB3E0', '#C9A6E8', '#FFD6A5'];
+
+function nameToColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
 }
 
-const initialFormData: EmployeeFormData = {
-  name: '',
-  cpf: '',
-  email: '',
-  phone: '',
-  role: '',
-  crmv: '',
-  hireDate: new Date().toISOString().split('T')[0],
-  createAuthUser: true,
-};
+function getInitials(name: string): string {
+  return name.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+}
 
 const EmployeesPage = () => {
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<(string | number)[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<EmployeeFormData>(initialFormData);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [isInactivating, setIsInactivating] = useState(false);
-
-  const [showCredentials, setShowCredentials] = useState(false);
-  const [credentialsData, setCredentialsData] = useState<EmployeeCreateResponse | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -135,21 +121,6 @@ const EmployeesPage = () => {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  const handleEdit = (employee: Employee) => {
-    setEditingEmployee(employee);
-    setFormData({
-      name: employee.name || '',
-      cpf: employee.cpf || '',
-      email: employee.email || '',
-      phone: employee.phone || '',
-      role: employee.role || '',
-      crmv: employee.crmv || '',
-      hireDate: employee.hireDate || '',
-      createAuthUser: false,
-    });
-    setShowForm(true);
-  };
-
   const handleDelete = (employee: Employee) => {
     setEmployeeToDelete(employee);
     setShowDeleteModal(true);
@@ -171,12 +142,6 @@ const EmployeesPage = () => {
     }
   };
 
-  const handleAddNew = () => {
-    setEditingEmployee(null);
-    setFormData(initialFormData);
-    setShowForm(true);
-  };
-
   const handleToggleAccess = async (employee: Employee) => {
     if (!employee.publicId) return;
     try {
@@ -193,60 +158,40 @@ const EmployeesPage = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const employeeData: EmployeeDto = {
-        name: formData.name,
-        cpf: formData.cpf || undefined,
-        email: formData.email || undefined,
-        phone: formData.phone || undefined,
-        role: formData.role as EmployeeRole || undefined,
-        crmv: formData.crmv || undefined,
-        hireDate: formData.hireDate || undefined,
-      };
-
-      if (editingEmployee?.publicId) {
-        await employeeService.updateEmployee(editingEmployee.publicId, employeeData);
-        toast.success('Funcionario atualizado com sucesso!');
-      } else {
-        employeeData.createAuthUser = formData.createAuthUser;
-        const result = await employeeService.createEmployee(employeeData);
-
-        if (formData.createAuthUser && (result.generatedUserName || result.generatedPassword)) {
-          setCredentialsData(result);
-          setShowCredentials(true);
-        } else {
-          toast.success('Funcionario criado com sucesso!');
-        }
-      }
-
-      setShowForm(false);
-      setCurrentPage(1);
-      fetchEmployees();
-    } catch (error) {
-      console.error('Erro ao salvar funcionario:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const columns: DataGridColumn<Employee>[] = [
     {
       key: 'name',
       header: 'Nome',
       sortable: true,
-      render: (employee) => (
-        <div style={{ fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <BadgeIcon sx={{ fontSize: 16, color: '#6b7280' }} />
-          {employee.name}
-        </div>
-      ),
+      render: (employee) => {
+        const color = nameToColor(employee.name || '');
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.25 }}>
+            <Avatar sx={{ width: 34, height: 34, fontSize: '0.78rem', fontWeight: 700, bgcolor: alpha(color, 0.14), color, letterSpacing: '0.02em' }}>
+              {getInitials(employee.name || '?')}
+            </Avatar>
+            <Typography variant="body2" fontWeight={600} color="text.primary">{employee.name}</Typography>
+          </Box>
+        );
+      },
     },
-    { key: 'cpf', header: 'CPF' },
-    { key: 'email', header: 'Email' },
-    { key: 'phone', header: 'Telefone', render: (employee) => employee.phone ? formatPhone(employee.phone) : '-' },
+    { key: 'cpf', header: 'CPF', render: (employee) => (
+      <Typography variant="body2" sx={{ fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace', fontSize: '0.78rem', color: 'text.secondary', letterSpacing: '0.03em' }}>
+        {employee.cpf || '-'}
+      </Typography>
+    ) },
+    { key: 'email', header: 'Email', render: (employee) => employee.email ? (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+        <EmailIcon sx={{ fontSize: 14, color: '#7EB3E0', opacity: 0.7 }} />
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.84rem' }}>{employee.email}</Typography>
+      </Box>
+    ) : <Typography variant="body2" color="text.disabled">-</Typography> },
+    { key: 'phone', header: 'Telefone', render: (employee) => employee.phone ? (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+        <PhoneIcon sx={{ fontSize: 14, color: '#81C9C5', opacity: 0.7 }} />
+        <Typography variant="body2" sx={{ fontSize: '0.84rem' }}>{formatPhone(employee.phone)}</Typography>
+      </Box>
+    ) : <Typography variant="body2" color="text.disabled">-</Typography> },
     {
       key: 'role',
       header: 'Cargo',
@@ -304,7 +249,7 @@ const EmployeesPage = () => {
           Inativar ({selectedEmployees.length})
         </Button>
       )}
-      <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNew}>
+      <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/funcionarios/novo')}>
         Novo Funcionario
       </Button>
     </div>
@@ -314,7 +259,7 @@ const EmployeesPage = () => {
     {
       icon: <EditIcon fontSize="small" />,
       tooltip: 'Editar',
-      onClick: (employee: Employee) => handleEdit(employee),
+      onClick: (employee: Employee) => navigate(`/funcionarios/${employee.publicId}/editar`),
       color: 'primary',
     },
     {
@@ -340,7 +285,18 @@ const EmployeesPage = () => {
   ];
 
   return (
-    <>
+    <Box>
+      {/* Page header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #9C72D9 0%, #7B5BBF 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 14px rgba(156, 114, 217, 0.35)', flexShrink: 0 }}>
+          <BadgeIcon />
+        </Box>
+        <Box>
+          <Typography variant="h5" fontWeight={700} lineHeight={1.2}>Funcionários</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>Equipe da clínica veterinária</Typography>
+        </Box>
+      </Box>
+
       <DataGrid<Employee>
         data={employees}
         columns={columns}
@@ -365,77 +321,7 @@ const EmployeesPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
-      />
-
-      <FormDialog
-        open={showForm}
-        onClose={() => setShowForm(false)}
-        onSubmit={handleSubmit}
-        title={editingEmployee ? 'Editar Funcionario' : 'Novo Funcionario'}
-        titleIcon={<BadgeIcon sx={{ color: '#9C72D9' }} />}
-        submitLabel={loading ? 'Salvando...' : editingEmployee ? 'Atualizar' : 'Criar'}
-        loading={loading}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-          <TextField fullWidth label="Nome" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField fullWidth label="CPF" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: formatCpf(e.target.value) })} placeholder="000.000.000-00" />
-            <TextField fullWidth label="Email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-          </Box>
-          <TextField fullWidth label="Telefone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })} placeholder="(00) 00000-0000" />
-          <TextField
-            fullWidth
-            select
-            label="Cargo"
-            value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value as EmployeeRole | '' })}
-          >
-            <MuiMenuItem value="">Selecione...</MuiMenuItem>
-            {Object.entries(ROLE_LABELS).map(([value, label]) => (
-              <MuiMenuItem key={value} value={value}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: ROLE_COLORS[value as EmployeeRole], display: 'flex' }}>{ROLE_ICONS[value as EmployeeRole]}</span>
-                  {label}
-                </span>
-              </MuiMenuItem>
-            ))}
-          </TextField>
-          {formData.role === 'VETERINARIAN' && (
-            <TextField fullWidth label="CRMV" value={formData.crmv} onChange={(e) => setFormData({ ...formData, crmv: e.target.value })} />
-          )}
-          <MuiDatePicker
-            mode="day"
-            value={formData.hireDate}
-            onChange={(val) => setFormData({ ...formData, hireDate: val })}
-            placeholder="Data de Contratacao"
-          />
-          {!editingEmployee && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formData.createAuthUser}
-                  onChange={(e) => setFormData({ ...formData, createAuthUser: e.target.checked })}
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    Criar acesso ao sistema
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Um usuario e senha serao gerados automaticamente para o funcionario acessar o sistema
-                  </Typography>
-                </Box>
-              }
-            />
-          )}
-        </Box>
-      </FormDialog>
-
-      <EmployeeCredentialsDialog
-        open={showCredentials}
-        data={credentialsData}
-        onClose={() => { setShowCredentials(false); setCredentialsData(null); }}
+        sx={{ borderRadius: 3, overflow: 'hidden' }}
       />
 
       <ConfirmDialog
@@ -464,7 +350,7 @@ const EmployeesPage = () => {
           </Box>
         )}
       </ConfirmDialog>
-    </>
+    </Box>
   );
 };
 

@@ -19,7 +19,7 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MuiDatePicker } from '@app/ui';
+import { MuiDatePicker, MuiTimePicker, CurrencyField } from '@app/ui';
 import { medicalProcedureService, petService, employeeService, medicationService } from '../services';
 import type {
   MedicalProcedureDto,
@@ -52,6 +52,7 @@ const ProcedureFormPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedPetId = searchParams.get('petId') || '';
+  const clinicalVisitId = searchParams.get('clinicalVisitId') || '';
 
   const [saving, setSaving] = useState(false);
   const [pets, setPets] = useState<Pet[]>([]);
@@ -64,7 +65,7 @@ const ProcedureFormPage = () => {
     description: '',
     date: new Date().toISOString().split('T')[0],
     time: '',
-    cost: '',
+    cost: 0,
     observations: '',
     petId: preselectedPetId,
     veterinarianId: '',
@@ -93,16 +94,17 @@ const ProcedureFormPage = () => {
         location: formData.location,
         description: formData.description,
         date: dateTime,
-        cost: parseFloat(formData.cost),
+        cost: formData.cost,
         observations: formData.observations || undefined,
         petId: formData.petId,
         veterinarianId: formData.veterinarianId,
+        clinicalVisitId: clinicalVisitId || undefined,
         medications: meds.length > 0 ? meds : undefined,
         notes: notes.filter(n => n.content.trim()).length > 0 ? notes.filter(n => n.content.trim()) : undefined,
       };
       await medicalProcedureService.create(data);
       toast.success('Procedimento agendado com sucesso!');
-      navigate('/procedimentos');
+      navigate(clinicalVisitId ? `/atendimentos/${clinicalVisitId}` : '/procedimentos');
     } catch (error) {
       console.error('Erro ao agendar procedimento:', error);
     } finally {
@@ -162,21 +164,16 @@ const ProcedureFormPage = () => {
                 onChange={(val) => setFormData({ ...formData, date: val })}
                 placeholder="Data *"
               />
-              <TextField
-                fullWidth
-                label="Hora"
-                type="time"
+              <MuiTimePicker
                 value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
+                onChange={(val) => setFormData({ ...formData, time: val })}
+                placeholder="Hora"
               />
-              <TextField
+              <CurrencyField
                 fullWidth
                 label="Custo (R$) *"
-                type="number"
                 value={formData.cost}
-                onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                slotProps={{ input: { inputProps: { min: '0', step: '0.01' } } }}
+                onChange={(val) => setFormData({ ...formData, cost: val })}
               />
             </Box>
 

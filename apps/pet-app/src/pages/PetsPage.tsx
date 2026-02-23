@@ -1,25 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  TextField,
   Box,
   Button,
   Typography,
   Chip,
-  MenuItem as MuiMenuItem,
+  alpha,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Pets as PetsIcon,
+  PersonSearch as TutorPanelIcon,
+  Description as DocumentsIcon,
+  LocalHospital as AtendimentoIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { FaDog, FaCat, FaDove, FaFrog, FaPaw, FaMars, FaVenus, FaGenderless } from 'react-icons/fa6';
 import { toast } from 'sonner';
-import { DataGrid, FormDialog, ConfirmDialog, StatusChip, SearchField, MuiDatePicker } from '@app/ui';
+import { useNavigate } from 'react-router-dom';
+import { DataGrid, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
 import { useSearchDebounce } from '@app/core';
-import { petService, customerService } from '../services';
-import type { Pet, PetDto, PetSpecies, PetGender, Customer, SearchRequest } from '../types';
+import { petService } from '../services';
+import type { Pet, PetSpecies, PetGender, SearchRequest } from '../types';
 
 const SPECIES_LABELS: Record<PetSpecies, string> = {
   DOG: 'Cão',
@@ -63,37 +67,11 @@ const GENDER_COLORS: Record<PetGender, string> = {
   UNKNOWN: '#BDBDBD',
 };
 
-interface PetFormData {
-  name: string;
-  species: PetSpecies | '';
-  breed: string;
-  gender: PetGender | '';
-  birthDate: string;
-  weight: string;
-  color: string;
-  observations: string;
-  primaryTutorId: string;
-}
-
-const initialFormData: PetFormData = {
-  name: '',
-  species: '',
-  breed: '',
-  gender: '',
-  birthDate: new Date().toISOString().split('T')[0],
-  weight: '',
-  color: '',
-  observations: '',
-  primaryTutorId: '',
-};
-
 const PetsPage = () => {
+  const navigate = useNavigate();
   const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPets, setSelectedPets] = useState<(string | number)[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<PetFormData>(initialFormData);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
@@ -106,12 +84,6 @@ const PetsPage = () => {
 
   const [sortField, setSortField] = useState('active');
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
-
-  const [customers, setCustomers] = useState<Customer[]>([]);
-
-  useEffect(() => {
-    customerService.getActiveCustomers().then(setCustomers).catch(() => setCustomers([]));
-  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -152,22 +124,6 @@ const PetsPage = () => {
     fetchPets();
   }, [fetchPets]);
 
-  const handleEdit = (pet: Pet) => {
-    setEditingPet(pet);
-    setFormData({
-      name: pet.name || '',
-      species: pet.species || '',
-      breed: pet.breed || '',
-      gender: pet.gender || '',
-      birthDate: pet.birthDate || '',
-      weight: pet.weight?.toString() || '',
-      color: pet.color || '',
-      observations: pet.observations || '',
-      primaryTutorId: pet.primaryTutorId || '',
-    });
-    setShowForm(true);
-  };
-
   const handleDelete = (pet: Pet) => {
     setPetToDelete(pet);
     setShowDeleteModal(true);
@@ -189,58 +145,18 @@ const PetsPage = () => {
     }
   };
 
-  const handleAddNew = () => {
-    setEditingPet(null);
-    setFormData(initialFormData);
-    setShowForm(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const petData: PetDto = {
-        name: formData.name,
-        species: formData.species as PetSpecies || undefined,
-        breed: formData.breed || undefined,
-        gender: formData.gender as PetGender || undefined,
-        birthDate: formData.birthDate || undefined,
-        weight: formData.weight ? parseFloat(formData.weight) : undefined,
-        color: formData.color || undefined,
-        observations: formData.observations || undefined,
-        primaryTutorId: formData.primaryTutorId || undefined,
-      };
-
-      if (editingPet?.publicId) {
-        await petService.updatePet(editingPet.publicId, petData);
-        toast.success('Pet atualizado com sucesso!');
-      } else {
-        await petService.createPet(petData);
-        toast.success('Pet criado com sucesso!');
-      }
-
-      setShowForm(false);
-      setCurrentPage(1);
-      fetchPets();
-    } catch (error) {
-      console.error('Erro ao salvar pet:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const columns: DataGridColumn<Pet>[] = [
     {
       key: 'name',
       header: 'Nome',
       sortable: true,
       render: (pet) => (
-        <div style={{ fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: pet.species ? SPECIES_COLORS[pet.species] : '#6b7280', display: 'flex', fontSize: 16 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.25 }}>
+          <Box sx={{ width: 30, height: 30, borderRadius: '8px', bgcolor: alpha(pet.species ? SPECIES_COLORS[pet.species] : '#9e9e9e', 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', color: pet.species ? SPECIES_COLORS[pet.species] : '#9e9e9e', fontSize: 16, flexShrink: 0 }}>
             {pet.species ? SPECIES_ICONS[pet.species] : <PetsIcon sx={{ fontSize: 16 }} />}
-          </span>
-          {pet.name}
-        </div>
+          </Box>
+          <Typography variant="body2" fontWeight={600} color="text.primary">{pet.name}</Typography>
+        </Box>
       ),
     },
     {
@@ -260,7 +176,9 @@ const PetsPage = () => {
         />
       ) : '-',
     },
-    { key: 'breed', header: 'Raça', render: (pet) => pet.breed || '-' },
+    { key: 'breed', header: 'Raça', render: (pet) => (
+      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.84rem' }}>{pet.breed || '-'}</Typography>
+    ) },
     {
       key: 'gender',
       header: 'Sexo',
@@ -274,7 +192,12 @@ const PetsPage = () => {
     {
       key: 'primaryTutorName',
       header: 'Tutor',
-      render: (pet) => pet.primaryTutorName || '-',
+      render: (pet) => pet.primaryTutorName ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <PersonIcon sx={{ fontSize: 14, color: '#7EB3E0', opacity: 0.7 }} />
+          <Typography variant="body2" sx={{ fontSize: '0.84rem' }}>{pet.primaryTutorName}</Typography>
+        </Box>
+      ) : <Typography variant="body2" color="text.disabled">-</Typography>,
     },
     {
       key: 'active',
@@ -309,7 +232,7 @@ const PetsPage = () => {
           Inativar ({selectedPets.length})
         </Button>
       )}
-      <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNew}>
+      <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/pets/novo')}>
         Novo Pet
       </Button>
     </div>
@@ -317,9 +240,44 @@ const PetsPage = () => {
 
   const actions = [
     {
+      icon: <TutorPanelIcon fontSize="small" />,
+      tooltip: 'Painel do Tutor',
+      onClick: (pet: Pet) => {
+        if (pet.primaryTutorCpf) {
+          navigate('/painel-tutor', { state: { cpf: pet.primaryTutorCpf } });
+        } else {
+          toast.info('Pet sem tutor associado.');
+        }
+      },
+      color: 'secondary',
+    },
+    {
+      icon: <DocumentsIcon fontSize="small" />,
+      tooltip: 'Documentos',
+      onClick: (pet: Pet) => {
+        if (pet.primaryTutorCpf) {
+          navigate('/documentos', { state: { cpf: pet.primaryTutorCpf, petId: pet.publicId } });
+        } else {
+          toast.info('Pet sem tutor associado.');
+        }
+      },
+      color: 'info',
+    },
+    {
+      icon: <AtendimentoIcon fontSize="small" />,
+      tooltip: 'Iniciar Atendimento',
+      onClick: (pet: Pet) => {
+        const params = new URLSearchParams({ petId: pet.publicId || '' });
+        if (pet.primaryTutorId) params.set('customerId', pet.primaryTutorId);
+        else if (pet.primaryTutorCpf) params.set('cpf', pet.primaryTutorCpf);
+        navigate(`/atendimentos/novo?${params}`);
+      },
+      color: 'success',
+    },
+    {
       icon: <EditIcon fontSize="small" />,
       tooltip: 'Editar',
-      onClick: (pet: Pet) => handleEdit(pet),
+      onClick: (pet: Pet) => navigate(`/pets/${pet.publicId}/editar`),
       color: 'primary',
     },
     {
@@ -331,7 +289,34 @@ const PetsPage = () => {
   ];
 
   return (
-    <>
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: 2.5,
+            background: 'linear-gradient(135deg, #9C72D9 0%, #7B5BBF 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            boxShadow: '0 4px 14px rgba(156, 114, 217, 0.35)',
+            flexShrink: 0,
+          }}
+        >
+          <PetsIcon />
+        </Box>
+        <Box>
+          <Typography variant="h5" fontWeight={700} lineHeight={1.2}>
+            Pets
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            Pacientes cadastrados na clínica
+          </Typography>
+        </Box>
+      </Box>
+
       <DataGrid<Pet>
         data={pets}
         columns={columns}
@@ -356,99 +341,8 @@ const PetsPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        sx={{ borderRadius: 3, overflow: 'hidden' }}
       />
-
-      <FormDialog
-        open={showForm}
-        onClose={() => setShowForm(false)}
-        onSubmit={handleSubmit}
-        title={editingPet ? 'Editar Pet' : 'Novo Pet'}
-        titleIcon={<PetsIcon sx={{ color: '#9C72D9' }} />}
-        submitLabel={loading ? 'Salvando...' : editingPet ? 'Atualizar' : 'Criar'}
-        loading={loading}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-          <TextField fullWidth label="Nome" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              fullWidth
-              select
-              label="Espécie"
-              value={formData.species}
-              onChange={(e) => setFormData({ ...formData, species: e.target.value as PetSpecies | '' })}
-            >
-              <MuiMenuItem value="">Selecione...</MuiMenuItem>
-              {Object.entries(SPECIES_LABELS).map(([value, label]) => (
-                <MuiMenuItem key={value} value={value}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: SPECIES_COLORS[value as PetSpecies], display: 'flex' }}>{SPECIES_ICONS[value as PetSpecies]}</span>
-                    {label}
-                  </span>
-                </MuiMenuItem>
-              ))}
-            </TextField>
-            <TextField fullWidth label="Raça" value={formData.breed} onChange={(e) => setFormData({ ...formData, breed: e.target.value })} />
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              fullWidth
-              select
-              label="Sexo"
-              value={formData.gender}
-              onChange={(e) => setFormData({ ...formData, gender: e.target.value as PetGender | '' })}
-            >
-              <MuiMenuItem value="">Selecione...</MuiMenuItem>
-              {Object.entries(GENDER_LABELS).map(([value, label]) => (
-                <MuiMenuItem key={value} value={value}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: GENDER_COLORS[value as PetGender], display: 'flex' }}>{GENDER_ICONS[value as PetGender]}</span>
-                    {label}
-                  </span>
-                </MuiMenuItem>
-              ))}
-            </TextField>
-            <TextField fullWidth label="Cor" value={formData.color} onChange={(e) => setFormData({ ...formData, color: e.target.value })} />
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <MuiDatePicker
-              mode="day"
-              value={formData.birthDate}
-              onChange={(val) => setFormData({ ...formData, birthDate: val })}
-              placeholder="Data de Nascimento"
-            />
-            <TextField
-              fullWidth
-              label="Peso (kg)"
-              type="number"
-              value={formData.weight}
-              onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-              slotProps={{ input: { inputProps: { step: '0.1', min: '0' } } }}
-            />
-          </Box>
-          <TextField
-            fullWidth
-            select
-            label="Tutor Principal"
-            value={formData.primaryTutorId}
-            onChange={(e) => setFormData({ ...formData, primaryTutorId: e.target.value })}
-          >
-            <MuiMenuItem value="">Nenhum</MuiMenuItem>
-            {customers.map((c) => (
-              <MuiMenuItem key={c.publicId || c.id} value={c.publicId || c.id || ''}>
-                {c.name}
-              </MuiMenuItem>
-            ))}
-          </TextField>
-          <TextField
-            fullWidth
-            label="Observações"
-            multiline
-            rows={3}
-            value={formData.observations}
-            onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
-          />
-        </Box>
-      </FormDialog>
 
       <ConfirmDialog
         open={showDeleteModal}
@@ -477,7 +371,7 @@ const PetsPage = () => {
           </Box>
         )}
       </ConfirmDialog>
-    </>
+    </Box>
   );
 };
 

@@ -2,6 +2,7 @@ export { DataGrid } from './components/DataGrid/DataGrid';
 export { CurrencyField } from './components/CurrencyField/CurrencyField';
 export { DateRangeField } from './components/DateRangeField/DateRangeField';
 export { MuiDatePicker } from './components/MuiDatePicker/MuiDatePicker';
+export { MuiTimePicker } from './components/MuiTimePicker/MuiTimePicker';
 export { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
 export { FormDialog } from './components/FormDialog/FormDialog';
 export { StatusChip } from './components/StatusChip/StatusChip';
@@ -19,6 +20,7 @@ export type {
   DateRange,
   DateRangeFieldProps,
   MuiDatePickerProps,
+  MuiTimePickerProps,
 } from './types';
 
 export type { ConfirmDialogProps } from './components/ConfirmDialog/ConfirmDialog';

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   FormControl,
   InputLabel,
@@ -10,6 +10,9 @@ import {
   Typography,
   Switch,
   FormControlLabel,
+  Grid2 as Grid,
+  alpha,
+  InputAdornment,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -18,6 +21,9 @@ import {
   ShoppingBag as ShoppingBagIcon,
   Inventory as PackageIcon,
   CalendarMonth as CalendarIcon,
+  Numbers as NumbersIcon,
+  AttachMoney as MoneyIcon,
+  Payment as PaymentIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -68,6 +74,18 @@ const isPaymentVista = (paymentType: string | boolean | number | undefined): boo
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
+
+const SectionHeader = ({ icon, title, subtitle, gradient }: { icon: React.ReactNode; title: string; subtitle?: string; gradient?: string }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+    <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: gradient || 'linear-gradient(135deg, #9C72D9, #7B5BBF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+      {icon}
+    </Box>
+    <Box>
+      <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>{title}</Typography>
+      {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
+    </Box>
+  </Box>
+);
 
 const PurchasesPage = () => {
   const { triggerMultipleRefresh } = useRefresh();
@@ -448,103 +466,133 @@ const PurchasesPage = () => {
         titleIcon={<ShoppingBagIcon sx={{ color: '#059669' }} />}
         submitLabel={loading ? 'Salvando...' : editingPurchase ? 'Atualizar' : 'Criar'}
         loading={loading}
+        maxWidth="md"
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-          {/* Product Selection */}
-          <FormControl fullWidth>
-            <InputLabel>Produto</InputLabel>
-            <Select
-              value={formData.productId}
-              label="Produto"
-              onChange={(e) => handleProductChange(e.target.value as string)}
-              required
-            >
-              {activeProducts.map((product) => (
-                <MenuItem key={product.publicId} value={product.publicId}>
-                  {product.name} - {formatCurrency(product.price)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Quantity */}
-          <TextField
-            fullWidth
-            label="Quantidade"
-            type="number"
-            value={formData.quantity}
-            onChange={(e) => handleQuantityChange(e.target.value)}
-            required
-          />
-
-          {/* Unit Price (read-only) */}
-          <CurrencyField
-            fullWidth
-            label="Preco Unitario"
-            value={parseFloat(formData.unit_price) || 0}
-            onChange={(_value: number) => {}}
-            disabled
-            helperText="Preco carregado automaticamente do produto selecionado"
-          />
-
-          {/* Total Price (read-only) */}
-          <CurrencyField
-            fullWidth
-            label="Valor Total"
-            value={parseFloat(formData.total_price) || 0}
-            onChange={(_value: number) => {}}
-            disabled
-            helperText="Calculado automaticamente: Quantidade x Preco Unitario"
-          />
-
-          {/* Purchase Date */}
-          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-            <DatePicker
-              label="Data da Compra"
-              value={formData.date ? new Date(formData.date + 'T12:00:00') : null}
-              onChange={(newDate: Date | null) => {
-                if (newDate) {
-                  const year = newDate.getFullYear();
-                  const month = String(newDate.getMonth() + 1).padStart(2, '0');
-                  const day = String(newDate.getDate()).padStart(2, '0');
-                  setFormData({ ...formData, date: `${year}-${month}-${day}` });
-                }
-              }}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  required: true,
-                },
-              }}
-            />
-          </LocalizationProvider>
-
-          {/* Payment Type */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              p: 2,
-              border: '1px solid #e0e0e0',
-              borderRadius: '4px',
-              backgroundColor: '#fafafa',
-            }}
-          >
-            <Typography variant="body1" color="text.secondary">
-              Tipo de Pagamento:
-            </Typography>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.paymentType}
-                  onChange={(e) => setFormData({ ...formData, paymentType: e.target.checked })}
-                  color="primary"
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+          {/* Section 1 - Produto */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<PackageIcon />} title="Produto" subtitle="Selecione o produto e quantidade" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Produto</InputLabel>
+                  <Select
+                    value={formData.productId}
+                    label="Produto"
+                    onChange={(e) => handleProductChange(e.target.value as string)}
+                    required
+                  >
+                    {activeProducts.map((product) => (
+                      <MenuItem key={product.publicId} value={product.publicId}>
+                        {product.name} - {formatCurrency(product.price)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Quantidade"
+                  type="number"
+                  value={formData.quantity}
+                  onChange={(e) => handleQuantityChange(e.target.value)}
+                  required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <NumbersIcon sx={{ color: '#9C72D9' }} />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-              }
-              label={formData.paymentType ? 'A Vista' : 'A Prazo'}
-              labelPlacement="end"
-            />
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Section 2 - Valores */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<MoneyIcon />} title="Valores" subtitle="Precos calculados automaticamente" gradient="linear-gradient(135deg, #F48FB1, #E57399)" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <CurrencyField
+                  fullWidth
+                  label="Preco Unitario"
+                  value={parseFloat(formData.unit_price) || 0}
+                  onChange={(_value: number) => {}}
+                  disabled
+                  helperText="Preco carregado automaticamente do produto selecionado"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <CurrencyField
+                  fullWidth
+                  label="Valor Total"
+                  value={parseFloat(formData.total_price) || 0}
+                  onChange={(_value: number) => {}}
+                  disabled
+                  helperText="Calculado automaticamente: Quantidade x Preco Unitario"
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Section 3 - Data e Pagamento */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<CalendarIcon />} title="Data e Pagamento" subtitle="Data da compra e forma de pagamento" gradient="linear-gradient(135deg, #7EB3E0, #5A9BD5)" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                  <DatePicker
+                    label="Data da Compra"
+                    value={formData.date ? new Date(formData.date + 'T12:00:00') : null}
+                    onChange={(newDate: Date | null) => {
+                      if (newDate) {
+                        const year = newDate.getFullYear();
+                        const month = String(newDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(newDate.getDate()).padStart(2, '0');
+                        setFormData({ ...formData, date: `${year}-${month}-${day}` });
+                      }
+                    }}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        required: true,
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: (theme) => alpha(theme.palette.divider, 0.12),
+                    borderRadius: '12px',
+                    backgroundColor: (theme) => alpha(theme.palette.background.default, 0.5),
+                  }}
+                >
+                  <Typography variant="body1" color="text.secondary">
+                    Tipo de Pagamento:
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.paymentType}
+                        onChange={(e) => setFormData({ ...formData, paymentType: e.target.checked })}
+                        color="primary"
+                      />
+                    }
+                    label={formData.paymentType ? 'A Vista' : 'A Prazo'}
+                    labelPlacement="end"
+                  />
+                </Box>
+              </Grid>
+            </Grid>
           </Box>
         </Box>
       </FormDialog>

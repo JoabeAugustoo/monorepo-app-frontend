@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Switch,
   FormControlLabel,
@@ -6,8 +6,19 @@ import {
   Button,
   TextField,
   Box,
+  Grid2 as Grid,
+  alpha,
+  InputAdornment,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Inventory as PackageIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Inventory as PackageIcon,
+  AttachMoney as MoneyIcon,
+  Label as LabelIcon,
+  CheckCircle as CheckIcon,
+} from '@mui/icons-material';
 import { toast } from 'sonner';
 import { DataGrid, CurrencyField, FormDialog, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
@@ -30,6 +41,18 @@ const initialFormData: ProductFormData = {
   suggestedSalePrice: '',
   active: true,
 };
+
+const SectionHeader = ({ icon, title, subtitle, gradient }: { icon: React.ReactNode; title: string; subtitle?: string; gradient?: string }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+    <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: gradient || 'linear-gradient(135deg, #9C72D9, #7B5BBF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+      {icon}
+    </Box>
+    <Box>
+      <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>{title}</Typography>
+      {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
+    </Box>
+  </Box>
+);
 
 const ProductsPage = () => {
   const { refreshTriggers, triggerMultipleRefresh } = useRefresh();
@@ -336,52 +359,79 @@ const ProductsPage = () => {
         titleIcon={<PackageIcon sx={{ color: '#3b82f6' }} />}
         submitLabel={loading ? 'Salvando...' : editingProduct ? 'Atualizar' : 'Criar'}
         loading={loading}
+        maxWidth="md"
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-          <TextField
-            fullWidth
-            label="Nome do Produto"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-
-          <CurrencyField
-            fullWidth
-            label="Preco do Produto"
-            value={parseFloat(formData.price) || 0}
-            onChange={(value: number) => setFormData({ ...formData, price: value.toString() })}
-            required
-          />
-
-          <CurrencyField
-            fullWidth
-            label="Preco Sugerido de Venda"
-            value={parseFloat(formData.suggestedSalePrice) || 0}
-            onChange={(value: number) => setFormData({ ...formData, suggestedSalePrice: value.toString() })}
-          />
-
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              p: 2,
-              border: '1px solid #e0e0e0',
-              borderRadius: '4px',
-              backgroundColor: '#fafafa',
-            }}
-          >
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.active}
-                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                  color="primary"
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+          {/* Section 1 - Informacoes do Produto */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<PackageIcon />} title="Informações do Produto" subtitle="Nome e precos do produto" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Nome do Produto"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LabelIcon sx={{ color: '#9C72D9' }} />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-              }
-              label="Produto Ativo"
-              sx={{ margin: 0 }}
-            />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <CurrencyField
+                  fullWidth
+                  label="Preco do Produto"
+                  value={parseFloat(formData.price) || 0}
+                  onChange={(value: number) => setFormData({ ...formData, price: value.toString() })}
+                  required
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <CurrencyField
+                  fullWidth
+                  label="Preco Sugerido de Venda"
+                  value={parseFloat(formData.suggestedSalePrice) || 0}
+                  onChange={(value: number) => setFormData({ ...formData, suggestedSalePrice: value.toString() })}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Section 2 - Status */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<CheckIcon />} title="Status" subtitle="Disponibilidade do produto" gradient="linear-gradient(135deg, #F48FB1, #E57399)" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: (theme) => alpha(theme.palette.divider, 0.12),
+                    borderRadius: '12px',
+                    backgroundColor: (theme) => alpha(theme.palette.background.default, 0.5),
+                  }}
+                >
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.active}
+                        onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                        color="primary"
+                      />
+                    }
+                    label="Produto Ativo"
+                    sx={{ margin: 0 }}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
           </Box>
         </Box>
       </FormDialog>

@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button,
   TextField,
   Box,
   Typography,
   Alert,
+  Grid2 as Grid,
+  alpha,
+  InputAdornment,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -12,6 +15,11 @@ import {
   Delete as DeleteIcon,
   Person as UserIcon,
   Schedule as ClockIcon,
+  Email as EmailIcon,
+  Badge as BadgeIcon,
+  AttachMoney as MoneyIcon,
+  AccessTime as TimeIcon,
+  CalendarViewDay as DaysIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { DataGrid, CurrencyField, FormDialog, ConfirmDialog, StatusChip, SearchField } from '@app/ui';
@@ -43,6 +51,18 @@ const initialFormData: EmployeeFormData = {
   hoursPerDay: '8',
   daysPerWeek: '5',
 };
+
+const SectionHeader = ({ icon, title, subtitle, gradient }: { icon: React.ReactNode; title: string; subtitle?: string; gradient?: string }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+    <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: gradient || 'linear-gradient(135deg, #9C72D9, #7B5BBF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+      {icon}
+    </Box>
+    <Box>
+      <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>{title}</Typography>
+      {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
+    </Box>
+  </Box>
+);
 
 const EmployeesPage = () => {
   const { triggerMultipleRefresh } = useRefresh();
@@ -377,92 +397,138 @@ const EmployeesPage = () => {
         disabled={!formData.name || !formData.monthlySalary}
         maxWidth="md"
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-          {/* Basic Information */}
-          <TextField
-            fullWidth
-            label="Nome Completo"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-
-          <TextField
-            fullWidth
-            label="Email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            helperText="Se nao informado, sera gerado automaticamente"
-          />
-
-          <CurrencyField
-            fullWidth
-            label="Salario Mensal"
-            value={parseFloat(formData.monthlySalary) || 0}
-            onChange={(value: number) => setFormData({ ...formData, monthlySalary: value.toString() })}
-            required
-          />
-
-          {/* Work Schedule */}
-          <Alert severity="info" sx={{ mt: 2 }}>
-            <Typography variant="body2">
-              Configure o horario de trabalho do funcionario
-            </Typography>
-          </Alert>
-
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 2,
-              flexDirection: { xs: 'column', sm: 'row' },
-            }}
-          >
-            <TextField
-              fullWidth
-              label="Horario de Entrada"
-              type="time"
-              value={formData.startTime}
-              onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-
-            <TextField
-              fullWidth
-              label="Horario de Saida"
-              type="time"
-              value={formData.endTime}
-              onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+          {/* Section 1 - Dados Pessoais */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<UserIcon />} title="Dados Pessoais" subtitle="Informacoes do funcionario" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Nome Completo"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <BadgeIcon sx={{ color: '#9C72D9' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  helperText="Se nao informado, sera gerado automaticamente"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon sx={{ color: '#9C72D9' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+            </Grid>
           </Box>
 
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 2,
-              flexDirection: { xs: 'column', sm: 'row' },
-            }}
-          >
-            <TextField
-              fullWidth
-              label="Horas por Dia"
-              type="number"
-              value={formData.hoursPerDay}
-              onChange={(e) => setFormData({ ...formData, hoursPerDay: e.target.value })}
-              slotProps={{ htmlInput: { min: 1, max: 12, step: 0.5 } }}
-              helperText="Quantidade de horas trabalhadas por dia"
-            />
+          {/* Section 2 - Remuneracao */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<MoneyIcon />} title="Remuneração" subtitle="Salario mensal do funcionario" gradient="linear-gradient(135deg, #F48FB1, #E57399)" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <CurrencyField
+                  fullWidth
+                  label="Salario Mensal"
+                  value={parseFloat(formData.monthlySalary) || 0}
+                  onChange={(value: number) => setFormData({ ...formData, monthlySalary: value.toString() })}
+                  required
+                />
+              </Grid>
+            </Grid>
+          </Box>
 
-            <TextField
-              fullWidth
-              label="Dias por Semana"
-              type="number"
-              value={formData.daysPerWeek}
-              onChange={(e) => setFormData({ ...formData, daysPerWeek: e.target.value })}
-              slotProps={{ htmlInput: { min: 1, max: 7 } }}
-              helperText="Quantos dias trabalha por semana"
-            />
+          {/* Section 3 - Horario de Trabalho */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
+            <SectionHeader icon={<TimeIcon />} title="Horário de Trabalho" subtitle="Jornada e expediente" gradient="linear-gradient(135deg, #7EB3E0, #5A9BD5)" />
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Horario de Entrada"
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <TimeIcon sx={{ color: '#7EB3E0' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Horario de Saida"
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <TimeIcon sx={{ color: '#7EB3E0' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Horas por Dia"
+                  type="number"
+                  value={formData.hoursPerDay}
+                  onChange={(e) => setFormData({ ...formData, hoursPerDay: e.target.value })}
+                  slotProps={{ htmlInput: { min: 1, max: 12, step: 0.5 } }}
+                  helperText="Quantidade de horas trabalhadas por dia"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <DaysIcon sx={{ color: '#7EB3E0' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Dias por Semana"
+                  type="number"
+                  value={formData.daysPerWeek}
+                  onChange={(e) => setFormData({ ...formData, daysPerWeek: e.target.value })}
+                  slotProps={{ htmlInput: { min: 1, max: 7 } }}
+                  helperText="Quantos dias trabalha por semana"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <DaysIcon sx={{ color: '#7EB3E0' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+            </Grid>
           </Box>
         </Box>
       </FormDialog>

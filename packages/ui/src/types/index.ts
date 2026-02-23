@@ -10,3 +10,4 @@ export type {
 export type { CurrencyFieldProps } from '../components/CurrencyField/CurrencyField';
 export type { DateRange, DateRangeFieldProps } from '../components/DateRangeField/DateRangeField';
 export type { MuiDatePickerProps } from '../components/MuiDatePicker/MuiDatePicker';
+export type { MuiTimePickerProps } from '../components/MuiTimePicker/MuiTimePicker';

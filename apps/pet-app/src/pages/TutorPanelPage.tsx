@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  PersonSearch as TutorPanelIcon,
   Pets as PetsIcon,
   Home as HomeIcon,
   Edit as EditIcon,
@@ -27,12 +28,13 @@ import {
   Scale as WeightIcon,
   Cake as BirthIcon,
   Palette as ColorIcon,
+  LocalHospital as HospitalIcon,
 } from '@mui/icons-material';
 import { FaDog, FaCat, FaDove, FaFrog, FaPaw } from 'react-icons/fa6';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { formatCpf, formatPhone, formatDate } from '@app/core';
-import { customerService, petService, medicalProcedureService } from '../services';
-import type { CustomerWithAddresses, Pet, PetSpecies, MedicalProcedure } from '../types';
+import { customerService, petService, medicalProcedureService, atendimentoService } from '../services';
+import type { CustomerWithAddresses, Pet, MedicalProcedure, ClinicalVisit } from '../types';
 
 const SPECIES_CONFIG: Record<string, { icon: React.ReactNode; color: string; gradient: string; label: string }> = {
   DOG: { icon: <FaDog size={22} />, color: '#9C72D9', gradient: 'linear-gradient(135deg, #9C72D9, #7B5BBF)', label: 'Cão' },
@@ -52,6 +54,7 @@ const TutorPanelPage = () => {
   const [customer, setCustomer] = useState<CustomerWithAddresses | null>(null);
   const [pets, setPets] = useState<Pet[]>([]);
   const [petProcedures, setPetProcedures] = useState<Record<string, MedicalProcedure[]>>({});
+  const [petAtendimentos, setPetAtendimentos] = useState<Record<string, ClinicalVisit>>({});
   const [loadingPets, setLoadingPets] = useState(false);
 
   const handleSearchByCpf = useCallback(async (digits: string) => {
@@ -71,8 +74,9 @@ const TutorPanelPage = () => {
           const customerPets = await petService.findByCustomer(found.publicId);
           setPets(customerPets);
 
-          // Check active procedures for each pet
+          // Check active procedures and open atendimentos for each pet
           const procedureMap: Record<string, MedicalProcedure[]> = {};
+          const atendimentoMap: Record<string, ClinicalVisit> = {};
           await Promise.all(
             customerPets.map(async (pet) => {
               if (!pet.publicId) return;
@@ -88,9 +92,18 @@ const TutorPanelPage = () => {
               } catch {
                 // ignore
               }
+              try {
+                const openAtendimento = await atendimentoService.getOpenByPet(pet.publicId);
+                if (openAtendimento) {
+                  atendimentoMap[pet.publicId] = openAtendimento;
+                }
+              } catch {
+                // ignore
+              }
             })
           );
           setPetProcedures(procedureMap);
+          setPetAtendimentos(atendimentoMap);
         } finally {
           setLoadingPets(false);
         }
@@ -99,6 +112,7 @@ const TutorPanelPage = () => {
       setCustomer(null);
       setPets([]);
       setPetProcedures({});
+      setPetAtendimentos({});
       setSearched(true);
     } finally {
       setSearching(false);
@@ -121,9 +135,15 @@ const TutorPanelPage = () => {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={700} gutterBottom>
-        Painel do Tutor
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #81C9C5 0%, #5FB8B3 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 14px rgba(129, 201, 197, 0.35)', flexShrink: 0 }}>
+          <TutorPanelIcon />
+        </Box>
+        <Box>
+          <Typography variant="h5" fontWeight={700} lineHeight={1.2}>Painel do Tutor</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>Busque o tutor e gerencie seus pets</Typography>
+        </Box>
+      </Box>
 
       {/* Search bar */}
       <Card sx={{ mb: 3 }}>
@@ -234,6 +254,7 @@ const TutorPanelPage = () => {
                 <Grid container spacing={2.5}>
                   {pets.map((pet) => {
                     const hasActiveProcedure = pet.publicId && petProcedures[pet.publicId]?.length > 0;
+                    const openAtendimento = pet.publicId ? petAtendimentos[pet.publicId] : undefined;
                     const speciesCfg = SPECIES_CONFIG[pet.species || 'OTHER'] || SPECIES_CONFIG.OTHER;
 
                     return (
@@ -287,14 +308,14 @@ const TutorPanelPage = () => {
                               </Box>
                               <Chip
                                 size="small"
-                                label={hasActiveProcedure ? 'Em atendimento' : 'Disponível'}
+                                label={openAtendimento ? 'Em atendimento' : hasActiveProcedure ? 'Em procedimento' : 'Disponível'}
                                 sx={{
-                                  backgroundColor: hasActiveProcedure ? '#FCE4EC' : alpha(speciesCfg.color, 0.08),
-                                  color: hasActiveProcedure ? '#C2185B' : speciesCfg.color,
+                                  backgroundColor: openAtendimento ? '#FCE4EC' : hasActiveProcedure ? '#FFF3E0' : alpha(speciesCfg.color, 0.08),
+                                  color: openAtendimento ? '#C2185B' : hasActiveProcedure ? '#E65100' : speciesCfg.color,
                                   fontWeight: 700,
                                   fontSize: '0.68rem',
                                   height: 24,
-                                  animation: hasActiveProcedure ? 'pulse 2s infinite' : 'none',
+                                  animation: openAtendimento ? 'pulse 2s infinite' : 'none',
                                   '@keyframes pulse': {
                                     '0%, 100%': { opacity: 1 },
                                     '50%': { opacity: 0.6 },
@@ -355,12 +376,50 @@ const TutorPanelPage = () => {
                               )}
                             </Box>
 
+                            {/* Atendimento action */}
+                            <Box sx={{ mb: 1 }}>
+                              {openAtendimento ? (
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  startIcon={<HospitalIcon />}
+                                  onClick={() => navigate(`/atendimentos/${openAtendimento.publicId}`)}
+                                  sx={{
+                                    backgroundColor: '#F48FB1',
+                                    '&:hover': { backgroundColor: '#E91E63' },
+                                    textTransform: 'none',
+                                    fontSize: '0.75rem',
+                                    width: '100%',
+                                  }}
+                                >
+                                  Ver Atendimento
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<HospitalIcon />}
+                                  onClick={() => navigate(`/atendimentos/novo?petId=${pet.publicId}&customerId=${customer?.publicId || ''}`)}
+                                  sx={{
+                                    borderColor: '#9C72D9',
+                                    color: '#9C72D9',
+                                    '&:hover': { borderColor: '#7B5BBF', backgroundColor: alpha('#9C72D9', 0.05) },
+                                    textTransform: 'none',
+                                    fontSize: '0.75rem',
+                                    width: '100%',
+                                  }}
+                                >
+                                  Iniciar Atendimento
+                                </Button>
+                              )}
+                            </Box>
+
                             {/* Actions */}
                             <Box sx={{ display: 'flex', gap: 0.5 }}>
-                              <Tooltip title="Histórico">
+                              <Tooltip title="Histórico de Atendimentos">
                                 <IconButton
                                   size="small"
-                                  onClick={() => pet.publicId && navigate(`/procedimentos?petId=${pet.publicId}`)}
+                                  onClick={() => pet.publicId && navigate('/atendimentos', { state: { petId: pet.publicId, petName: pet.name } })}
                                   sx={{
                                     color: speciesCfg.color,
                                     '&:hover': { bgcolor: alpha(speciesCfg.color, 0.1) },

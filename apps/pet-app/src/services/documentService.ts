@@ -1,5 +1,5 @@
 import api from './api';
-import type { DocumentTemplate, DocumentRecord, DocumentTracking, SendDocumentDto, GenerateReportDto, GenerateReportResponse, SignDocumentDto, ReportStatusResponse, DocumentSearchRequest, DocumentSearchResponse, DocumentTrackingSearchResponse, TemplateSearchRequest, TemplateSearchResponse, TemplateCategory } from '../types';
+import type { DocumentTemplate, DocumentRecord, DocumentTracking, SendDocumentDto, GenerateReportDto, GenerateReportResponse, GenerateMedicalDischargeDto, SignDocumentDto, ReportStatusResponse, DocumentSearchRequest, DocumentSearchResponse, DocumentTrackingSearchResponse, TemplateSearchRequest, TemplateSearchResponse, TemplateCategory } from '../types';
 
 export const documentService = {
   getTemplates: async (): Promise<DocumentTemplate[]> => {
@@ -45,6 +45,11 @@ export const documentService = {
 
   generateReport: async (dto: GenerateReportDto): Promise<GenerateReportResponse> => {
     const response = await api.post('/petflow-reports/generate', dto);
+    return response.data;
+  },
+
+  generateMedicalDischarge: async (dto: GenerateMedicalDischargeDto): Promise<GenerateReportResponse> => {
+    const response = await api.post('/petflow-reports/medical-discharge', dto);
     return response.data;
   },
 

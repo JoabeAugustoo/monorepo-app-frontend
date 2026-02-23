@@ -34,4 +34,25 @@ export const clinicService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  uploadLogo: async (file: File): Promise<void> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    await api.post('/clinics/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  getLogo: async (): Promise<string | null> => {
+    try {
+      const response = await api.get('/clinics/logo', {
+        responseType: 'blob',
+        validateStatus: (status) => status === 200 || status === 204 || status === 404,
+      });
+      if (response.status !== 200 || !response.data) return null;
+      return URL.createObjectURL(response.data);
+    } catch {
+      return null;
+    }
+  },
 };

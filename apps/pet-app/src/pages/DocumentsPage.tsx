@@ -80,7 +80,7 @@ function triggerBlobDownload(blob: Blob, filename: string) {
 // --- Main Page ---
 const DocumentsPage = () => {
   const location = useLocation();
-  const locationState = location.state as { customerId?: string; petId?: string } | null;
+  const locationState = location.state as { customerId?: string; petId?: string; cpf?: string } | null;
 
   // --- Tutor search ---
   const [cpfInput, setCpfInput] = useState('');
@@ -185,33 +185,49 @@ const DocumentsPage = () => {
     setDocPage(1);
   }, []);
 
-  // Deep-link: auto-load customer and select pet from notification navigation
+  // Deep-link: auto-load customer (and optionally pet) from navigation state
   useEffect(() => {
-    if (!locationState?.customerId || !locationState?.petId) return;
-
-    // If already viewing this customer+pet, just refresh documents
-    if (customer?.publicId === locationState.customerId && selectedPet?.publicId === locationState.petId) {
-      refreshDocuments();
-      return;
-    }
+    const cpf = locationState?.cpf?.replace(/\D/g, '');
+    const customerId = locationState?.customerId;
+    if (!cpf && !customerId) return;
 
     const load = async () => {
       setSearching(true);
       try {
-        const found = await customerService.getCustomerById(locationState.customerId!);
+        let found: CustomerWithAddresses | null = null;
+
+        if (cpf) {
+          setCpfInput(formatCpf(cpf));
+          found = await customerService.findByCpf(cpf);
+        } else if (customerId) {
+          const c = await customerService.getCustomerById(customerId);
+          found = c as CustomerWithAddresses;
+          setCpfInput(c.cpf ? formatCpf(c.cpf) : '');
+        }
+
+        if (!found) {
+          setSearched(true);
+          return;
+        }
+
         setCustomer(found);
         setSearched(true);
-        setCpfInput(found.cpf ? formatCpf(found.cpf) : '');
 
-        const customerPets = await petService.findByCustomer(found.publicId!);
-        setPets(customerPets);
+        if (found.publicId) {
+          setLoadingPets(true);
+          const customerPets = await petService.findByCustomer(found.publicId);
+          setPets(customerPets);
+          setLoadingPets(false);
 
-        const target = customerPets.find((p) => p.publicId === locationState.petId);
-        if (target) {
-          setSelectedPet(target);
+          if (locationState?.petId) {
+            const target = customerPets.find((p) => p.publicId === locationState.petId);
+            if (target) {
+              setSelectedPet(target);
+            }
+          }
         }
       } catch {
-        toast.error('Erro ao carregar dados da notificação.');
+        toast.error('Erro ao carregar dados.');
       } finally {
         setSearching(false);
       }
@@ -506,9 +522,15 @@ const DocumentsPage = () => {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={700} gutterBottom>
-        Documentos & Assinaturas
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #7EB3E0 0%, #5A9BD5 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 14px rgba(126, 179, 224, 0.35)', flexShrink: 0 }}>
+          <SendIcon />
+        </Box>
+        <Box>
+          <Typography variant="h5" fontWeight={700} lineHeight={1.2}>Documentos & Assinaturas</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>Gere e acompanhe documentos dos pacientes</Typography>
+        </Box>
+      </Box>
 
       {/* Section 1: Search Tutor */}
       <Card sx={{ mb: 3 }}>

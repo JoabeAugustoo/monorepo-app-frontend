@@ -1,26 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  TextField,
   Box,
   Button,
   Typography,
   Chip,
-  MenuItem as MuiMenuItem,
+  alpha,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
   Medication as MedicationIcon,
   Warning as WarningIcon,
   Inventory as InventoryIcon,
 } from '@mui/icons-material';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { DataGrid, FormDialog, SearchField } from '@app/ui';
+import { DataGrid, SearchField } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
 import { medicationService } from '../services';
-import type { Medication, MedicationDto, MedicationType, SearchRequest } from '../types';
+import type { Medication, MedicationType, SearchRequest } from '../types';
 
 const TYPE_LABELS: Record<MedicationType, string> = {
   INTERNAL: 'Interno',
@@ -28,26 +25,10 @@ const TYPE_LABELS: Record<MedicationType, string> = {
   CONTROLLED: 'Controlado',
 };
 
-interface MedicationFormData {
-  name: string;
-  type: MedicationType | '';
-  defaultDosage: string;
-  manufacturer: string;
-  description: string;
-  minimumStock: string;
-}
-
-const initialFormData: MedicationFormData = {
-  name: '', type: '', defaultDosage: '', manufacturer: '', description: '', minimumStock: '0',
-};
-
 const MedicationsPage = () => {
   const navigate = useNavigate();
   const [medications, setMedications] = useState<Medication[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingMed, setEditingMed] = useState<Medication | null>(null);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<MedicationFormData>(initialFormData);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -110,66 +91,18 @@ const MedicationsPage = () => {
     fetchMedications();
   }, [fetchMedications]);
 
-  const handleEdit = (med: Medication) => {
-    setEditingMed(med);
-    setFormData({
-      name: med.name || '',
-      type: med.type || '',
-      defaultDosage: med.defaultDosage || '',
-      manufacturer: med.manufacturer || '',
-      description: med.description || '',
-      minimumStock: med.minimumStock?.toString() || '0',
-    });
-    setShowForm(true);
-  };
-
-  const handleAddNew = () => {
-    setEditingMed(null);
-    setFormData(initialFormData);
-    setShowForm(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const data: MedicationDto = {
-        name: formData.name,
-        type: formData.type as MedicationType,
-        defaultDosage: formData.defaultDosage || undefined,
-        manufacturer: formData.manufacturer || undefined,
-        description: formData.description || undefined,
-        minimumStock: formData.minimumStock ? parseInt(formData.minimumStock) : undefined,
-      };
-
-      if (editingMed?.publicId) {
-        await medicationService.update(editingMed.publicId, data);
-        toast.success('Medicamento atualizado com sucesso!');
-      } else {
-        await medicationService.create(data);
-        toast.success('Medicamento criado com sucesso!');
-      }
-
-      setShowForm(false);
-      setCurrentPage(1);
-      fetchMedications();
-    } catch (error) {
-      console.error('Erro ao salvar medicamento:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const columns: DataGridColumn<Medication>[] = [
     {
       key: 'name',
       header: 'Nome',
       sortable: true,
       render: (med) => (
-        <div style={{ fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <MedicationIcon sx={{ fontSize: 16, color: '#6b7280' }} />
-          {med.name}
-        </div>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.25 }}>
+          <Box sx={{ width: 30, height: 30, borderRadius: '8px', bgcolor: alpha('#9C72D9', 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <MedicationIcon sx={{ fontSize: 16, color: '#9C72D9' }} />
+          </Box>
+          <Typography variant="body2" fontWeight={600} color="text.primary">{med.name}</Typography>
+        </Box>
       ),
     },
     {
@@ -179,7 +112,9 @@ const MedicationsPage = () => {
         <Chip label={TYPE_LABELS[med.type] || med.type} size="small" variant="outlined" />
       ) : '-',
     },
-    { key: 'manufacturer', header: 'Fabricante', render: (med) => med.manufacturer || '-' },
+    { key: 'manufacturer', header: 'Fabricante', render: (med) => (
+      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.84rem' }}>{med.manufacturer || '-'}</Typography>
+    ) },
     {
       key: 'currentStock',
       header: 'Estoque Atual',
@@ -216,7 +151,7 @@ const MedicationsPage = () => {
       >
         Estoque baixo
       </Button>
-      <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNew}>
+      <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/medicamentos/novo')}>
         Novo Medicamento
       </Button>
     </div>
@@ -232,13 +167,23 @@ const MedicationsPage = () => {
     {
       icon: <EditIcon fontSize="small" />,
       tooltip: 'Editar',
-      onClick: (med: Medication) => handleEdit(med),
+      onClick: (med: Medication) => navigate(`/medicamentos/${med.publicId}/editar`),
       color: 'primary',
     },
   ];
 
   return (
-    <>
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #9C72D9 0%, #7B5BBF 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 14px rgba(156, 114, 217, 0.35)', flexShrink: 0 }}>
+          <MedicationIcon />
+        </Box>
+        <Box>
+          <Typography variant="h5" fontWeight={700} lineHeight={1.2}>Medicamentos</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>Controle de medicamentos e estoque</Typography>
+        </Box>
+      </Box>
+
       <DataGrid<Medication>
         data={medications}
         columns={columns}
@@ -261,38 +206,9 @@ const MedicationsPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        sx={{ borderRadius: 3, overflow: 'hidden' }}
       />
-
-      <FormDialog
-        open={showForm}
-        onClose={() => setShowForm(false)}
-        onSubmit={handleSubmit}
-        title={editingMed ? 'Editar Medicamento' : 'Novo Medicamento'}
-        titleIcon={<MedicationIcon sx={{ color: '#9C72D9' }} />}
-        submitLabel={loading ? 'Salvando...' : editingMed ? 'Atualizar' : 'Criar'}
-        loading={loading}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-          <TextField fullWidth label="Nome *" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextField
-            fullWidth
-            select
-            label="Tipo *"
-            value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value as MedicationType | '' })}
-          >
-            <MuiMenuItem value="">Selecione...</MuiMenuItem>
-            {Object.entries(TYPE_LABELS).map(([value, label]) => (
-              <MuiMenuItem key={value} value={value}>{label}</MuiMenuItem>
-            ))}
-          </TextField>
-          <TextField fullWidth label="Dosagem Padrão" value={formData.defaultDosage} onChange={(e) => setFormData({ ...formData, defaultDosage: e.target.value })} />
-          <TextField fullWidth label="Fabricante" value={formData.manufacturer} onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })} />
-          <TextField fullWidth label="Descrição" multiline rows={2} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-          <TextField fullWidth label="Estoque Mínimo" type="number" value={formData.minimumStock} onChange={(e) => setFormData({ ...formData, minimumStock: e.target.value })} slotProps={{ input: { inputProps: { min: '0' } } }} />
-        </Box>
-      </FormDialog>
-    </>
+    </Box>
   );
 };
 

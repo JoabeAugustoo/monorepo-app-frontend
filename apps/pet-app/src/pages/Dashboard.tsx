@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -12,15 +12,15 @@ import {
   Alert,
   useTheme,
 } from '@mui/material';
-import PetsIcon from '@mui/icons-material/Pets';
-import PeopleIcon from '@mui/icons-material/People';
-import BadgeIcon from '@mui/icons-material/Badge';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import WarningIcon from '@mui/icons-material/Warning';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import DrawIcon from '@mui/icons-material/Draw';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import HotelIcon from '@mui/icons-material/Hotel';
 import {
   AreaChart,
   Area,
@@ -37,9 +37,9 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-import { KPICard } from '@app/ui';
-import { petService, customerService, employeeService, medicalProcedureService, medicationService, stockBatchService } from '../services';
-import type { MedicalProcedure, Medication, StockBatch, ProcedureType } from '../types';
+import { KPICard, DateRangeField, type DateRange } from '@app/ui';
+import { dashboardService, medicalProcedureService, medicationService, stockBatchService } from '../services';
+import type { DashboardKpis, VisitsPerDayItem, ProceduresByTypeItem, ProceduresByStatusItem, MedicationStockItem, MedicalProcedure, Medication, StockBatch } from '../types';
 
 const TYPE_LABELS: Record<string, string> = {
   CONSULTATION: 'Consulta',
@@ -48,6 +48,20 @@ const TYPE_LABELS: Record<string, string> = {
   VACCINATION: 'Vacinação',
   GROOMING: 'Banho/Tosa',
   OTHER: 'Outro',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  SCHEDULED: 'Agendados',
+  IN_PROGRESS: 'Em andamento',
+  COMPLETED: 'Concluídos',
+  CANCELLED: 'Cancelados',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  SCHEDULED: '#7EB3E0',
+  IN_PROGRESS: '#F48FB1',
+  COMPLETED: '#81C9C5',
+  CANCELLED: '#BDBDBD',
 };
 
 const CHART_COLORS = ['#9C72D9', '#F48FB1', '#81C9C5', '#FFD6A5', '#7EB3E0', '#C9A6E8'];
@@ -65,208 +79,113 @@ function useChartStyles() {
     },
     gridStroke: isDark ? 'rgba(156,114,217,0.12)' : '#e5e7eb',
     axisStroke: isDark ? '#A99BBF' : '#6b7280',
-    labelFill: isDark ? '#A99BBF' : undefined,
   }), [isDark]);
 }
 
-interface DailyChartData {
-  day: string;
-  atendimentos: number;
+function getDefaultRange(): DateRange {
+  const now = new Date();
+  return {
+    start: new Date(now.getFullYear(), now.getMonth(), 1),
+    end: now,
+  };
 }
 
-interface TypeChartData {
-  name: string;
-  value: number;
-}
-
-interface StatusChartData {
-  name: string;
-  value: number;
-  color: string;
-}
-
-interface MedStockChartData {
-  name: string;
-  atual: number;
-  minimo: number;
+function toISODate(d: Date): string {
+  return d.toISOString().split('T')[0];
 }
 
 export default function Dashboard() {
   const chartStyles = useChartStyles();
-  const [petCount, setPetCount] = useState<number | null>(null);
-  const [customerCount, setCustomerCount] = useState<number | null>(null);
-  const [employeeCount, setEmployeeCount] = useState<number | null>(null);
-  const [inProgressCount, setInProgressCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultRange);
 
+  // Dashboard API data
+  const [kpis, setKpis] = useState<DashboardKpis | null>(null);
+  const [visitsPerDay, setVisitsPerDay] = useState<VisitsPerDayItem[]>([]);
+  const [proceduresByType, setProceduresByType] = useState<ProceduresByTypeItem[]>([]);
+  const [proceduresByStatus, setProceduresByStatus] = useState<ProceduresByStatusItem[]>([]);
+  const [medicationStock, setMedicationStock] = useState<MedicationStockItem[]>([]);
+
+  // Secondary data (kept from existing services)
   const [scheduledToday, setScheduledToday] = useState<MedicalProcedure[]>([]);
   const [lowStockMeds, setLowStockMeds] = useState<Medication[]>([]);
   const [expiringBatches, setExpiringBatches] = useState<StockBatch[]>([]);
 
-  // Chart data
-  const [dailyData, setDailyData] = useState<DailyChartData[]>([]);
-  const [typeData, setTypeData] = useState<TypeChartData[]>([]);
-  const [statusData, setStatusData] = useState<StatusChartData[]>([]);
-  const [medStockData, setMedStockData] = useState<MedStockChartData[]>([]);
+  // Load dashboard data from backend
+  const loadDashboard = useCallback(() => {
+    if (!dateRange.start || !dateRange.end) return;
+    setLoading(true);
+    const startDate = toISODate(dateRange.start);
+    const endDate = toISODate(dateRange.end);
 
-  // KPIs
+    Promise.all([
+      dashboardService.getKpis(startDate, endDate).catch(() => null),
+      dashboardService.getVisitsPerDay(startDate, endDate).catch(() => []),
+      dashboardService.getProceduresByType(startDate, endDate).catch(() => []),
+      dashboardService.getProceduresByStatus(startDate, endDate).catch(() => []),
+      dashboardService.getMedicationStock().catch(() => []),
+    ]).then(([kpisData, visits, byType, byStatus, stock]) => {
+      setKpis(kpisData);
+      setVisitsPerDay(visits);
+      setProceduresByType(byType);
+      setProceduresByStatus(byStatus);
+      setMedicationStock(stock);
+    }).finally(() => setLoading(false));
+  }, [dateRange]);
+
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
+  // Load secondary data (scheduled today + alerts)
   useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const [pets, customers, employees] = await Promise.all([
-          petService.getCount().catch(() => 0),
-          customerService.getCount().catch(() => 0),
-          employeeService.getCount().catch(() => 0),
-        ]);
-        setPetCount(typeof pets === 'number' ? pets : pets?.count ?? 0);
-        setCustomerCount(typeof customers === 'number' ? customers : customers?.count ?? 0);
-        setEmployeeCount(typeof employees === 'number' ? employees : employees?.count ?? 0);
-      } catch (error) {
-        console.error('Erro ao carregar dados do painel:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCounts();
-  }, []);
-
-  // Lists & alerts
-  useEffect(() => {
-    medicalProcedureService.search({
-      where: { status: 'IN_PROGRESS' },
-      skip: 0,
-      take: 1,
-    }).then((res) => {
-      setInProgressCount(res?.total ?? 0);
-    }).catch(() => setInProgressCount(0));
-
     const today = new Date().toISOString().split('T')[0];
     medicalProcedureService.search({
       where: { status: 'SCHEDULED', date: { gte: today + 'T00:00:00', lte: today + 'T23:59:59' } },
       skip: 0,
       take: 10,
       sort: [{ field: 'date', direction: 'ASC' }],
-    }).then((res) => {
-      setScheduledToday(res?.data || []);
-    }).catch(() => {});
+    }).then((res) => setScheduledToday(res?.data || [])).catch(() => {});
 
     medicationService.getLowStock().then(setLowStockMeds).catch(() => {});
     stockBatchService.getExpiring(30).then(setExpiringBatches).catch(() => {});
   }, []);
 
-  // Chart: Atendimentos por dia (last 30 days)
-  useEffect(() => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const from = thirtyDaysAgo.toISOString().split('T')[0];
+  // Transform chart data
+  const dailyChartData = useMemo(() =>
+    visitsPerDay.map((item) => ({
+      day: new Date(item.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+      atendimentos: item.count,
+    })),
+  [visitsPerDay]);
 
-    medicalProcedureService.search({
-      where: { date: { gte: from + 'T00:00:00' } },
-      skip: 0,
-      take: 1000,
-      sort: [{ field: 'date', direction: 'ASC' }],
-    }).then((res) => {
-      const procedures = res?.data || [];
-      const dayMap: Record<string, number> = {};
+  const typeChartData = useMemo(() =>
+    proceduresByType
+      .map((item) => ({ name: TYPE_LABELS[item.type] || item.type, value: item.count }))
+      .sort((a, b) => b.value - a.value),
+  [proceduresByType]);
 
-      // Initialize all 30 days
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const key = d.toISOString().split('T')[0];
-        dayMap[key] = 0;
-      }
+  const statusChartData = useMemo(() =>
+    proceduresByStatus
+      .filter((item) => item.count > 0)
+      .map((item) => ({
+        name: STATUS_LABELS[item.status] || item.status,
+        value: item.count,
+        color: STATUS_COLORS[item.status] || '#BDBDBD',
+      })),
+  [proceduresByStatus]);
 
-      procedures.forEach((p) => {
-        if (p.date) {
-          const key = p.date.split('T')[0];
-          if (key in dayMap) dayMap[key]++;
-        }
-      });
+  const medStockChartData = useMemo(() =>
+    medicationStock.slice(0, 10).map((m) => ({
+      name: m.name.length > 15 ? m.name.slice(0, 15) + '...' : m.name,
+      atual: m.currentStock,
+      minimo: m.minimumStock,
+    })),
+  [medicationStock]);
 
-      setDailyData(
-        Object.entries(dayMap).map(([day, count]) => ({
-          day: new Date(day + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-          atendimentos: count,
-        }))
-      );
-    }).catch(() => {});
-  }, []);
-
-  // Chart: Procedimentos por tipo (last 30 days)
-  useEffect(() => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const from = thirtyDaysAgo.toISOString().split('T')[0];
-
-    medicalProcedureService.search({
-      where: { date: { gte: from + 'T00:00:00' } },
-      skip: 0,
-      take: 1000,
-    }).then((res) => {
-      const procedures = res?.data || [];
-      const typeMap: Record<string, number> = {};
-      procedures.forEach((p) => {
-        const label = TYPE_LABELS[p.type] || p.type;
-        typeMap[label] = (typeMap[label] || 0) + 1;
-      });
-      setTypeData(
-        Object.entries(typeMap)
-          .map(([name, value]) => ({ name, value }))
-          .sort((a, b) => b.value - a.value)
-      );
-    }).catch(() => {});
-  }, []);
-
-  // Chart: Procedimentos por status
-  useEffect(() => {
-    const statusConfig: { status: string; label: string; color: string }[] = [
-      { status: 'SCHEDULED', label: 'Agendados', color: '#7EB3E0' },
-      { status: 'IN_PROGRESS', label: 'Em andamento', color: '#F48FB1' },
-      { status: 'COMPLETED', label: 'Concluídos', color: '#81C9C5' },
-      { status: 'CANCELLED', label: 'Cancelados', color: '#BDBDBD' },
-    ];
-
-    Promise.all(
-      statusConfig.map(async ({ status, label, color }) => {
-        try {
-          const res = await medicalProcedureService.search({
-            where: { status },
-            skip: 0,
-            take: 1,
-          });
-          return { name: label, value: res?.total ?? 0, color };
-        } catch {
-          return { name: label, value: 0, color };
-        }
-      })
-    ).then((data) => setStatusData(data.filter(d => d.value > 0)));
-  }, []);
-
-  // Chart: Estoque de medicamentos (top 10)
-  useEffect(() => {
-    medicationService.search({
-      where: {},
-      skip: 0,
-      take: 10,
-      sort: [{ field: 'currentStock', direction: 'ASC' }],
-    }).then((res) => {
-      const meds = res?.data || [];
-      setMedStockData(
-        meds.map((m) => ({
-          name: m.name.length > 15 ? m.name.slice(0, 15) + '...' : m.name,
-          atual: m.currentStock ?? 0,
-          minimo: m.minimumStock,
-        }))
-      );
-    }).catch(() => {});
-  }, []);
-
-  const cards = [
-    { titulo: 'Total de Pets', valor: petCount, icone: <PetsIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #9C72D9, #7B5BBF)' },
-    { titulo: 'Total de Clientes', valor: customerCount, icone: <PeopleIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #F48FB1, #E57399)' },
-    { titulo: 'Total de Funcionários', valor: employeeCount, icone: <BadgeIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #81C9C5, #5FB8B3)' },
-    { titulo: 'Em Atendimento', valor: inProgressCount, icone: <MedicalServicesIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #7EB3E0, #5A9BD5)' },
+  const kpiCards = [
+    { titulo: 'Atendimentos Ativos', valor: kpis?.activeVisits, icone: <MedicalServicesIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #9C72D9, #7B5BBF)' },
+    { titulo: 'Internações', valor: kpis?.hospitalizations, icone: <HotelIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #F48FB1, #E57399)' },
+    { titulo: 'Aguardando Assinatura', valor: kpis?.documentsAwaitingSignature, icone: <DrawIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #7EB3E0, #5A9BD5)' },
+    { titulo: 'Visitas Concluídas', valor: kpis?.completedVisits, icone: <CheckCircleIcon sx={{ fontSize: 50 }} />, gradient: 'linear-gradient(135deg, #81C9C5, #5FB8B3)' },
   ];
 
   const formatTime = (date?: string) => {
@@ -276,17 +195,24 @@ export default function Dashboard() {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={700} gutterBottom>
-        Painel
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Typography variant="h5" fontWeight={700}>
+          Painel
+        </Typography>
+        <DateRangeField
+          value={dateRange}
+          onChange={setDateRange}
+          size="small"
+        />
+      </Box>
 
       {/* KPI Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {cards.map((card) => (
+        {kpiCards.map((card) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={card.titulo}>
             <KPICard
               label={card.titulo}
-              value={loading && card.valor === null ? '...' : (card.valor ?? 0)}
+              value={loading && card.valor == null ? '...' : (card.valor ?? 0)}
               icon={card.icone}
               gradient={card.gradient}
               minHeight={120}
@@ -304,19 +230,19 @@ export default function Dashboard() {
           mb: 3,
         }}
       >
-        {/* Chart 1 (Top-Left): Atendimentos por dia - Line/Area */}
+        {/* Chart 1: Atendimentos por dia */}
         <Card sx={{ minHeight: 420 }}>
           <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
               <TrendingUpIcon sx={{ color: '#9C72D9' }} />
               <Typography variant="h6" fontWeight={600}>
-                Atendimentos por Dia (30 dias)
+                Atendimentos por Dia
               </Typography>
             </Box>
             <Box sx={{ flex: 1 }}>
-              {dailyData.length > 0 ? (
+              {dailyChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={320}>
-                  <AreaChart data={dailyData}>
+                  <AreaChart data={dailyChartData}>
                     <defs>
                       <linearGradient id="colorAtendimentos" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#9C72D9" stopOpacity={0.3} />
@@ -328,7 +254,7 @@ export default function Dashboard() {
                       dataKey="day"
                       tick={{ fontSize: 11 }}
                       stroke={chartStyles.axisStroke}
-                      interval={Math.floor(dailyData.length / 8)}
+                      interval={Math.floor(dailyChartData.length / 8)}
                     />
                     <YAxis tick={{ fontSize: 12 }} stroke={chartStyles.axisStroke} allowDecimals={false} />
                     <Tooltip
@@ -354,21 +280,21 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Chart 2 (Top-Right): Procedimentos por tipo - Donut */}
+        {/* Chart 2: Procedimentos por tipo */}
         <Card sx={{ minHeight: 420 }}>
           <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
               <LocalHospitalIcon sx={{ color: '#F48FB1' }} />
               <Typography variant="h6" fontWeight={600}>
-                Procedimentos por Tipo (30 dias)
+                Procedimentos por Tipo
               </Typography>
             </Box>
             <Box sx={{ flex: 1 }}>
-              {typeData.length > 0 ? (
+              {typeChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={320}>
                   <PieChart>
                     <Pie
-                      data={typeData}
+                      data={typeChartData}
                       cx="50%"
                       cy="50%"
                       innerRadius={65}
@@ -381,7 +307,7 @@ export default function Dashboard() {
                       }
                       labelLine={false}
                     >
-                      {typeData.map((_entry, index) => (
+                      {typeChartData.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
@@ -411,7 +337,7 @@ export default function Dashboard() {
           mb: 3,
         }}
       >
-        {/* Chart 3 (Bottom-Left): Status dos Procedimentos - Bar horizontal */}
+        {/* Chart 3: Status dos Procedimentos */}
         <Card sx={{ minHeight: 420 }}>
           <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
@@ -421,9 +347,9 @@ export default function Dashboard() {
               </Typography>
             </Box>
             <Box sx={{ flex: 1 }}>
-              {statusData.length > 0 ? (
+              {statusChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={statusData} layout="vertical" margin={{ left: 20 }}>
+                  <BarChart data={statusChartData} layout="vertical" margin={{ left: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.gridStroke} />
                     <XAxis type="number" tick={{ fontSize: 12 }} stroke={chartStyles.axisStroke} allowDecimals={false} />
                     <YAxis
@@ -438,7 +364,7 @@ export default function Dashboard() {
                       formatter={(value: number) => [`${value} procedimento(s)`, 'Total']}
                     />
                     <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={32}>
-                      {statusData.map((entry, index) => (
+                      {statusChartData.map((entry, index) => (
                         <Cell key={`cell-status-${index}`} fill={entry.color} />
                       ))}
                     </Bar>
@@ -453,7 +379,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Chart 4 (Bottom-Right): Estoque de Medicamentos - Bar */}
+        {/* Chart 4: Estoque de Medicamentos */}
         <Card sx={{ minHeight: 420 }}>
           <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
@@ -463,9 +389,9 @@ export default function Dashboard() {
               </Typography>
             </Box>
             <Box sx={{ flex: 1 }}>
-              {medStockData.length > 0 ? (
+              {medStockChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={medStockData}>
+                  <BarChart data={medStockChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.gridStroke} />
                     <XAxis
                       dataKey="name"

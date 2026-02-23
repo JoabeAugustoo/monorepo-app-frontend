@@ -8,4 +8,6 @@ export { medicationService } from './medicationService';
 export { stockBatchService } from './stockBatchService';
 export { documentService } from './documentService';
 export { clinicService } from './clinicService';
+export { atendimentoService } from './atendimentoService';
+export { dashboardService } from './dashboardService';
 export { default as api } from './api';

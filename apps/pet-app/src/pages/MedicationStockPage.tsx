@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  TextField,
   Box,
   Button,
   Typography,
@@ -10,16 +9,14 @@ import {
 import {
   Add as AddIcon,
   ArrowBack as BackIcon,
-  Inventory as InventoryIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
-import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DataGrid, FormDialog, MuiDatePicker } from '@app/ui';
+import { DataGrid } from '@app/ui';
 import type { DataGridColumn } from '@app/ui';
 import { formatCurrency, formatDate } from '@app/core';
 import { stockBatchService, medicationService } from '../services';
-import type { StockBatch, StockBatchDto, Medication, SearchRequest } from '../types';
+import type { StockBatch, Medication, SearchRequest } from '../types';
 
 const MedicationStockPage = () => {
   const { id: medicationId } = useParams<{ id: string }>();
@@ -28,7 +25,6 @@ const MedicationStockPage = () => {
   const [medication, setMedication] = useState<Medication | null>(null);
   const [batches, setBatches] = useState<StockBatch[]>([]);
   const [expiringBatches, setExpiringBatches] = useState<StockBatch[]>([]);
-  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,13 +33,6 @@ const MedicationStockPage = () => {
 
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
-
-  const [formData, setFormData] = useState({
-    batchNumber: '',
-    quantity: '',
-    unitCost: '',
-    expirationDate: new Date().toISOString().split('T')[0],
-  });
 
   useEffect(() => {
     if (medicationId) {
@@ -85,35 +74,6 @@ const MedicationStockPage = () => {
   useEffect(() => {
     fetchBatches();
   }, [fetchBatches]);
-
-  const handleAddNew = () => {
-    setFormData({ batchNumber: '', quantity: '', unitCost: '', expirationDate: new Date().toISOString().split('T')[0] });
-    setShowForm(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!medicationId) return;
-    try {
-      setLoading(true);
-      const data: StockBatchDto = {
-        medicationId,
-        batchNumber: formData.batchNumber,
-        quantity: parseFloat(formData.quantity),
-        unitCost: parseFloat(formData.unitCost),
-        expirationDate: formData.expirationDate,
-      };
-      await stockBatchService.create(data);
-      toast.success('Lote criado com sucesso!');
-      setShowForm(false);
-      setCurrentPage(1);
-      fetchBatches();
-    } catch (error) {
-      console.error('Erro ao salvar lote:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fmtCurrency = (value?: number) => value != null ? formatCurrency(value, 'BRL') : '-';
 
@@ -186,7 +146,7 @@ const MedicationStockPage = () => {
       <Button variant="outlined" startIcon={<BackIcon />} onClick={() => navigate('/medicamentos')}>
         Voltar
       </Button>
-      <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNew}>
+      <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`/medicamentos/${medicationId}/estoque/novo`)}>
         Novo Lote
       </Button>
     </div>
@@ -232,31 +192,8 @@ const MedicationStockPage = () => {
           setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
           setCurrentPage(1);
         }}
+        sx={{ borderRadius: 3, overflow: 'hidden' }}
       />
-
-      <FormDialog
-        open={showForm}
-        onClose={() => setShowForm(false)}
-        onSubmit={handleSubmit}
-        title="Novo Lote"
-        titleIcon={<InventoryIcon sx={{ color: '#9C72D9' }} />}
-        submitLabel={loading ? 'Salvando...' : 'Criar'}
-        loading={loading}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-          <TextField fullWidth label="Número do Lote *" value={formData.batchNumber} onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })} required />
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField fullWidth label="Quantidade *" type="number" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: e.target.value })} required slotProps={{ input: { inputProps: { min: '1' } } }} />
-            <TextField fullWidth label="Custo Unitário *" type="number" value={formData.unitCost} onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })} required slotProps={{ input: { inputProps: { min: '0', step: '0.01' } } }} />
-          </Box>
-          <MuiDatePicker
-            mode="day"
-            value={formData.expirationDate}
-            onChange={(val) => setFormData({ ...formData, expirationDate: val })}
-            placeholder="Data de Validade *"
-          />
-        </Box>
-      </FormDialog>
     </>
   );
 };

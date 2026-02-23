@@ -5,11 +5,15 @@ import {
   Chip,
   MenuItem as MuiMenuItem,
   TextField,
+  Typography,
+  alpha,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Visibility as ViewIcon,
   MedicalServices as MedicalIcon,
+  Pets as PetsIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DataGrid, SearchField } from '@app/ui';
@@ -116,12 +120,22 @@ const ProceduresPage = () => {
     {
       key: 'petName',
       header: 'Pet',
-      render: (proc) => proc.petName || '-',
+      render: (proc) => proc.petName ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <PetsIcon sx={{ fontSize: 14, color: '#9C72D9', opacity: 0.7 }} />
+          <Typography variant="body2" sx={{ fontSize: '0.84rem' }}>{proc.petName}</Typography>
+        </Box>
+      ) : <Typography variant="body2" color="text.disabled">-</Typography>,
     },
     {
       key: 'veterinarianName',
       header: 'Veterinário',
-      render: (proc) => proc.veterinarianName || '-',
+      render: (proc) => proc.veterinarianName ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <MedicalIcon sx={{ fontSize: 14, color: '#81C9C5', opacity: 0.7 }} />
+          <Typography variant="body2" sx={{ fontSize: '0.84rem' }}>{proc.veterinarianName}</Typography>
+        </Box>
+      ) : <Typography variant="body2" color="text.disabled">-</Typography>,
     },
     {
       key: 'status',
@@ -145,7 +159,11 @@ const ProceduresPage = () => {
       key: 'cost',
       header: 'Custo',
       sortable: true,
-      render: (proc) => fmtCurrency(proc.cost),
+      render: (proc) => (
+        <Typography variant="body2" sx={{ fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace', fontSize: '0.78rem', color: 'text.secondary' }}>
+          {fmtCurrency(proc.cost)}
+        </Typography>
+      ),
     },
   ];
 
@@ -194,29 +212,42 @@ const ProceduresPage = () => {
   ];
 
   return (
-    <DataGrid<MedicalProcedure>
-      data={procedures}
-      columns={columns}
-      getRowId={(row) => row.publicId || ''}
-      pageSize={pageSize}
-      headerActions={headerActions}
-      actions={actions}
-      emptyMessage="Nenhum procedimento encontrado"
-      loading={loading}
-      onRefresh={fetchProcedures}
-      serverSidePagination
-      page={currentPage}
-      totalRows={totalItems}
-      onPageChange={setCurrentPage}
-      onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
-      sortField={sortField}
-      sortDirection={sortDirection === 'ASC' ? 'asc' : 'desc'}
-      onSortChange={(field, direction) => {
-        setSortField(field);
-        setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
-        setCurrentPage(1);
-      }}
-    />
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #9C72D9 0%, #7B5BBF 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 14px rgba(156, 114, 217, 0.35)', flexShrink: 0 }}>
+          <MedicalIcon />
+        </Box>
+        <Box>
+          <Typography variant="h5" fontWeight={700} lineHeight={1.2}>Procedimentos</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>Controle de procedimentos veterinários</Typography>
+        </Box>
+      </Box>
+
+      <DataGrid<MedicalProcedure>
+        data={procedures}
+        columns={columns}
+        getRowId={(row) => row.publicId || ''}
+        pageSize={pageSize}
+        headerActions={headerActions}
+        actions={actions}
+        emptyMessage="Nenhum procedimento encontrado"
+        loading={loading}
+        onRefresh={fetchProcedures}
+        serverSidePagination
+        page={currentPage}
+        totalRows={totalItems}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+        sortField={sortField}
+        sortDirection={sortDirection === 'ASC' ? 'asc' : 'desc'}
+        onSortChange={(field, direction) => {
+          setSortField(field);
+          setSortDirection(direction === 'asc' ? 'ASC' : 'DESC');
+          setCurrentPage(1);
+        }}
+        sx={{ borderRadius: 3, overflow: 'hidden' }}
+      />
+    </Box>
   );
 };
 
