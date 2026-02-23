@@ -9,7 +9,7 @@ import {
   alpha,
 } from '@mui/material';
 import {
-  Add as AddIcon,
+
   Visibility as ViewIcon,
   MedicalServices as MedicalIcon,
   Pets as PetsIcon,
@@ -196,9 +196,7 @@ const ProceduresPage = () => {
           <MuiMenuItem key={value} value={value}>{label}</MuiMenuItem>
         ))}
       </TextField>
-      <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/procedimentos/novo')}>
-        Novo Procedimento
-      </Button>
+
     </div>
   );
 

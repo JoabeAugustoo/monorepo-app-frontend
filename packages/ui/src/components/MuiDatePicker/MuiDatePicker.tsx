@@ -9,6 +9,7 @@ export interface MuiDatePickerProps {
   value: string;
   onChange: (value: string) => void;
   mode?: 'month' | 'day';
+  label?: string;
   placeholder?: string;
   disabled?: boolean;
   size?: 'small' | 'medium';
@@ -40,6 +41,7 @@ export function MuiDatePicker({
   value,
   onChange,
   mode = 'month',
+  label,
   placeholder = 'Selecione...',
   disabled = false,
   size = 'medium',
@@ -72,6 +74,7 @@ export function MuiDatePicker({
           disabled={disabled}
           slotProps={{
             textField: {
+              label,
               placeholder,
               fullWidth: true,
               size,

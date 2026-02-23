@@ -411,9 +411,9 @@ const PetFormPage = () => {
               <Grid size={{ xs: 12, md: 6 }}>
                 <MuiDatePicker
                   mode="day"
+                  label="Data de Nascimento"
                   value={formData.birthDate}
                   onChange={(val) => setFormData({ ...formData, birthDate: val })}
-                  placeholder="Data de Nascimento"
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>

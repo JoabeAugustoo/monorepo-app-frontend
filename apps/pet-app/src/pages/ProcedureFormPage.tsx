@@ -160,9 +160,9 @@ const ProcedureFormPage = () => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <MuiDatePicker
                 mode="day"
+                label="Data *"
                 value={formData.date}
                 onChange={(val) => setFormData({ ...formData, date: val })}
-                placeholder="Data *"
               />
               <MuiTimePicker
                 value={formData.time}

@@ -925,6 +925,25 @@ const AtendimentoDetailPage = () => {
                 >
                   Fechar
                 </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<DocIcon />}
+                  onClick={() => {
+                    setSelectedDoc(null);
+                    navigate('/documentos', { state: { customerId: visit?.customerId, petId: visit?.petId } });
+                  }}
+                  sx={{
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #7EB3E0, #5A9BD5)',
+                    boxShadow: `0 4px 12px ${alpha('#7EB3E0', 0.3)}`,
+                    px: 3,
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #6DA3D5, #4A8BC5)',
+                    },
+                  }}
+                >
+                  Ver Documentos
+                </Button>
               </DialogActions>
             </>
           );

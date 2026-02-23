@@ -5,7 +5,8 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5175,
+    port: 5177,
+    strictPort: true,
     watch: {
       ignored: ['!**/packages/**'],
     },

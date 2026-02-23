@@ -125,12 +125,12 @@ const EmployeeFormPage = () => {
         const employee = await employeeService.getEmployeeById(id);
         setFormData({
           name: employee.name || '',
-          cpf: employee.cpf || '',
+          cpf: employee.cpf ? formatCpf(employee.cpf) : '',
           email: employee.email || '',
-          phone: employee.phone || '',
+          phone: employee.phone ? formatPhone(employee.phone) : '',
           role: employee.role || '',
           crmv: employee.crmv || '',
-          hireDate: employee.hireDate || '',
+          hireDate: employee.hireDate ? employee.hireDate.split('T')[0] : '',
           createAuthUser: false,
         });
       } catch {
@@ -332,9 +332,9 @@ const EmployeeFormPage = () => {
               <Grid size={{ xs: 12, md: 6 }}>
                 <MuiDatePicker
                   mode="day"
+                  label="Data de Contratação"
                   value={formData.hireDate}
                   onChange={(val) => setFormData({ ...formData, hireDate: val })}
-                  placeholder="Data de Contratacao"
                 />
               </Grid>
             </Grid>

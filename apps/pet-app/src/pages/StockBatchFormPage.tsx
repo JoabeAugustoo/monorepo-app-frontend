@@ -19,7 +19,7 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MuiDatePicker } from '@app/ui';
+import { MuiDatePicker, CurrencyField } from '@app/ui';
 import { stockBatchService, medicationService } from '../services';
 import type { StockBatchDto, Medication } from '../types';
 
@@ -45,7 +45,7 @@ const StockBatchFormPage = () => {
   const [formData, setFormData] = useState({
     batchNumber: '',
     quantity: '',
-    unitCost: '',
+    unitCost: 0,
     expirationDate: new Date().toISOString().split('T')[0],
   });
 
@@ -64,7 +64,7 @@ const StockBatchFormPage = () => {
         medicationId,
         batchNumber: formData.batchNumber,
         quantity: parseFloat(formData.quantity),
-        unitCost: parseFloat(formData.unitCost),
+        unitCost: formData.unitCost,
         expirationDate: formData.expirationDate,
       };
       await stockBatchService.create(data);
@@ -122,9 +122,9 @@ const StockBatchFormPage = () => {
               <Grid size={{ xs: 12, md: 6 }}>
                 <MuiDatePicker
                   mode="day"
+                  label="Data de Validade *"
                   value={formData.expirationDate}
                   onChange={(val) => setFormData({ ...formData, expirationDate: val })}
-                  placeholder="Data de Validade *"
                 />
               </Grid>
             </Grid>
@@ -153,14 +153,12 @@ const StockBatchFormPage = () => {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <CurrencyField
                   fullWidth
                   label="Custo Unitário *"
-                  type="number"
                   value={formData.unitCost}
-                  onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, unitCost: val })}
                   required
-                  slotProps={{ input: { inputProps: { min: '0', step: '0.01' } } }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">

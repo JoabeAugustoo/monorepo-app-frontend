@@ -503,9 +503,9 @@ const PetRegisterPage = () => {
       <Box sx={{ display: 'flex', gap: 2 }}>
         <MuiDatePicker
           mode="day"
+          label="Data de Nascimento"
           value={petForm.birthDate}
           onChange={(val) => setPetForm({ ...petForm, birthDate: val })}
-          placeholder="Data de Nascimento"
         />
         <TextField
           fullWidth
