@@ -604,42 +604,63 @@ const AtendimentoDetailPage = () => {
       </Card>
 
       {/* Procedure Detail Dialog */}
-      <Dialog open={!!selectedProc} onClose={() => setSelectedProc(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={!!selectedProc}
+        onClose={() => setSelectedProc(null)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: '16px', overflow: 'hidden' },
+        }}
+      >
         {selectedProc && (() => {
           const procStatusCfg = selectedProc.status ? PROC_STATUS_CONFIG[selectedProc.status] : null;
+          const procColor = procStatusCfg?.color || '#9C72D9';
           return (
             <>
-              <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
+              <Box sx={{
+                background: `linear-gradient(135deg, ${procColor}, ${alpha(procColor, 0.7)})`,
+                px: 3,
+                py: 2.5,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+              }}>
                 <Box sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #9C72D9, #7B5BBF)',
+                  width: 44,
+                  height: 44,
+                  borderRadius: '12px',
+                  bgcolor: 'rgba(255,255,255,0.25)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#fff',
-                  flexShrink: 0,
                 }}>
-                  <ProcIcon fontSize="small" />
+                  <ProcIcon />
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography variant="h6" fontWeight={700} noWrap>{selectedProc.description}</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#fff" noWrap>
+                    {selectedProc.description}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.85)' }}>
+                    {PROC_TYPE_LABELS[selectedProc.type] || selectedProc.type}
+                  </Typography>
                 </Box>
                 {procStatusCfg && (
                   <Chip
                     label={procStatusCfg.label}
                     size="small"
-                    sx={{ backgroundColor: procStatusCfg.color + '14', color: procStatusCfg.color, fontWeight: 600 }}
+                    sx={{
+                      bgcolor: 'rgba(255,255,255,0.2)',
+                      color: '#fff',
+                      fontWeight: 600,
+                      backdropFilter: 'blur(4px)',
+                    }}
                   />
                 )}
-              </DialogTitle>
-              <DialogContent dividers>
+              </Box>
+              <DialogContent sx={{ pt: 2.5 }}>
                 <Grid container spacing={2}>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="caption" color="text.secondary">Tipo</Typography>
-                    <Typography variant="body2" fontWeight={500}>{PROC_TYPE_LABELS[selectedProc.type] || selectedProc.type}</Typography>
-                  </Grid>
                   <Grid size={{ xs: 6 }}>
                     <Typography variant="caption" color="text.secondary">Localização</Typography>
                     <Typography variant="body2" fontWeight={500}>
@@ -662,12 +683,10 @@ const AtendimentoDetailPage = () => {
                     <Typography variant="caption" color="text.secondary">Veterinário</Typography>
                     <Typography variant="body2" fontWeight={500}>{selectedProc.veterinarianName || selectedProc.veterinarianId}</Typography>
                   </Grid>
-                  {selectedProc.createdAt && (
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="caption" color="text.secondary">Criado em</Typography>
-                      <Typography variant="body2" fontWeight={500}>{formatDateTime(selectedProc.createdAt)}</Typography>
-                    </Grid>
-                  )}
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="caption" color="text.secondary">Criado em</Typography>
+                    <Typography variant="body2" fontWeight={500}>{formatDateTime(selectedProc.createdAt)}</Typography>
+                  </Grid>
                   {selectedProc.updatedAt && (
                     <Grid size={{ xs: 6 }}>
                       <Typography variant="caption" color="text.secondary">Atualizado em</Typography>
@@ -705,16 +724,54 @@ const AtendimentoDetailPage = () => {
                       ))}
                     </Grid>
                   )}
+                  {selectedProc.publicId && (
+                    <Grid size={{ xs: 12 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="caption" color="text.secondary">ID</Typography>
+                        <Chip
+                          label={selectedProc.publicId}
+                          size="small"
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontSize: '0.7rem',
+                            bgcolor: alpha('#9C72D9', 0.08),
+                            color: '#7B5BBF',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            '&:hover': { bgcolor: alpha('#9C72D9', 0.15) },
+                          }}
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedProc.publicId || '');
+                            toast.success('ID copiado!');
+                          }}
+                        />
+                      </Box>
+                    </Grid>
+                  )}
                 </Grid>
               </DialogContent>
-              <DialogActions>
-                <Button onClick={() => setSelectedProc(null)}>Fechar</Button>
+              <DialogActions sx={{ px: 3, pb: 2.5 }}>
+                <Button
+                  onClick={() => setSelectedProc(null)}
+                  sx={{ borderRadius: '10px' }}
+                >
+                  Fechar
+                </Button>
                 <Button
                   variant="contained"
                   startIcon={<ViewIcon />}
                   onClick={() => {
                     setSelectedProc(null);
                     navigate(`/procedimentos/${selectedProc.publicId}`);
+                  }}
+                  sx={{
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #9C72D9, #7B5BBF)',
+                    boxShadow: `0 4px 12px ${alpha('#9C72D9', 0.3)}`,
+                    px: 3,
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #8B63CC, #6A4AAE)',
+                    },
                   }}
                 >
                   Ver Completo

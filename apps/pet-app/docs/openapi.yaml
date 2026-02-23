@@ -1,0 +1,4591 @@
+openapi: 3.0.0
+info:
+  title: Petflow API
+  description: API for Petflow application
+  version: '1.0'
+  contact: {}
+tags: []
+servers:
+  - url: http://localhost:8084
+    description: Local development
+components:
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+  schemas:
+    LoginDto:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Username or email
+        password:
+          type: string
+          description: User password
+        applicationId:
+          type: string
+          description: Application public ID (UUID)
+      required:
+        - username
+        - password
+    TokenResponseDto:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+        tokenType:
+          type: string
+          description: Token type (Bearer)
+        expiresIn:
+          type: number
+          description: Access token expiration time in seconds
+      required:
+        - accessToken
+        - refreshToken
+        - tokenType
+        - expiresIn
+    RefreshTokenDto:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token
+      required:
+        - refreshToken
+    TokenConfigDto:
+      type: object
+      properties:
+        theme:
+          type: string
+          description: Application theme
+          example: claro
+      required:
+        - theme
+    TokenPayloadDto:
+      type: object
+      properties:
+        sub:
+          type: string
+          description: User/Client public ID
+        app:
+          type: string
+          description: Application code
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: User email
+        roles:
+          description: User/Client roles in the application
+          type: array
+          items:
+            type: string
+        config:
+          description: User config for the application
+          allOf:
+            - $ref: '#/components/schemas/TokenConfigDto'
+        iat:
+          type: number
+          description: Token issued at timestamp
+        exp:
+          type: number
+          description: Token expiration timestamp
+      required:
+        - sub
+        - app
+        - username
+        - email
+        - roles
+    UpdateThemeDto:
+      type: object
+      properties:
+        theme:
+          type: string
+          description: Theme name
+          enum: [claro, escuro, oceano, sunset, nord, pet, azul]
+          example: claro
+      required:
+        - theme
+    CountResponse:
+      type: object
+      properties:
+        total:
+          type: number
+          example: 100
+        active:
+          type: number
+          example: 85
+        inactive:
+          type: number
+          example: 15
+      required: [total, active, inactive]
+    SearchRequest:
+      type: object
+      properties:
+        where:
+          type: object
+          description: Filter conditions
+          additionalProperties: true
+        skip:
+          type: number
+          default: 0
+          minimum: 0
+        take:
+          type: number
+          default: 10
+          minimum: 1
+        sort:
+          description: Sort fields and directions
+          type: array
+          items:
+            type: array
+      required: [skip, take]
+    AddressResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        zipCode:
+          type: string
+        street:
+          type: string
+        neighborhood:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+      required: [publicId, active, createdAt, updatedAt, zipCode, street, neighborhood, city, state]
+    CustomerAddressResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        number:
+          type: string
+        complement:
+          type: string
+        notes:
+          type: string
+        isDefault:
+          type: boolean
+        address:
+          $ref: '#/components/schemas/AddressResponseDto'
+      required: [publicId, active, createdAt, updatedAt, isDefault, address]
+    CustomerResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        name:
+          type: string
+        cpf:
+          type: string
+        rg:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        secondaryPhone:
+          type: string
+        notes:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerAddressResponseDto'
+      required: [publicId, active, createdAt, updatedAt, name, phone]
+    AddressDto:
+      type: object
+      properties:
+        zipCode:
+          type: string
+          maxLength: 10
+        street:
+          type: string
+          description: Street name (if provided, skips external API lookup)
+          maxLength: 200
+        neighborhood:
+          type: string
+          maxLength: 100
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 2
+        number:
+          type: string
+          maxLength: 20
+        complement:
+          type: string
+          maxLength: 100
+        notes:
+          type: string
+        isDefault:
+          type: boolean
+          default: false
+      required: [zipCode]
+    UpdateCustomerAddressDto:
+      type: object
+      properties:
+        number:
+          type: string
+          maxLength: 20
+        complement:
+          type: string
+          maxLength: 100
+        notes:
+          type: string
+        isDefault:
+          type: boolean
+    CustomerDto:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        cpf:
+          type: string
+          maxLength: 14
+        rg:
+          type: string
+          maxLength: 20
+        email:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 20
+        secondaryPhone:
+          type: string
+          maxLength: 20
+        notes:
+          type: string
+      required: [name, phone]
+    ClinicResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        tradeName:
+          type: string
+        legalName:
+          type: string
+        cnpj:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        logoUrl:
+          type: string
+        logoSvg:
+          type: string
+      required: [publicId, active, createdAt, updatedAt, tradeName, legalName, cnpj, phone, email]
+    ClinicDto:
+      type: object
+      properties:
+        tradeName:
+          type: string
+          maxLength: 150
+        legalName:
+          type: string
+          maxLength: 200
+        cnpj:
+          type: string
+          maxLength: 18
+        phone:
+          type: string
+          maxLength: 20
+        email:
+          type: string
+          maxLength: 150
+        address:
+          type: string
+          maxLength: 300
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 2
+      required: [tradeName, legalName, cnpj, phone, email]
+    EmployeeDto:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        cpf:
+          type: string
+          maxLength: 14
+        email:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 20
+        role:
+          type: string
+          enum: [VETERINARIAN, ATTENDANT, ADMINISTRATIVE, MANAGER]
+        crmv:
+          type: string
+          maxLength: 20
+        hireDate:
+          type: string
+          example: '2024-01-15'
+        createAuthUser:
+          type: boolean
+          default: true
+      required: [name, cpf, role, hireDate]
+    EmployeeCreateResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        name:
+          type: string
+        cpf:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+        crmv:
+          type: string
+        hireDate:
+          format: date-time
+          type: string
+        status:
+          type: string
+        employeeGuid:
+          type: string
+        authUserGuid:
+          type: string
+        hasAuthAccess:
+          type: boolean
+        generatedUserName:
+          type: string
+        generatedPassword:
+          type: string
+        isExistingUser:
+          type: boolean
+      required: [publicId, active, createdAt, updatedAt, name, cpf, role, hireDate, status, hasAuthAccess, generatedUserName, generatedPassword, isExistingUser]
+    EmployeeResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        name:
+          type: string
+        cpf:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+        crmv:
+          type: string
+        hireDate:
+          format: date-time
+          type: string
+        status:
+          type: string
+        employeeGuid:
+          type: string
+        authUserGuid:
+          type: string
+        hasAuthAccess:
+          type: boolean
+      required: [publicId, active, createdAt, updatedAt, name, cpf, role, hireDate, status, hasAuthAccess]
+    PetTutorResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        customerId:
+          type: string
+        customerName:
+          type: string
+        role:
+          type: string
+        relationship:
+          type: string
+        canAuthorize:
+          type: boolean
+        canPickup:
+          type: boolean
+        startDate:
+          format: date-time
+          type: string
+        endDate:
+          format: date-time
+          type: string
+      required: [publicId, active, createdAt, updatedAt, customerId, customerName, role, canAuthorize, canPickup, startDate]
+    PetResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        name:
+          type: string
+        species:
+          type: string
+        breed:
+          type: string
+        gender:
+          type: string
+        birthDate:
+          format: date-time
+          type: string
+        weight:
+          type: number
+        color:
+          type: string
+        observations:
+          type: string
+        status:
+          type: string
+        primaryTutorName:
+          type: string
+        primaryTutorCpf:
+          type: string
+        tutors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PetTutorResponseDto'
+      required: [publicId, active, createdAt, updatedAt, name, species, status]
+    PetTutorDto:
+      type: object
+      properties:
+        customerId:
+          type: string
+        role:
+          type: string
+          enum: [PRIMARY, SECONDARY, TEMPORARY]
+        relationship:
+          type: string
+          maxLength: 50
+        canAuthorize:
+          type: boolean
+          default: false
+        canPickup:
+          type: boolean
+          default: true
+        endDate:
+          type: string
+      required: [customerId, role]
+    PetDto:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        species:
+          type: string
+          enum: [DOG, CAT, BIRD, REPTILE, OTHER]
+        breed:
+          type: string
+          maxLength: 100
+        gender:
+          type: string
+          enum: [MALE, FEMALE, UNKNOWN]
+        birthDate:
+          type: string
+          example: '2020-05-15'
+        weight:
+          type: number
+          example: 12.5
+        color:
+          type: string
+          maxLength: 50
+        observations:
+          type: string
+        primaryTutorId:
+          type: string
+      required: [name, species, primaryTutorId]
+    ProcedureMedicationResponseDto:
+      type: object
+      properties:
+        medicationId:
+          type: string
+        medicationName:
+          type: string
+        quantity:
+          type: number
+        dosage:
+          type: string
+        batchId:
+          type: string
+      required: [medicationId, medicationName, quantity, dosage]
+    MedicalNoteResponseDto:
+      type: object
+      properties:
+        content:
+          type: string
+        authorId:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+      required: [content, authorId, createdAt]
+    MedicalProcedureResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        type:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        date:
+          format: date-time
+          type: string
+        cost:
+          type: number
+        observations:
+          type: string
+        status:
+          type: string
+        petId:
+          type: string
+        petName:
+          type: string
+        veterinarianId:
+          type: string
+        veterinarianName:
+          type: string
+        clinicalVisitId:
+          type: string
+        medications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureMedicationResponseDto'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalNoteResponseDto'
+      required: [publicId, active, createdAt, updatedAt, type, location, description, date, cost, status, petId, veterinarianId]
+    ProcedureMedicationDto:
+      type: object
+      properties:
+        medicationId:
+          type: string
+        quantity:
+          type: number
+          example: 2.5
+        dosage:
+          type: string
+          maxLength: 200
+      required: [medicationId, quantity, dosage]
+    MedicalNoteDto:
+      type: object
+      properties:
+        content:
+          type: string
+      required: [content]
+    CompleteProcedureDto:
+      type: object
+      properties:
+        medications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureMedicationDto'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalNoteDto'
+        observations:
+          type: string
+    MedicalProcedureDto:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [CONSULTATION, SURGERY, EXAM, VACCINATION, GROOMING, OTHER]
+        location:
+          type: string
+          enum: [IN_CLINIC, HOME_VISIT, PARTNER, EXTERNAL]
+          default: IN_CLINIC
+        description:
+          type: string
+        date:
+          type: string
+        cost:
+          type: number
+          example: 150
+        observations:
+          type: string
+        petId:
+          type: string
+        veterinarianId:
+          type: string
+        clinicalVisitId:
+          type: string
+        medications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureMedicationDto'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalNoteDto'
+      required: [type, description, date, cost, petId, veterinarianId]
+    ClinicalVisitSummaryDto:
+      type: object
+      properties:
+        procedureCount:
+          type: number
+        medicationCount:
+          type: number
+        documentCount:
+          type: number
+        totalCost:
+          type: number
+      required: [procedureCount, medicationCount, documentCount, totalCost]
+    ClinicalVisitResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        chiefComplaint:
+          type: string
+        notes:
+          type: string
+        startedAt:
+          format: date-time
+          type: string
+        completedAt:
+          format: date-time
+          type: string
+        petId:
+          type: string
+        petName:
+          type: string
+        customerId:
+          type: string
+        customerName:
+          type: string
+        veterinarianId:
+          type: string
+        veterinarianName:
+          type: string
+        lastUpdatedAt:
+          format: date-time
+          type: string
+        summary:
+          $ref: '#/components/schemas/ClinicalVisitSummaryDto'
+      required: [publicId, active, createdAt, updatedAt, type, status, startedAt, petId, customerId, veterinarianId]
+    DocumentTrackingResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        reportId:
+          type: string
+        templateKey:
+          type: string
+        status:
+          type: string
+          enum: [GENERATING, REPORT_FAILED, REPORT_COMPLETED, NO_SIGNATURE_REQUIRED, UPLOADING_TO_SIGNATURE, AWAITING_SIGNATURES, PARTIALLY_SIGNED, COMPLETED, EXPIRED, FAILED, CANCELLED]
+        errorMessage:
+          type: string
+        signatureDocumentId:
+          type: string
+        petId:
+          type: string
+        customerId:
+          type: string
+        documentName:
+          type: string
+        clinicalVisitId:
+          type: string
+      required: [publicId, active, createdAt, updatedAt, reportId, templateKey, status]
+    TimelineEntryDto:
+      type: object
+      properties:
+        entryType:
+          type: string
+          enum: [VISIT_STARTED, PROCEDURE, DOCUMENT, VISIT_COMPLETED, VISIT_CANCELLED]
+        date:
+          format: date-time
+          type: string
+        publicId:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        procedure:
+          $ref: '#/components/schemas/MedicalProcedureResponseDto'
+        document:
+          $ref: '#/components/schemas/DocumentTrackingResponseDto'
+      required: [entryType, date, publicId, title, status]
+    ClinicalVisitDto:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [CONSULTATION, HOSPITALIZATION, FOLLOW_UP, EMERGENCY]
+        petId:
+          type: string
+        customerId:
+          type: string
+        veterinarianId:
+          type: string
+        chiefComplaint:
+          type: string
+          maxLength: 2000
+        notes:
+          type: string
+          maxLength: 5000
+      required: [type, petId, customerId, veterinarianId]
+    MedicationResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        defaultDosage:
+          type: string
+        manufacturer:
+          type: string
+        description:
+          type: string
+        minimumStock:
+          type: number
+        currentStock:
+          type: number
+      required: [publicId, active, createdAt, updatedAt, name, type, minimumStock]
+    MedicationDto:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        type:
+          type: string
+          enum: [INTERNAL, EXTERNAL, CONTROLLED]
+        defaultDosage:
+          type: string
+          maxLength: 200
+        manufacturer:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+        minimumStock:
+          type: number
+          default: 0
+      required: [name, type]
+    StockBatchResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        medicationId:
+          type: string
+        medicationName:
+          type: string
+        batchNumber:
+          type: string
+        quantity:
+          type: number
+        initialQuantity:
+          type: number
+        unitCost:
+          type: number
+        expirationDate:
+          format: date-time
+          type: string
+        entryDate:
+          format: date-time
+          type: string
+        status:
+          type: string
+      required: [publicId, active, createdAt, updatedAt, medicationId, medicationName, batchNumber, quantity, initialQuantity, unitCost, expirationDate, entryDate, status]
+    StockBatchDto:
+      type: object
+      properties:
+        medicationId:
+          type: string
+        batchNumber:
+          type: string
+          maxLength: 50
+        quantity:
+          type: number
+          example: 100
+        unitCost:
+          type: number
+          example: 25.5
+        expirationDate:
+          type: string
+          example: '2025-12-31'
+      required: [medicationId, batchNumber, quantity, unitCost, expirationDate]
+    StockMovementDto:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ENTRY, EXIT_PROCEDURE, EXIT_SALE, ADJUSTMENT, DISPOSAL]
+        medicationId:
+          type: string
+        batchId:
+          type: string
+        quantity:
+          type: number
+          example: 10
+        performedById:
+          type: string
+        reason:
+          type: string
+        referenceId:
+          type: string
+      required: [type, medicationId, batchId, quantity, performedById]
+    StockMovementResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        type:
+          type: string
+        quantity:
+          type: number
+        reason:
+          type: string
+        referenceId:
+          type: string
+        medicationId:
+          type: string
+        medicationName:
+          type: string
+        batchId:
+          type: string
+        batchNumber:
+          type: string
+        performedById:
+          type: string
+        performedByName:
+          type: string
+      required: [publicId, active, createdAt, updatedAt, type, quantity, medicationId, medicationName, batchId, batchNumber, performedById, performedByName]
+    RevenueDto:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [PROCEDURE, PRODUCT_SALE, OTHER]
+        description:
+          type: string
+          maxLength: 500
+        amount:
+          type: number
+          example: 250
+        date:
+          type: string
+          example: '2024-01-15'
+        status:
+          type: string
+          enum: [PENDING, PAID, OVERDUE, CANCELLED]
+          default: PENDING
+        customerId:
+          type: string
+        procedureId:
+          type: string
+      required: [category, description, amount, date]
+    RevenueResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        date:
+          format: date-time
+          type: string
+        status:
+          type: string
+        customerId:
+          type: string
+        customerName:
+          type: string
+        procedureId:
+          type: string
+      required: [publicId, active, createdAt, updatedAt, category, description, amount, date, status]
+    ExpenseDto:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [STOCK_PURCHASE, RENT, SALARY, UTILITIES, MAINTENANCE, OTHER]
+        description:
+          type: string
+          maxLength: 500
+        amount:
+          type: number
+          example: 500
+        date:
+          type: string
+          example: '2024-01-15'
+        costType:
+          type: string
+          enum: [FIXED, VARIABLE]
+        status:
+          type: string
+          enum: [PENDING, PAID, OVERDUE, CANCELLED]
+          default: PENDING
+        referenceId:
+          type: string
+      required: [category, description, amount, date, costType]
+    ExpenseResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        date:
+          format: date-time
+          type: string
+        costType:
+          type: string
+        status:
+          type: string
+        referenceId:
+          type: string
+      required: [publicId, active, createdAt, updatedAt, category, description, amount, date, costType, status]
+    DebtInstallmentResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        installmentNumber:
+          type: number
+        amount:
+          type: number
+        dueDate:
+          format: date-time
+          type: string
+        paidDate:
+          format: date-time
+          type: string
+        status:
+          type: string
+      required: [publicId, active, createdAt, updatedAt, installmentNumber, amount, dueDate, status]
+    DebtResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        totalAmount:
+          type: number
+        remainingAmount:
+          type: number
+        creditor:
+          type: string
+        startDate:
+          format: date-time
+          type: string
+        dueDate:
+          format: date-time
+          type: string
+        status:
+          type: string
+        installments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DebtInstallmentResponseDto'
+      required: [publicId, active, createdAt, updatedAt, description, totalAmount, remainingAmount, creditor, startDate, dueDate, status]
+    PayInstallmentDto:
+      type: object
+      properties:
+        paidDate:
+          type: string
+    DebtDto:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 500
+        totalAmount:
+          type: number
+          example: 5000
+        creditor:
+          type: string
+          maxLength: 200
+        startDate:
+          type: string
+          example: '2024-01-15'
+        dueDate:
+          type: string
+          example: '2024-12-15'
+        numberOfInstallments:
+          type: number
+          example: 12
+      required: [description, totalAmount, creditor, startDate, dueDate]
+    MonthlyReportDto:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+        totalExpenses:
+          type: number
+        fixedCosts:
+          type: number
+        variableCosts:
+          type: number
+        profit:
+          type: number
+        month:
+          type: number
+        year:
+          type: number
+      required: [totalRevenue, totalExpenses, fixedCosts, variableCosts, profit, month, year]
+    CepResponseDto:
+      type: object
+      properties:
+        cep:
+          type: string
+          example: '29024010'
+        street:
+          type: string
+          example: Rua Maria Clara de Menezes Rodrigues
+        neighborhood:
+          type: string
+          example: Grande Vitória
+        city:
+          type: string
+          example: Vitória
+        state:
+          type: string
+          example: ES
+      required: [cep, street, neighborhood, city, state]
+    TemplateWithOverrideResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        engine:
+          type: string
+          enum: [HANDLEBARS, HTML]
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, ARCHIVED]
+        categoryId:
+          type: string
+        categoryName:
+          type: string
+        applicationId:
+          type: string
+        applicationName:
+          type: string
+        applicationCode:
+          type: string
+        activeVersion:
+          type: number
+        speciesSpecific:
+          type: string
+          enum: ['NO', 'YES', DEPENDS]
+        tutorSignature:
+          type: string
+          enum: ['NO', 'YES', OPTIONAL]
+        vetSignature:
+          type: string
+          enum: ['NO', 'YES', OPTIONAL]
+      required: [publicId, active, createdAt, updatedAt, key, name, engine, status, applicationId, applicationName, applicationCode, speciesSpecific, tutorSignature, vetSignature]
+    TemplateSearchRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+        key:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, ARCHIVED]
+        engine:
+          type: string
+          enum: [HANDLEBARS, HTML]
+        categoryId:
+          type: string
+        skip:
+          type: number
+          default: 0
+          minimum: 0
+        take:
+          type: number
+          default: 10
+          minimum: 1
+    TemplateCategoryResponseDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        applicationId:
+          type: string
+        applicationName:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required: [publicId, name, applicationId, active, createdAt, updatedAt]
+    TemplateCategoryDto:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required: [name]
+    GenerateMedicalDischargeDto:
+      type: object
+      properties:
+        procedureId:
+          type: string
+        clinicalVisitId:
+          type: string
+      required: [procedureId]
+    GenerateDocumentDto:
+      type: object
+      properties:
+        templateKey:
+          type: string
+        data:
+          type: object
+        documentName:
+          type: string
+        petId:
+          type: string
+        customerId:
+          type: string
+        clinicalVisitId:
+          type: string
+      required: [templateKey, data]
+    KpiResponseDto:
+      type: object
+      properties:
+        activeVisits:
+          type: number
+        hospitalizations:
+          type: number
+        documentsAwaitingSignature:
+          type: number
+        completedVisits:
+          type: number
+      required: [activeVisits, hospitalizations, documentsAwaitingSignature, completedVisits]
+    VisitsPerDayItemDto:
+      type: object
+      properties:
+        date:
+          type: string
+        count:
+          type: number
+      required: [date, count]
+    VisitsPerDayResponseDto:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitsPerDayItemDto'
+      required: [data]
+    ProceduresByTypeItemDto:
+      type: object
+      properties:
+        type:
+          type: string
+        count:
+          type: number
+      required: [type, count]
+    ProceduresByTypeResponseDto:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProceduresByTypeItemDto'
+      required: [data]
+    ProceduresByStatusItemDto:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: number
+      required: [status, count]
+    ProceduresByStatusResponseDto:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProceduresByStatusItemDto'
+      required: [data]
+    MedicationStockItemDto:
+      type: object
+      properties:
+        publicId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        currentStock:
+          type: number
+        minimumStock:
+          type: number
+        lowStock:
+          type: boolean
+      required: [publicId, name, type, currentStock, minimumStock, lowStock]
+    MedicationStockResponseDto:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicationStockItemDto'
+      required: [data]
+paths:
+  /api/health:
+    get:
+      operationId: HealthController_health
+      parameters: []
+      responses:
+        '200':
+          description: Service is healthy
+      summary: Health check endpoint
+      tags: [Health]
+  /api/auth/login:
+    post:
+      operationId: AuthProxyController_login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponseDto'
+        '401':
+          description: Invalid credentials
+      summary: Authenticate user and get tokens
+      tags: [Authentication]
+  /api/auth/refresh:
+    post:
+      operationId: AuthProxyController_refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenDto'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponseDto'
+        '401':
+          description: Invalid or expired refresh token
+      summary: Refresh access token using refresh token
+      tags: [Authentication]
+  /api/auth/validate:
+    post:
+      operationId: AuthProxyController_validate
+      parameters:
+        - name: authorization
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPayloadDto'
+        '401':
+          description: Invalid or expired token
+      security:
+        - bearer: []
+      summary: Validate current token
+      tags: [Authentication]
+  /api/auth/theme:
+    put:
+      operationId: AuthProxyController_updateTheme
+      parameters:
+        - name: authorization
+          required: true
+          in: header
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateThemeDto'
+      responses:
+        '200':
+          description: Theme updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponseDto'
+      security:
+        - bearer: []
+      summary: Update user theme
+      tags: [Authentication]
+  /api/auth/introspect:
+    post:
+      operationId: AuthProxyController_introspect
+      parameters:
+        - name: authorization
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token introspection result
+      security:
+        - bearer: []
+      summary: Introspect token
+      tags: [Authentication]
+  /api/clinics:
+    post:
+      operationId: ClinicController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicDto'
+      responses:
+        '201':
+          description: Clinic created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicResponseDto'
+      security:
+        - bearer: []
+      summary: Create new Clinic
+      tags: [Clinics]
+  /api/clinics/active:
+    get:
+      operationId: ClinicController_findActive
+      responses:
+        '200':
+          description: List of active clinics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClinicResponseDto'
+      security:
+        - bearer: []
+      summary: List all active Clinic
+      tags: [Clinics]
+  /api/clinics/stats/count:
+    get:
+      operationId: ClinicController_count
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+      security:
+        - bearer: []
+      summary: Get Clinic count statistics
+      tags: [Clinics]
+  /api/clinics/search:
+    post:
+      operationId: ClinicController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Clinic
+      security:
+        - bearer: []
+      summary: Search Clinic
+      tags: [Clinics]
+  /api/clinics/{id}:
+    get:
+      operationId: ClinicController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clinic found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicResponseDto'
+      security:
+        - bearer: []
+      summary: Get Clinic by ID
+      tags: [Clinics]
+    put:
+      operationId: ClinicController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicDto'
+      responses:
+        '200':
+          description: Clinic updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicResponseDto'
+      security:
+        - bearer: []
+      summary: Update Clinic by ID
+      tags: [Clinics]
+    delete:
+      operationId: ClinicController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Clinic deleted
+      security:
+        - bearer: []
+      summary: Delete Clinic by ID
+      tags: [Clinics]
+  /api/clinics/{id}/activate:
+    patch:
+      operationId: ClinicController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clinic activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicResponseDto'
+      security:
+        - bearer: []
+      summary: Activate Clinic
+      tags: [Clinics]
+  /api/clinics/{id}/deactivate:
+    patch:
+      operationId: ClinicController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clinic deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicResponseDto'
+      security:
+        - bearer: []
+      summary: Deactivate Clinic
+      tags: [Clinics]
+  /api/clinics/logo:
+    post:
+      operationId: ClinicController_uploadLogo
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Logo uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicResponseDto'
+      security:
+        - bearer: []
+      summary: Upload clinic logo
+      tags: [Clinics]
+    get:
+      operationId: ClinicController_getLogo
+      responses:
+        '200':
+          description: Logo image binary
+        '404':
+          description: No logo
+      security:
+        - bearer: []
+      summary: Download clinic logo
+      tags: [Clinics]
+  /api/clinics/certificate:
+    get:
+      operationId: ClinicController_getCertificate
+      responses:
+        '200':
+          description: Active certificate info
+        '204':
+          description: No active certificate
+      security:
+        - bearer: []
+      summary: Get active digital certificate
+      tags: [Clinics]
+    post:
+      operationId: ClinicController_uploadCertificate
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, name, password]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Certificate uploaded
+      security:
+        - bearer: []
+      summary: Upload digital certificate (.p12)
+      tags: [Clinics]
+  /api/customers:
+    post:
+      operationId: CustomerController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerDto'
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+      security:
+        - bearer: []
+      summary: Create new Customer
+      tags: [Customers]
+  /api/customers/active:
+    get:
+      operationId: CustomerController_findActive
+      responses:
+        '200':
+          description: List of active customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerResponseDto'
+      security:
+        - bearer: []
+      summary: List all active Customer
+      tags: [Customers]
+  /api/customers/stats/count:
+    get:
+      operationId: CustomerController_count
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+      security:
+        - bearer: []
+      summary: Get Customer count
+      tags: [Customers]
+  /api/customers/search:
+    post:
+      operationId: CustomerController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Customer
+      security:
+        - bearer: []
+      summary: Search Customer
+      tags: [Customers]
+  /api/customers/cpf/{cpf}:
+    get:
+      operationId: CustomerController_findByCpf
+      parameters:
+        - name: cpf
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '404':
+          description: Customer not found
+      security:
+        - bearer: []
+      summary: Find customer by CPF
+      tags: [Customers]
+  /api/customers/{id}:
+    get:
+      operationId: CustomerController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+      security:
+        - bearer: []
+      summary: Get Customer by ID
+      tags: [Customers]
+    put:
+      operationId: CustomerController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerDto'
+      responses:
+        '200':
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+      security:
+        - bearer: []
+      summary: Update Customer by ID
+      tags: [Customers]
+    delete:
+      operationId: CustomerController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Customer deleted
+      security:
+        - bearer: []
+      summary: Delete Customer by ID
+      tags: [Customers]
+  /api/customers/{id}/activate:
+    patch:
+      operationId: CustomerController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+      security:
+        - bearer: []
+      summary: Activate Customer
+      tags: [Customers]
+  /api/customers/{id}/deactivate:
+    patch:
+      operationId: CustomerController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+      security:
+        - bearer: []
+      summary: Deactivate Customer
+      tags: [Customers]
+  /api/customers/{id}/addresses:
+    post:
+      operationId: CustomerController_addAddress
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressDto'
+      responses:
+        '201':
+          description: Address added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAddressResponseDto'
+      security:
+        - bearer: []
+      summary: Add address to customer
+      tags: [Customers]
+    get:
+      operationId: CustomerController_listAddresses
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of customer addresses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerAddressResponseDto'
+      security:
+        - bearer: []
+      summary: List customer addresses
+      tags: [Customers]
+  /api/customers/{customerId}/addresses/{addressId}:
+    patch:
+      operationId: CustomerController_updateAddress
+      parameters:
+        - name: customerId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: addressId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerAddressDto'
+      responses:
+        '200':
+          description: Address updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAddressResponseDto'
+      security:
+        - bearer: []
+      summary: Update customer address
+      tags: [Customers]
+    delete:
+      operationId: CustomerController_removeAddress
+      parameters:
+        - name: customerId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: addressId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Address removed
+      security:
+        - bearer: []
+      summary: Remove customer address
+      tags: [Customers]
+  /api/employees:
+    post:
+      operationId: EmployeeController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDto'
+      responses:
+        '201':
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeCreateResponseDto'
+      security:
+        - bearer: []
+      summary: Create new Employee
+      tags: [Employees]
+  /api/employees/active:
+    get:
+      operationId: EmployeeController_findActive
+      responses:
+        '200':
+          description: List of active employees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeResponseDto'
+      security:
+        - bearer: []
+      summary: List all active Employee
+      tags: [Employees]
+  /api/employees/veterinarians:
+    get:
+      operationId: EmployeeController_findVeterinarians
+      responses:
+        '200':
+          description: List of veterinarians
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeResponseDto'
+      security:
+        - bearer: []
+      summary: List all active veterinarians
+      tags: [Employees]
+  /api/employees/stats/count:
+    get:
+      operationId: EmployeeController_count
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+      security:
+        - bearer: []
+      summary: Get Employee count
+      tags: [Employees]
+  /api/employees/search:
+    post:
+      operationId: EmployeeController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Employee
+      security:
+        - bearer: []
+      summary: Search Employee
+      tags: [Employees]
+  /api/employees/{id}:
+    get:
+      operationId: EmployeeController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+      security:
+        - bearer: []
+      summary: Get Employee by ID
+      tags: [Employees]
+    put:
+      operationId: EmployeeController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDto'
+      responses:
+        '200':
+          description: Employee updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+      security:
+        - bearer: []
+      summary: Update Employee by ID
+      tags: [Employees]
+    delete:
+      operationId: EmployeeController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Employee deleted
+      security:
+        - bearer: []
+      summary: Delete Employee by ID
+      tags: [Employees]
+  /api/employees/{id}/activate:
+    patch:
+      operationId: EmployeeController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee activated
+      security:
+        - bearer: []
+      summary: Activate Employee
+      tags: [Employees]
+  /api/employees/{id}/deactivate:
+    patch:
+      operationId: EmployeeController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee deactivated
+      security:
+        - bearer: []
+      summary: Deactivate Employee
+      tags: [Employees]
+  /api/pets:
+    post:
+      operationId: PetController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetDto'
+      responses:
+        '201':
+          description: Pet created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Create new Pet
+      tags: [Pets]
+  /api/pets/active:
+    get:
+      operationId: PetController_findActive
+      responses:
+        '200':
+          description: List of active pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: List all active Pet
+      tags: [Pets]
+  /api/pets/stats/count:
+    get:
+      operationId: PetController_count
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+      security:
+        - bearer: []
+      summary: Get Pet count
+      tags: [Pets]
+  /api/pets/search:
+    post:
+      operationId: PetController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list of Pet
+      security:
+        - bearer: []
+      summary: Search Pet
+      tags: [Pets]
+  /api/pets/by-customer/{customerId}:
+    get:
+      operationId: PetController_findByCustomer
+      parameters:
+        - name: customerId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: List all pets by customer
+      tags: [Pets]
+  /api/pets/{id}:
+    get:
+      operationId: PetController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Get Pet by ID
+      tags: [Pets]
+    put:
+      operationId: PetController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetDto'
+      responses:
+        '200':
+          description: Pet updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Update Pet by ID
+      tags: [Pets]
+    delete:
+      operationId: PetController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Pet deleted
+      security:
+        - bearer: []
+      summary: Delete Pet by ID
+      tags: [Pets]
+  /api/pets/{id}/activate:
+    patch:
+      operationId: PetController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet activated
+      security:
+        - bearer: []
+      summary: Activate Pet
+      tags: [Pets]
+  /api/pets/{id}/deactivate:
+    patch:
+      operationId: PetController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet deactivated
+      security:
+        - bearer: []
+      summary: Deactivate Pet
+      tags: [Pets]
+  /api/pets/{id}/deceased:
+    patch:
+      operationId: PetController_markDeceased
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet marked deceased
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Mark pet as deceased
+      tags: [Pets]
+  /api/pets/{id}/transferred:
+    patch:
+      operationId: PetController_markTransferred
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet marked transferred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Mark pet as transferred
+      tags: [Pets]
+  /api/pets/{id}/tutors:
+    post:
+      operationId: PetController_assignTutor
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetTutorDto'
+      responses:
+        '201':
+          description: Tutor assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Assign tutor to pet
+      tags: [Pets]
+  /api/pets/{petId}/tutors/{tutorId}:
+    delete:
+      operationId: PetController_removeTutor
+      parameters:
+        - name: petId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: tutorId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tutor removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetResponseDto'
+      security:
+        - bearer: []
+      summary: Remove tutor from pet
+      tags: [Pets]
+  /api/medical-procedures:
+    post:
+      operationId: MedicalProcedureController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalProcedureDto'
+      responses:
+        '201':
+          description: Procedure created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Create new MedicalProcedure
+      tags: [Medical Procedures]
+  /api/medical-procedures/active:
+    get:
+      operationId: MedicalProcedureController_findActive
+      responses:
+        '200':
+          description: List of active procedures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: List all active MedicalProcedure
+      tags: [Medical Procedures]
+  /api/medical-procedures/stats/count:
+    get:
+      operationId: MedicalProcedureController_count
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+      security:
+        - bearer: []
+      summary: Get MedicalProcedure count
+      tags: [Medical Procedures]
+  /api/medical-procedures/search:
+    post:
+      operationId: MedicalProcedureController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search MedicalProcedure
+      tags: [Medical Procedures]
+  /api/medical-procedures/{id}:
+    get:
+      operationId: MedicalProcedureController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Procedure found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Get MedicalProcedure by ID
+      tags: [Medical Procedures]
+    put:
+      operationId: MedicalProcedureController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalProcedureDto'
+      responses:
+        '200':
+          description: Procedure updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Update MedicalProcedure by ID
+      tags: [Medical Procedures]
+    delete:
+      operationId: MedicalProcedureController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Procedure deleted
+      security:
+        - bearer: []
+      summary: Delete MedicalProcedure by ID
+      tags: [Medical Procedures]
+  /api/medical-procedures/{id}/start:
+    patch:
+      operationId: MedicalProcedureController_startProcedure
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Procedure started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Start a procedure
+      tags: [Medical Procedures]
+  /api/medical-procedures/{id}/complete:
+    patch:
+      operationId: MedicalProcedureController_completeProcedure
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteProcedureDto'
+      responses:
+        '200':
+          description: Procedure completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Complete a procedure
+      tags: [Medical Procedures]
+  /api/medical-procedures/{id}/cancel:
+    patch:
+      operationId: MedicalProcedureController_cancelProcedure
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Procedure cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Cancel a procedure
+      tags: [Medical Procedures]
+  /api/medical-procedures/{id}/activate:
+    patch:
+      operationId: MedicalProcedureController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Procedure activated
+      security:
+        - bearer: []
+      summary: Activate MedicalProcedure
+      tags: [Medical Procedures]
+  /api/medical-procedures/{id}/deactivate:
+    patch:
+      operationId: MedicalProcedureController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Procedure deactivated
+      security:
+        - bearer: []
+      summary: Deactivate MedicalProcedure
+      tags: [Medical Procedures]
+  /api/medical-procedures/pet/{petId}/history:
+    get:
+      operationId: MedicalProcedureController_getMedicalHistory
+      parameters:
+        - name: petId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medical history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Get medical history of a pet
+      tags: [Medical Procedures]
+  /api/medical-procedures/{id}/notes:
+    post:
+      operationId: MedicalProcedureController_addNote
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalNoteDto'
+      responses:
+        '201':
+          description: Note added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: Add a note to a procedure
+      tags: [Medical Procedures]
+  /api/clinical-visits:
+    post:
+      operationId: ClinicalVisitController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicalVisitDto'
+      responses:
+        '201':
+          description: Visit created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalVisitResponseDto'
+      security:
+        - bearer: []
+      summary: Create new ClinicalVisit
+      tags: [Clinical Visits]
+  /api/clinical-visits/active:
+    get:
+      operationId: ClinicalVisitController_findActive
+      responses:
+        '200':
+          description: List of active visits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClinicalVisitResponseDto'
+      security:
+        - bearer: []
+      summary: List all active ClinicalVisit
+      tags: [Clinical Visits]
+  /api/clinical-visits/stats/count:
+    get:
+      operationId: ClinicalVisitController_count
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+      security:
+        - bearer: []
+      summary: Get ClinicalVisit count
+      tags: [Clinical Visits]
+  /api/clinical-visits/search:
+    post:
+      operationId: ClinicalVisitController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search ClinicalVisit
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}:
+    get:
+      operationId: ClinicalVisitController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Visit found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalVisitResponseDto'
+      security:
+        - bearer: []
+      summary: Get ClinicalVisit by ID
+      tags: [Clinical Visits]
+    put:
+      operationId: ClinicalVisitController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicalVisitDto'
+      responses:
+        '200':
+          description: Visit updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalVisitResponseDto'
+      security:
+        - bearer: []
+      summary: Update ClinicalVisit by ID
+      tags: [Clinical Visits]
+    delete:
+      operationId: ClinicalVisitController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Visit deleted
+      security:
+        - bearer: []
+      summary: Delete ClinicalVisit by ID
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}/start:
+    patch:
+      operationId: ClinicalVisitController_startVisit
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Visit started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalVisitResponseDto'
+      security:
+        - bearer: []
+      summary: Start a clinical visit
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}/complete:
+    patch:
+      operationId: ClinicalVisitController_completeVisit
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Visit completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalVisitResponseDto'
+      security:
+        - bearer: []
+      summary: Complete a clinical visit
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}/cancel:
+    patch:
+      operationId: ClinicalVisitController_cancelVisit
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Visit cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalVisitResponseDto'
+      security:
+        - bearer: []
+      summary: Cancel a clinical visit
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}/activate:
+    patch:
+      operationId: ClinicalVisitController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Visit activated
+      security:
+        - bearer: []
+      summary: Activate ClinicalVisit
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}/deactivate:
+    patch:
+      operationId: ClinicalVisitController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Visit deactivated
+      security:
+        - bearer: []
+      summary: Deactivate ClinicalVisit
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}/procedures:
+    get:
+      operationId: ClinicalVisitController_getProcedures
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of procedures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalProcedureResponseDto'
+      security:
+        - bearer: []
+      summary: List procedures of a visit
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}/documents:
+    get:
+      operationId: ClinicalVisitController_getDocuments
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentTrackingResponseDto'
+      security:
+        - bearer: []
+      summary: List documents of a visit
+      tags: [Clinical Visits]
+  /api/clinical-visits/{id}/timeline:
+    get:
+      operationId: ClinicalVisitController_getTimeline
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Timeline entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimelineEntryDto'
+      security:
+        - bearer: []
+      summary: Unified timeline
+      tags: [Clinical Visits]
+  /api/medications:
+    post:
+      operationId: MedicationController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicationDto'
+      responses:
+        '201':
+          description: Medication created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationResponseDto'
+      security:
+        - bearer: []
+      summary: Create new Medication
+      tags: [Medications]
+  /api/medications/active:
+    get:
+      operationId: MedicationController_findActive
+      responses:
+        '200':
+          description: List of active medications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicationResponseDto'
+      security:
+        - bearer: []
+      summary: List all active Medication
+      tags: [Medications]
+  /api/medications/low-stock:
+    get:
+      operationId: MedicationController_findLowStock
+      responses:
+        '200':
+          description: Low stock medications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicationResponseDto'
+      security:
+        - bearer: []
+      summary: List medications below minimum stock
+      tags: [Medications]
+  /api/medications/stats/count:
+    get:
+      operationId: MedicationController_count
+      responses:
+        '200':
+          description: Count statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+      security:
+        - bearer: []
+      summary: Get Medication count
+      tags: [Medications]
+  /api/medications/search:
+    post:
+      operationId: MedicationController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search Medication
+      tags: [Medications]
+  /api/medications/{id}:
+    get:
+      operationId: MedicationController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medication found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationResponseDto'
+      security:
+        - bearer: []
+      summary: Get Medication by ID
+      tags: [Medications]
+    put:
+      operationId: MedicationController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicationDto'
+      responses:
+        '200':
+          description: Medication updated
+      security:
+        - bearer: []
+      summary: Update Medication by ID
+      tags: [Medications]
+    delete:
+      operationId: MedicationController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Medication deleted
+      security:
+        - bearer: []
+      summary: Delete Medication by ID
+      tags: [Medications]
+  /api/medications/{id}/activate:
+    patch:
+      operationId: MedicationController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medication activated
+      security:
+        - bearer: []
+      summary: Activate Medication
+      tags: [Medications]
+  /api/medications/{id}/deactivate:
+    patch:
+      operationId: MedicationController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Medication deactivated
+      security:
+        - bearer: []
+      summary: Deactivate Medication
+      tags: [Medications]
+  /api/stock-batches:
+    post:
+      operationId: StockBatchController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockBatchDto'
+      responses:
+        '201':
+          description: Batch created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockBatchResponseDto'
+      security:
+        - bearer: []
+      summary: Create new StockBatch
+      tags: [Stock Batches]
+  /api/stock-batches/active:
+    get:
+      operationId: StockBatchController_findActive
+      responses:
+        '200':
+          description: List of active batches
+      security:
+        - bearer: []
+      summary: List all active StockBatch
+      tags: [Stock Batches]
+  /api/stock-batches/expiring:
+    get:
+      operationId: StockBatchController_findExpiringBatches
+      parameters:
+        - name: days
+          required: false
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Expiring batches
+      security:
+        - bearer: []
+      summary: List batches expiring within N days
+      tags: [Stock Batches]
+  /api/stock-batches/stats/count:
+    get:
+      operationId: StockBatchController_count
+      responses:
+        '200':
+          description: Count statistics
+      security:
+        - bearer: []
+      summary: Get StockBatch count
+      tags: [Stock Batches]
+  /api/stock-batches/search:
+    post:
+      operationId: StockBatchController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search StockBatch
+      tags: [Stock Batches]
+  /api/stock-batches/{id}:
+    get:
+      operationId: StockBatchController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Batch found
+      security:
+        - bearer: []
+      summary: Get StockBatch by ID
+      tags: [Stock Batches]
+    put:
+      operationId: StockBatchController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockBatchDto'
+      responses:
+        '200':
+          description: Batch updated
+      security:
+        - bearer: []
+      summary: Update StockBatch by ID
+      tags: [Stock Batches]
+    delete:
+      operationId: StockBatchController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Batch deleted
+      security:
+        - bearer: []
+      summary: Delete StockBatch by ID
+      tags: [Stock Batches]
+  /api/stock-batches/{id}/activate:
+    patch:
+      operationId: StockBatchController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Batch activated
+      security:
+        - bearer: []
+      summary: Activate StockBatch
+      tags: [Stock Batches]
+  /api/stock-batches/{id}/deactivate:
+    patch:
+      operationId: StockBatchController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Batch deactivated
+      security:
+        - bearer: []
+      summary: Deactivate StockBatch
+      tags: [Stock Batches]
+  /api/stock-movements:
+    post:
+      operationId: StockMovementController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementDto'
+      responses:
+        '201':
+          description: Movement created
+      security:
+        - bearer: []
+      summary: Create new StockMovement
+      tags: [Stock Movements]
+  /api/stock-movements/active:
+    get:
+      operationId: StockMovementController_findActive
+      responses:
+        '200':
+          description: List of active movements
+      security:
+        - bearer: []
+      summary: List all active StockMovement
+      tags: [Stock Movements]
+  /api/stock-movements/stats/count:
+    get:
+      operationId: StockMovementController_count
+      responses:
+        '200':
+          description: Count statistics
+      security:
+        - bearer: []
+      summary: Get StockMovement count
+      tags: [Stock Movements]
+  /api/stock-movements/search:
+    post:
+      operationId: StockMovementController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search StockMovement
+      tags: [Stock Movements]
+  /api/stock-movements/{id}:
+    get:
+      operationId: StockMovementController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Movement found
+      security:
+        - bearer: []
+      summary: Get StockMovement by ID
+      tags: [Stock Movements]
+    put:
+      operationId: StockMovementController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementDto'
+      responses:
+        '200':
+          description: Movement updated
+      security:
+        - bearer: []
+      summary: Update StockMovement by ID
+      tags: [Stock Movements]
+    delete:
+      operationId: StockMovementController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Movement deleted
+      security:
+        - bearer: []
+      summary: Delete StockMovement by ID
+      tags: [Stock Movements]
+  /api/stock-movements/{id}/activate:
+    patch:
+      operationId: StockMovementController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Movement activated
+      security:
+        - bearer: []
+      summary: Activate StockMovement
+      tags: [Stock Movements]
+  /api/stock-movements/{id}/deactivate:
+    patch:
+      operationId: StockMovementController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Movement deactivated
+      security:
+        - bearer: []
+      summary: Deactivate StockMovement
+      tags: [Stock Movements]
+  /api/revenues:
+    post:
+      operationId: RevenueController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevenueDto'
+      responses:
+        '201':
+          description: Revenue created
+      security:
+        - bearer: []
+      summary: Create new Revenue
+      tags: [Revenues]
+  /api/revenues/active:
+    get:
+      operationId: RevenueController_findActive
+      responses:
+        '200':
+          description: List of active revenues
+      security:
+        - bearer: []
+      summary: List all active Revenue
+      tags: [Revenues]
+  /api/revenues/stats/count:
+    get:
+      operationId: RevenueController_count
+      responses:
+        '200':
+          description: Count statistics
+      security:
+        - bearer: []
+      summary: Get Revenue count
+      tags: [Revenues]
+  /api/revenues/search:
+    post:
+      operationId: RevenueController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search Revenue
+      tags: [Revenues]
+  /api/revenues/{id}:
+    get:
+      operationId: RevenueController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revenue found
+      security:
+        - bearer: []
+      summary: Get Revenue by ID
+      tags: [Revenues]
+    put:
+      operationId: RevenueController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevenueDto'
+      responses:
+        '200':
+          description: Revenue updated
+      security:
+        - bearer: []
+      summary: Update Revenue by ID
+      tags: [Revenues]
+    delete:
+      operationId: RevenueController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Revenue deleted
+      security:
+        - bearer: []
+      summary: Delete Revenue by ID
+      tags: [Revenues]
+  /api/revenues/{id}/activate:
+    patch:
+      operationId: RevenueController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revenue activated
+      security:
+        - bearer: []
+      summary: Activate Revenue
+      tags: [Revenues]
+  /api/revenues/{id}/deactivate:
+    patch:
+      operationId: RevenueController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revenue deactivated
+      security:
+        - bearer: []
+      summary: Deactivate Revenue
+      tags: [Revenues]
+  /api/expenses:
+    post:
+      operationId: ExpenseController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseDto'
+      responses:
+        '201':
+          description: Expense created
+      security:
+        - bearer: []
+      summary: Create new Expense
+      tags: [Expenses]
+  /api/expenses/active:
+    get:
+      operationId: ExpenseController_findActive
+      responses:
+        '200':
+          description: List of active expenses
+      security:
+        - bearer: []
+      summary: List all active Expense
+      tags: [Expenses]
+  /api/expenses/stats/count:
+    get:
+      operationId: ExpenseController_count
+      responses:
+        '200':
+          description: Count statistics
+      security:
+        - bearer: []
+      summary: Get Expense count
+      tags: [Expenses]
+  /api/expenses/search:
+    post:
+      operationId: ExpenseController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search Expense
+      tags: [Expenses]
+  /api/expenses/{id}:
+    get:
+      operationId: ExpenseController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expense found
+      security:
+        - bearer: []
+      summary: Get Expense by ID
+      tags: [Expenses]
+    put:
+      operationId: ExpenseController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseDto'
+      responses:
+        '200':
+          description: Expense updated
+      security:
+        - bearer: []
+      summary: Update Expense by ID
+      tags: [Expenses]
+    delete:
+      operationId: ExpenseController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Expense deleted
+      security:
+        - bearer: []
+      summary: Delete Expense by ID
+      tags: [Expenses]
+  /api/expenses/{id}/activate:
+    patch:
+      operationId: ExpenseController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expense activated
+      security:
+        - bearer: []
+      summary: Activate Expense
+      tags: [Expenses]
+  /api/expenses/{id}/deactivate:
+    patch:
+      operationId: ExpenseController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expense deactivated
+      security:
+        - bearer: []
+      summary: Deactivate Expense
+      tags: [Expenses]
+  /api/debts:
+    post:
+      operationId: DebtController_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebtDto'
+      responses:
+        '201':
+          description: Debt created
+      security:
+        - bearer: []
+      summary: Create new Debt
+      tags: [Debts]
+  /api/debts/active:
+    get:
+      operationId: DebtController_findActive
+      responses:
+        '200':
+          description: List of active debts
+      security:
+        - bearer: []
+      summary: List all active Debt
+      tags: [Debts]
+  /api/debts/stats/count:
+    get:
+      operationId: DebtController_count
+      responses:
+        '200':
+          description: Count statistics
+      security:
+        - bearer: []
+      summary: Get Debt count
+      tags: [Debts]
+  /api/debts/search:
+    post:
+      operationId: DebtController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search Debt
+      tags: [Debts]
+  /api/debts/{id}:
+    get:
+      operationId: DebtController_findById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debt found
+      security:
+        - bearer: []
+      summary: Get Debt by ID
+      tags: [Debts]
+    put:
+      operationId: DebtController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebtDto'
+      responses:
+        '200':
+          description: Debt updated
+      security:
+        - bearer: []
+      summary: Update Debt by ID
+      tags: [Debts]
+    delete:
+      operationId: DebtController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Debt deleted
+      security:
+        - bearer: []
+      summary: Delete Debt by ID
+      tags: [Debts]
+  /api/debts/{id}/activate:
+    patch:
+      operationId: DebtController_activate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debt activated
+      security:
+        - bearer: []
+      summary: Activate Debt
+      tags: [Debts]
+  /api/debts/{id}/deactivate:
+    patch:
+      operationId: DebtController_deactivate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debt deactivated
+      security:
+        - bearer: []
+      summary: Deactivate Debt
+      tags: [Debts]
+  /api/debts/{debtId}/installments/{installmentId}/pay:
+    patch:
+      operationId: DebtController_payInstallment
+      parameters:
+        - name: debtId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: installmentId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayInstallmentDto'
+      responses:
+        '200':
+          description: Installment paid
+      security:
+        - bearer: []
+      summary: Pay a debt installment
+      tags: [Debts]
+  /api/financial-reports/monthly/{year}/{month}:
+    get:
+      operationId: FinancialReportController_getMonthlyReport
+      parameters:
+        - name: year
+          required: true
+          in: path
+          schema:
+            type: number
+        - name: month
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Monthly report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyReportDto'
+      security:
+        - bearer: []
+      summary: Get monthly financial report
+      tags: [Financial Reports]
+  /api/addresses/cep/{cep}:
+    get:
+      operationId: AddressController_findByCep
+      parameters:
+        - name: cep
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Address found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CepResponseDto'
+        '400':
+          description: Invalid CEP format
+        '404':
+          description: CEP not found
+      security:
+        - bearer: []
+      summary: Lookup address by CEP
+      tags: [Addresses]
+  /api/templates/active:
+    get:
+      operationId: TemplateController_getActiveTemplates
+      parameters:
+        - name: categoryId
+          required: false
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of active templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TemplateWithOverrideResponseDto'
+      security:
+        - bearer: []
+      summary: Get active published templates
+      tags: [Templates]
+  /api/templates/search:
+    post:
+      operationId: TemplateController_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateSearchRequestDto'
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search templates
+      tags: [Templates]
+  /api/templates/{id}/raw:
+    get:
+      operationId: TemplateController_getRawTemplate
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Raw HBS template content
+      security:
+        - bearer: []
+      summary: Get raw template content
+      tags: [Templates]
+  /api/templates/{id}/versions:
+    get:
+      operationId: TemplateController_listVersions
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of versions
+      security:
+        - bearer: []
+      summary: List all versions
+      tags: [Templates]
+  /api/templates/{id}/versions/upload:
+    post:
+      operationId: TemplateController_uploadVersion
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Version created
+      security:
+        - bearer: []
+      summary: Upload new template version
+      tags: [Templates]
+  /api/templates/{id}/versions/{vid}:
+    get:
+      operationId: TemplateController_getVersion
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: vid
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version details
+      security:
+        - bearer: []
+      summary: Get version details
+      tags: [Templates]
+  /api/templates/{id}/versions/{vid}/activate:
+    patch:
+      operationId: TemplateController_activateVersion
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: vid
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version activated
+      security:
+        - bearer: []
+      summary: Activate a version
+      tags: [Templates]
+  /api/template-categories:
+    get:
+      operationId: TemplateCategoryController_getActiveCategories
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TemplateCategoryResponseDto'
+      security:
+        - bearer: []
+      summary: Get active template categories
+      tags: [Template Categories]
+    post:
+      operationId: TemplateCategoryController_createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCategoryDto'
+      responses:
+        '201':
+          description: Category created
+      security:
+        - bearer: []
+      summary: Create a template category
+      tags: [Template Categories]
+  /api/template-categories/{id}:
+    put:
+      operationId: TemplateCategoryController_updateCategory
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCategoryDto'
+      responses:
+        '200':
+          description: Category updated
+      security:
+        - bearer: []
+      summary: Update a template category
+      tags: [Template Categories]
+    delete:
+      operationId: TemplateCategoryController_deleteCategory
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category deleted
+      security:
+        - bearer: []
+      summary: Delete a template category
+      tags: [Template Categories]
+  /api/reports/search:
+    post:
+      operationId: ReportController_search
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search generated reports
+      tags: [Reports]
+  /api/reports/{id}:
+    get:
+      operationId: ReportController_getStatus
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report status
+      security:
+        - bearer: []
+      summary: Get report status
+      tags: [Reports]
+  /api/reports/{id}/download:
+    get:
+      operationId: ReportController_download
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PDF file
+      security:
+        - bearer: []
+      summary: Download generated PDF
+      tags: [Reports]
+  /api/webhooks/reports:
+    post:
+      operationId: ReportWebhookController_handleNotification
+      parameters:
+        - name: x-webhook-secret
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification received
+      summary: Receive report notification
+      tags: [Webhooks]
+  /api/webhooks/signatures:
+    post:
+      operationId: SignatureWebhookController_handleNotification
+      parameters:
+        - name: x-webhook-secret
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification received
+      summary: Receive signature notification
+      tags: [Webhooks]
+  /api/document-tracking/{id}:
+    get:
+      operationId: DocumentTrackingController_findByPublicId
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tracking found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTrackingResponseDto'
+      security:
+        - bearer: []
+      summary: Get document tracking by ID
+      tags: [Document Tracking]
+  /api/document-tracking/by-report/{reportId}:
+    get:
+      operationId: DocumentTrackingController_findByReportId
+      parameters:
+        - name: reportId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tracking found
+      security:
+        - bearer: []
+      summary: Get tracking by report ID
+      tags: [Document Tracking]
+  /api/document-tracking/by-customer/{customerId}:
+    get:
+      operationId: DocumentTrackingController_findByCustomer
+      parameters:
+        - name: customerId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of trackings
+      security:
+        - bearer: []
+      summary: List trackings by customer
+      tags: [Document Tracking]
+  /api/document-tracking/by-pet/{petId}:
+    get:
+      operationId: DocumentTrackingController_findByPet
+      parameters:
+        - name: petId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of trackings
+      security:
+        - bearer: []
+      summary: List trackings by pet
+      tags: [Document Tracking]
+  /api/document-tracking/search:
+    post:
+      operationId: DocumentTrackingController_search
+      responses:
+        '200':
+          description: Paginated list
+      security:
+        - bearer: []
+      summary: Search document trackings
+      tags: [Document Tracking]
+  /api/document-tracking/{id}/download:
+    get:
+      operationId: DocumentTrackingController_download
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PDF file
+      security:
+        - bearer: []
+      summary: Download generated PDF
+      tags: [Document Tracking]
+  /api/document-tracking/{id}/download-signed:
+    get:
+      operationId: DocumentTrackingController_downloadSigned
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Signed PDF file
+      security:
+        - bearer: []
+      summary: Download signed PDF
+      tags: [Document Tracking]
+  /api/document-tracking/{id}/cancel:
+    patch:
+      operationId: DocumentTrackingController_cancel
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tracking cancelled
+      security:
+        - bearer: []
+      summary: Cancel a document tracking
+      tags: [Document Tracking]
+  /api/petflow-reports/medical-discharge:
+    post:
+      operationId: PetflowReportController_generateMedicalDischarge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateMedicalDischargeDto'
+      responses:
+        '201':
+          description: Report generation initiated
+      security:
+        - bearer: []
+      summary: Generate medical discharge report
+      tags: [Petflow Reports]
+  /api/petflow-reports/generate:
+    post:
+      operationId: PetflowReportController_generate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateDocumentDto'
+      responses:
+        '201':
+          description: Report generation initiated
+      security:
+        - bearer: []
+      summary: Generate a document from template
+      tags: [Petflow Reports]
+  /api/dashboard/kpis:
+    get:
+      operationId: DashboardController_getKpis
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: KPIs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KpiResponseDto'
+      security:
+        - bearer: []
+      summary: Get dashboard KPIs
+      tags: [Dashboard]
+  /api/dashboard/visits-per-day:
+    get:
+      operationId: DashboardController_getVisitsPerDay
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Visits per day
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitsPerDayResponseDto'
+      security:
+        - bearer: []
+      summary: Visits count grouped by day
+      tags: [Dashboard]
+  /api/dashboard/procedures-by-type:
+    get:
+      operationId: DashboardController_getProceduresByType
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Procedures by type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProceduresByTypeResponseDto'
+      security:
+        - bearer: []
+      summary: Procedures count grouped by type
+      tags: [Dashboard]
+  /api/dashboard/procedures-by-status:
+    get:
+      operationId: DashboardController_getProceduresByStatus
+      parameters:
+        - name: startDate
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Procedures by status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProceduresByStatusResponseDto'
+      security:
+        - bearer: []
+      summary: Procedures count grouped by status
+      tags: [Dashboard]
+  /api/dashboard/medication-stock:
+    get:
+      operationId: DashboardController_getMedicationStock
+      responses:
+        '200':
+          description: Medication stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationStockResponseDto'
+      security:
+        - bearer: []
+      summary: Current medication stock levels
+      tags: [Dashboard]

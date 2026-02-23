@@ -24,7 +24,7 @@ import {
   CheckCircle as CheckIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MuiDatePicker } from '@app/ui';
 import { customerService, addressService, petService } from '../services';
 import type {
@@ -100,8 +100,11 @@ interface PetFormData {
 
 const PetRegisterPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as { cpf?: string } | null;
   const [activeStep, setActiveStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [prefilledCpf] = useState(locationState?.cpf || '');
 
   // Tutor state
   const [tutorForm, setTutorForm] = useState<TutorFormData>({
@@ -124,6 +127,21 @@ const PetRegisterPage = () => {
   const [petForm, setPetForm] = useState<PetFormData>({
     name: '', species: '', breed: '', gender: '', birthDate: new Date().toISOString().split('T')[0], weight: '', color: '', observations: '',
   });
+
+  // Pre-fill CPF from navigation state (e.g. coming from Customers grid)
+  useEffect(() => {
+    if (prefilledCpf) {
+      const digits = prefilledCpf.replace(/\D/g, '');
+      setTutorForm(prev => ({ ...prev, cpf: formatCpf(digits) }));
+    }
+  }, [prefilledCpf]);
+
+  // Auto-advance to address step when customer is found via pre-filled CPF
+  useEffect(() => {
+    if (prefilledCpf && existingCustomer && activeStep === 0) {
+      setActiveStep(1);
+    }
+  }, [prefilledCpf, existingCustomer, activeStep]);
 
   // CPF auto-search
   useEffect(() => {
@@ -174,15 +192,13 @@ const PetRegisterPage = () => {
       setSearchingCep(true);
       addressService.getCep(digits)
         .then((data: CepResponse) => {
-          if (!data.erro) {
-            setAddressForm(prev => ({
-              ...prev,
-              street: data.logradouro || prev.street,
-              neighborhood: data.bairro || prev.neighborhood,
-              city: data.localidade || prev.city,
-              state: data.uf || prev.state,
-            }));
-          }
+          setAddressForm(prev => ({
+            ...prev,
+            street: data.street || prev.street,
+            neighborhood: data.neighborhood || prev.neighborhood,
+            city: data.city || prev.city,
+            state: data.state || prev.state,
+          }));
         })
         .catch(() => {})
         .finally(() => setSearchingCep(false));
@@ -219,6 +235,10 @@ const PetRegisterPage = () => {
       if (useNewAddress && customerId) {
         const addressData: AddressDto = {
           zipCode: addressForm.zipCode.replace(/\D/g, ''),
+          street: addressForm.street || undefined,
+          neighborhood: addressForm.neighborhood || undefined,
+          city: addressForm.city || undefined,
+          state: addressForm.state || undefined,
           number: addressForm.number || undefined,
           complement: addressForm.complement || undefined,
           notes: addressForm.notes || undefined,

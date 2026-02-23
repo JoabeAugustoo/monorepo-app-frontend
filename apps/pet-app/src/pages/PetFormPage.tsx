@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   TextField,
   Box,
@@ -9,6 +9,11 @@ import {
   Grid2 as Grid,
   alpha,
   InputAdornment,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  Avatar,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -21,11 +26,18 @@ import {
   Palette as PaletteIcon,
   FitnessCenter as WeightIcon,
   Person as PersonIcon,
+  SwapHoriz as SwapIcon,
+  Search as SearchIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  Badge as BadgeIcon,
+  CheckCircle as CheckIcon,
 } from '@mui/icons-material';
 import { FaDog, FaCat, FaDove, FaFrog, FaPaw, FaMars, FaVenus, FaGenderless } from 'react-icons/fa6';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MuiDatePicker } from '@app/ui';
+import { formatCpf, formatPhone } from '@app/core';
 import { petService, customerService } from '../services';
 import type { PetDto, PetSpecies, PetGender, Customer } from '../types';
 
@@ -119,8 +131,34 @@ const PetFormPage = () => {
   const [formData, setFormData] = useState<PetFormData>(initialFormData);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
+  // Tutor details (for edit mode)
+  const [tutorDetails, setTutorDetails] = useState<Customer | null>(null);
+  const [loadingTutor, setLoadingTutor] = useState(false);
+
+  // Change tutor dialog
+  const [showChangeTutor, setShowChangeTutor] = useState(false);
+  const [tutorSearchInput, setTutorSearchInput] = useState('');
+  const [tutorSearchResults, setTutorSearchResults] = useState<Customer[]>([]);
+  const [searchingTutors, setSearchingTutors] = useState(false);
+
   useEffect(() => {
-    customerService.getActiveCustomers().then(setCustomers).catch(() => setCustomers([]));
+    if (!isEditing) {
+      customerService.getActiveCustomers().then(setCustomers).catch(() => setCustomers([]));
+    }
+  }, [isEditing]);
+
+  // Load tutor details when editing and tutorId is available
+  const loadTutorDetails = useCallback(async (tutorId: string) => {
+    if (!tutorId) return;
+    setLoadingTutor(true);
+    try {
+      const tutor = await customerService.getCustomerById(tutorId);
+      setTutorDetails(tutor);
+    } catch {
+      setTutorDetails(null);
+    } finally {
+      setLoadingTutor(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -145,6 +183,9 @@ const PetFormPage = () => {
           primaryTutorId: full.primaryTutorId || '',
           primaryTutorName: tutorName,
         });
+        if (full.primaryTutorId) {
+          loadTutorDetails(full.primaryTutorId);
+        }
       } catch {
         toast.error('Erro ao carregar dados do pet.');
         navigate('/pets');
@@ -153,7 +194,49 @@ const PetFormPage = () => {
       }
     };
     loadPet();
-  }, [id, navigate]);
+  }, [id, navigate, loadTutorDetails]);
+
+  // Debounced tutor search
+  useEffect(() => {
+    if (!showChangeTutor) return;
+    const term = tutorSearchInput.trim();
+    if (!term) {
+      setTutorSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearchingTutors(true);
+      try {
+        const isCpf = /^\d/.test(term);
+        const where = isCpf
+          ? { cpf: { contains: term.replace(/\D/g, '') } }
+          : { name: { contains: term } };
+        const result = await customerService.searchCustomers({
+          where,
+          take: 10,
+          sort: [{ field: 'name', direction: 'ASC' }],
+        });
+        setTutorSearchResults(result?.data || []);
+      } catch {
+        setTutorSearchResults([]);
+      } finally {
+        setSearchingTutors(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [tutorSearchInput, showChangeTutor]);
+
+  const handleSelectNewTutor = (customer: Customer) => {
+    setFormData(prev => ({
+      ...prev,
+      primaryTutorId: customer.publicId || customer.id || '',
+      primaryTutorName: customer.name,
+    }));
+    setTutorDetails(customer);
+    setShowChangeTutor(false);
+    setTutorSearchInput('');
+    setTutorSearchResults([]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -355,24 +438,133 @@ const PetFormPage = () => {
 
           {/* --- Tutor --- */}
           <Box sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: '16px', border: '1px solid', borderColor: (theme) => alpha(theme.palette.divider, 0.08), boxShadow: `0 1px 3px ${alpha('#000', 0.04)}` }}>
-            <SectionHeader icon={<PeopleIcon fontSize="small" />} title="Tutor" subtitle="Tutor responsavel pelo pet" gradient="linear-gradient(135deg, #7EB3E0, #5A9BD5)" />
-            <Grid container spacing={2.5}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                {isEditing ? (
-                  <TextField
-                    fullWidth
-                    label="Tutor Principal"
-                    value={formData.primaryTutorName || 'Nenhum'}
-                    disabled
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <PersonIcon sx={{ color: '#7EB3E0' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+              <SectionHeader icon={<PeopleIcon fontSize="small" />} title="Tutor" subtitle="Tutor responsavel pelo pet" gradient="linear-gradient(135deg, #7EB3E0, #5A9BD5)" />
+              {isEditing && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<SwapIcon />}
+                  onClick={() => setShowChangeTutor(true)}
+                  sx={{
+                    borderColor: alpha('#7EB3E0', 0.4),
+                    color: '#5A9BD5',
+                    borderRadius: '10px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    flexShrink: 0,
+                    '&:hover': {
+                      borderColor: '#7EB3E0',
+                      bgcolor: alpha('#7EB3E0', 0.06),
+                    },
+                  }}
+                >
+                  Trocar Tutor
+                </Button>
+              )}
+            </Box>
+            {isEditing ? (
+              loadingTutor ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : tutorDetails ? (
+                <Box sx={{
+                  p: 2.5,
+                  borderRadius: '12px',
+                  bgcolor: alpha('#7EB3E0', 0.04),
+                  border: `1px solid ${alpha('#7EB3E0', 0.12)}`,
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Avatar sx={{
+                      width: 44,
+                      height: 44,
+                      bgcolor: alpha('#7EB3E0', 0.14),
+                      color: '#5A9BD5',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                    }}>
+                      {(tutorDetails.name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="subtitle1" fontWeight={700} noWrap>
+                        {tutorDetails.name}
+                      </Typography>
+                      {tutorDetails.active !== undefined && (
+                        <Chip
+                          label={tutorDetails.active ? 'Ativo' : 'Inativo'}
+                          size="small"
+                          sx={{
+                            mt: 0.25,
+                            height: 20,
+                            fontSize: '0.68rem',
+                            fontWeight: 600,
+                            bgcolor: tutorDetails.active ? alpha('#81C9C5', 0.12) : alpha('#BDBDBD', 0.12),
+                            color: tutorDetails.active ? '#00897B' : '#757575',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Box>
+                  <Grid container spacing={2}>
+                    {tutorDetails.cpf && (
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <BadgeIcon sx={{ fontSize: 16, color: '#7EB3E0', opacity: 0.7 }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">CPF</Typography>
+                            <Typography variant="body2" fontWeight={500} sx={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>
+                              {formatCpf(tutorDetails.cpf)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
+                    {tutorDetails.email && (
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <EmailIcon sx={{ fontSize: 16, color: '#7EB3E0', opacity: 0.7 }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Email</Typography>
+                            <Typography variant="body2" fontWeight={500} noWrap>{tutorDetails.email}</Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
+                    {tutorDetails.phone && (
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PhoneIcon sx={{ fontSize: 16, color: '#81C9C5', opacity: 0.7 }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Telefone</Typography>
+                            <Typography variant="body2" fontWeight={500}>{formatPhone(tutorDetails.phone)}</Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
+                    {tutorDetails.city && (
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PersonIcon sx={{ fontSize: 16, color: '#F48FB1', opacity: 0.7 }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Cidade</Typography>
+                            <Typography variant="body2" fontWeight={500}>
+                              {tutorDetails.city}{tutorDetails.state ? `/${tutorDetails.state}` : ''}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  {formData.primaryTutorName || 'Nenhum tutor vinculado'}
+                </Typography>
+              )
+            ) : (
+              <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     select
@@ -387,9 +579,9 @@ const PetFormPage = () => {
                       </MuiMenuItem>
                     ))}
                   </TextField>
-                )}
+                </Grid>
               </Grid>
-            </Grid>
+            )}
           </Box>
 
           {/* --- Observações --- */}
@@ -432,6 +624,190 @@ const PetFormPage = () => {
           </Box>
         </Box>
       </form>
+
+      {/* Change Tutor Dialog */}
+      <Dialog
+        open={showChangeTutor}
+        onClose={() => {
+          setShowChangeTutor(false);
+          setTutorSearchInput('');
+          setTutorSearchResults([]);
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: '16px', overflow: 'hidden' },
+        }}
+      >
+        <Box sx={{
+          background: 'linear-gradient(135deg, #7EB3E0, #5A9BD5)',
+          px: 3,
+          py: 2.5,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+        }}>
+          <Box sx={{
+            width: 44,
+            height: 44,
+            borderRadius: '12px',
+            bgcolor: 'rgba(255,255,255,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+          }}>
+            <SwapIcon />
+          </Box>
+          <Box>
+            <Typography variant="h6" fontWeight={700} color="#fff">
+              Trocar Tutor
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.85)' }}>
+              Busque por nome ou CPF para selecionar o novo tutor
+            </Typography>
+          </Box>
+        </Box>
+        <DialogContent sx={{ pt: 2.5 }}>
+          <TextField
+            fullWidth
+            placeholder="Digite o nome ou CPF do tutor..."
+            value={tutorSearchInput}
+            onChange={(e) => setTutorSearchInput(e.target.value)}
+            autoFocus
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: '#7EB3E0' }} />
+                </InputAdornment>
+              ),
+              endAdornment: searchingTutors ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={20} />
+                </InputAdornment>
+              ) : null,
+            }}
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#7EB3E0',
+                },
+              },
+            }}
+          />
+
+          {tutorSearchInput.trim() && !searchingTutors && tutorSearchResults.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <Typography variant="body2" color="text.secondary">
+                Nenhum tutor encontrado para "{tutorSearchInput}"
+              </Typography>
+            </Box>
+          )}
+
+          {!tutorSearchInput.trim() && (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <SearchIcon sx={{ fontSize: 40, color: alpha('#7EB3E0', 0.3), mb: 1 }} />
+              <Typography variant="body2" color="text.secondary">
+                Digite o nome ou CPF para buscar
+              </Typography>
+            </Box>
+          )}
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {tutorSearchResults.map((customer) => {
+              const isCurrentTutor = (customer.publicId || customer.id) === formData.primaryTutorId;
+              return (
+                <Box
+                  key={customer.publicId || customer.id}
+                  onClick={() => !isCurrentTutor && handleSelectNewTutor(customer)}
+                  sx={{
+                    p: 2,
+                    borderRadius: '12px',
+                    border: '1px solid',
+                    borderColor: isCurrentTutor ? alpha('#81C9C5', 0.4) : alpha('#000', 0.06),
+                    bgcolor: isCurrentTutor ? alpha('#81C9C5', 0.04) : 'transparent',
+                    cursor: isCurrentTutor ? 'default' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    ...(!isCurrentTutor && {
+                      '&:hover': {
+                        borderColor: alpha('#7EB3E0', 0.4),
+                        bgcolor: alpha('#7EB3E0', 0.04),
+                        boxShadow: `0 2px 8px ${alpha('#7EB3E0', 0.12)}`,
+                      },
+                    }),
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: alpha('#7EB3E0', 0.14),
+                      color: '#5A9BD5',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                    }}>
+                      {(customer.name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2" fontWeight={600} noWrap>
+                          {customer.name}
+                        </Typography>
+                        {isCurrentTutor && (
+                          <Chip
+                            icon={<CheckIcon sx={{ fontSize: '14px !important' }} />}
+                            label="Tutor atual"
+                            size="small"
+                            sx={{
+                              height: 22,
+                              fontSize: '0.68rem',
+                              fontWeight: 600,
+                              bgcolor: alpha('#81C9C5', 0.12),
+                              color: '#00897B',
+                              '& .MuiChip-icon': { color: '#81C9C5' },
+                            }}
+                          />
+                        )}
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.25 }}>
+                        {customer.cpf && (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                            {formatCpf(customer.cpf)}
+                          </Typography>
+                        )}
+                        {customer.phone && (
+                          <Typography variant="caption" color="text.secondary">
+                            {formatPhone(customer.phone)}
+                          </Typography>
+                        )}
+                        {customer.email && (
+                          <Typography variant="caption" color="text.secondary" noWrap>
+                            {customer.email}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={() => {
+              setShowChangeTutor(false);
+              setTutorSearchInput('');
+              setTutorSearchResults([]);
+            }}
+            sx={{ borderRadius: '10px' }}
+          >
+            Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

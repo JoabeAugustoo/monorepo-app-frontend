@@ -144,15 +144,13 @@ const CustomerFormPage = () => {
     setLoadingCep(true);
     try {
       const data = await addressService.getCep(digits);
-      if (!data.erro) {
-        setFormData((prev) => ({
-          ...prev,
-          street: data.logradouro || prev.street,
-          neighborhood: data.bairro || prev.neighborhood,
-          city: data.localidade || prev.city,
-          state: data.uf || prev.state,
-        }));
-      }
+      setFormData((prev) => ({
+        ...prev,
+        street: data.street || prev.street,
+        neighborhood: data.neighborhood || prev.neighborhood,
+        city: data.city || prev.city,
+        state: data.state || prev.state,
+      }));
     } catch {
       // silently fail
     } finally {

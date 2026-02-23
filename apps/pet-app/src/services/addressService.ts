@@ -4,8 +4,8 @@ import type { CustomerAddress, AddressDto, CepResponse } from '../types';
 export const addressService = {
   getCep: async (cep: string): Promise<CepResponse> => {
     const cleanCep = cep.replace(/\D/g, '');
-    const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-    return response.json();
+    const response = await api.get(`/addresses/cep/${cleanCep}`);
+    return response.data;
   },
 
   addAddress: async (customerId: string, data: AddressDto): Promise<CustomerAddress> => {

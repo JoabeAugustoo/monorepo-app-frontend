@@ -226,6 +226,10 @@ export interface CustomerWithAddresses extends Customer {
 
 export interface AddressDto {
   zipCode: string;
+  street?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
   number?: string;
   complement?: string;
   notes?: string;
@@ -233,13 +237,11 @@ export interface AddressDto {
 }
 
 export interface CepResponse {
-  cep: string;
-  logradouro: string;
-  complemento: string;
-  bairro: string;
-  localidade: string;
-  uf: string;
-  erro?: boolean;
+  zipCode: string;
+  street: string;
+  neighborhood: string;
+  city: string;
+  state: string;
 }
 
 // --- Medical Procedures ---

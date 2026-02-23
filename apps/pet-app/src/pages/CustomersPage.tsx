@@ -13,6 +13,7 @@ import {
   PersonSearch as TutorPanelIcon,
   Description as DocumentsIcon,
   LocalHospital as AtendimentoIcon,
+  Pets as PetsIcon,
   People as PeopleIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
@@ -275,6 +276,12 @@ const CustomersPage = () => {
       tooltip: 'Documentos',
       onClick: (customer: Customer) => navigate('/documentos', { state: { cpf: customer.cpf, customerId: customer.publicId } }),
       color: 'info',
+    },
+    {
+      icon: <PetsIcon fontSize="small" />,
+      tooltip: 'Adicionar Pet',
+      onClick: (customer: Customer) => navigate('/cadastro-pet', { state: { cpf: customer.cpf } }),
+      color: 'warning',
     },
     {
       icon: <AtendimentoIcon fontSize="small" />,
